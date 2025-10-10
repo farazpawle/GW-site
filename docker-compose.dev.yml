@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database - Primary data storage
+  postgres:
+    image: postgres:15-alpine
+    container_name: garritwulf-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: garritwulf_user
+      POSTGRES_PASSWORD: garritwulf_secure_pass_2025
+      POSTGRES_DB: garritwulf_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"  # Exposed to localhost for Next.js connection
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - garrit-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U garritwulf_user -d garritwulf_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache - Session storage and API caching
+  redis:
+    image: redis:7-alpine
+    container_name: garritwulf-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"  # Exposed to localhost for Next.js connection
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - garrit-dev-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO S3 Storage - Product and category images
+  minio:
+    image: minio/minio:latest
+    container_name: garritwulf-minio-dev
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: garritwulf_minio
+      MINIO_ROOT_PASSWORD: garritwulf_minio_secure_2025
+    ports:
+      - "9000:9000"  # API - Exposed to localhost for Next.js connection
+      - "9001:9001"  # Console - Web UI for management
+    volumes:
+      - minio_dev_data:/data
+    networks:
+      - garrit-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  minio_dev_data:
+    driver: local
+
+networks:
+  garrit-dev-network:
+    driver: bridge

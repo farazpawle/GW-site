@@ -1,0 +1,519 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Edit, Trash2, ExternalLink, Check, X, Eye, EyeOff } from 'lucide-react';
+import type { Category, Prisma } from '@prisma/client';
+import DeleteConfirmModal from './DeleteConfirmModal';
+
+// Serialized product type for client components (Decimal converted to number)
+interface ProductWithCategory {
+  id: string;
+  name: string;
+  partNumber: string;
+  description: string | null;
+  shortDesc: string | null;
+  price: number; // Serialized from Decimal
+  comparePrice: number | null; // Serialized from Decimal
+  categoryId: string;
+  stockQuantity: number;
+  inStock: boolean;
+  images: string[];
+  specifications: Prisma.JsonValue | null;
+  compatibility: string[];
+  featured: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  slug: string;
+  // Showcase fields (Phase 4.5)
+  published: boolean;
+  publishedAt: Date | null;
+  showcaseOrder: number;
+  views: number;
+  tags: string[];
+  brand: string | null;
+  origin: string | null;
+  certifications: string[];
+  warranty: string | null;
+  difficulty: string | null;
+  application: string[];
+  videoUrl: string | null;
+  pdfUrl: string | null;
+  category: Category | null;
+}
+
+interface ProductTableProps {
+  products: ProductWithCategory[];
+  currentSort: string;
+}
+
+export default function ProductTable({ products, currentSort }: ProductTableProps) {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+  const getSortLink = (field: string) => {
+    const currentField = currentSort.split('-')[0];
+    const currentOrder = currentSort.split('-')[1];
+    const newOrder = currentField === field && currentOrder === 'asc' ? 'desc' : 'asc';
+    return `?sort=${field}-${newOrder}`;
+  };
+
+  const getSortIndicator = (field: string) => {
+    const currentField = currentSort.split('-')[0];
+    const currentOrder = currentSort.split('-')[1];
+    if (currentField !== field) return null;
+    return currentOrder === 'asc' ? '↑' : '↓';
+  };
+
+  // Toggle single product selection
+  const toggleProduct = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  // Toggle all products
+  const toggleAll = () => {
+    if (selectedIds.size === products.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(products.map(p => p.id)));
+    }
+  };
+
+  // Handle single delete
+  const handleDeleteClick = (product: { id: string; name: string }) => {
+    setProductToDelete(product);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
+
+    try {
+      const response = await fetch(`/api/admin/parts/${productToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete product');
+      }
+
+      // Refresh the page to show updated list
+      window.location.reload();
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete product. Please try again.');
+    }
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} product(s)? This cannot be undone.`)) {
+      return;
+    }
+
+    setBulkActionLoading(true);
+    try {
+      const response = await fetch('/api/admin/parts/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: Array.from(selectedIds),
+          operation: 'delete',
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to delete products');
+      }
+
+      setSelectedIds(new Set());
+      window.location.reload();
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      alert('Failed to delete products. Please try again.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  // Handle bulk stock update
+  const handleBulkStock = async (inStock: boolean) => {
+    setBulkActionLoading(true);
+    try {
+      const response = await fetch('/api/admin/parts/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: Array.from(selectedIds),
+          operation: 'updateStock',
+          data: { inStock },
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to update stock status');
+      }
+
+      setSelectedIds(new Set());
+      window.location.reload();
+    } catch (error) {
+      console.error('Bulk stock update error:', error);
+      alert('Failed to update stock status. Please try again.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  // Handle bulk featured update
+  const handleBulkFeatured = async (featured: boolean) => {
+    setBulkActionLoading(true);
+    try {
+      const response = await fetch('/api/admin/parts/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: Array.from(selectedIds),
+          operation: 'updateFeatured',
+          data: { featured },
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to update featured status');
+      }
+
+      setSelectedIds(new Set());
+      window.location.reload();
+    } catch (error) {
+      console.error('Bulk featured update error:', error);
+      alert('Failed to update featured status. Please try again.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  // Handle bulk publish update
+  const handleBulkPublish = async (published: boolean) => {
+    setBulkActionLoading(true);
+    try {
+      const response = await fetch('/api/admin/parts/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ids: Array.from(selectedIds),
+          operation: 'updatePublished',
+          data: { published },
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to update published status');
+      }
+
+      setSelectedIds(new Set());
+      window.location.reload();
+    } catch (error) {
+      console.error('Bulk publish update error:', error);
+      alert('Failed to update published status. Please try again.');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  return (
+    <>
+      {/* Bulk Action Toolbar */}
+      {selectedIds.size > 0 && (
+        <div className="mb-4 p-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg flex flex-wrap items-center justify-between gap-4">
+          <div className="text-white">
+            <span className="font-semibold">{selectedIds.size}</span> product{selectedIds.size !== 1 ? 's' : ''} selected
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => handleBulkStock(true)}
+              disabled={bulkActionLoading}
+              className="px-4 py-2 bg-green-900/30 text-green-400 border border-green-800 rounded-lg hover:bg-green-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              <Check className="w-4 h-4" />
+              Set In Stock
+            </button>
+            <button
+              onClick={() => handleBulkStock(false)}
+              disabled={bulkActionLoading}
+              className="px-4 py-2 bg-red-900/30 text-red-400 border border-red-800 rounded-lg hover:bg-red-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              <X className="w-4 h-4" />
+              Set Out of Stock
+            </button>
+            <button
+              onClick={() => handleBulkFeatured(true)}
+              disabled={bulkActionLoading}
+              className="px-4 py-2 bg-[#6e0000] text-white rounded-lg hover:bg-[#8a0000] transition-colors disabled:opacity-50"
+            >
+              Set Featured
+            </button>
+            <button
+              onClick={() => handleBulkFeatured(false)}
+              disabled={bulkActionLoading}
+              className="px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] text-white rounded-lg hover:bg-[#2a2a2a] transition-colors disabled:opacity-50"
+            >
+              Remove Featured
+            </button>
+            <div className="w-px h-8 bg-[#2a2a2a]"></div>
+            <button
+              onClick={() => handleBulkPublish(true)}
+              disabled={bulkActionLoading}
+              className="px-4 py-2 bg-blue-900/30 text-blue-400 border border-blue-800 rounded-lg hover:bg-blue-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              <Eye className="w-4 h-4" />
+              Publish
+            </button>
+            <button
+              onClick={() => handleBulkPublish(false)}
+              disabled={bulkActionLoading}
+              className="px-4 py-2 bg-gray-900/30 text-gray-400 border border-gray-800 rounded-lg hover:bg-gray-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              <EyeOff className="w-4 h-4" />
+              Unpublish
+            </button>
+            <div className="w-px h-8 bg-[#2a2a2a]"></div>
+            <button
+              onClick={handleBulkDelete}
+              disabled={bulkActionLoading}
+              className="px-4 py-2 bg-red-900/30 text-red-400 border border-red-800 rounded-lg hover:bg-red-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Selected
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Product Table */}
+      <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[#2a2a2a] bg-[#0a0a0a]">
+                <th className="px-3 py-4 text-left w-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.size === products.length && products.length > 0}
+                    onChange={toggleAll}
+                    className="w-4 h-4 rounded border-[#2a2a2a] bg-[#0a0a0a] checked:bg-brand-maroon focus:ring-brand-maroon"
+                  />
+                </th>
+                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-20">Image</th>
+                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                  <Link href={getSortLink('name')} className="hover:text-white flex items-center gap-1">
+                    Name {getSortIndicator('name')}
+                  </Link>
+                </th>
+                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-32">
+                  <Link href={getSortLink('partNumber')} className="hover:text-white flex items-center gap-1">
+                    Part # {getSortIndicator('partNumber')}
+                  </Link>
+                </th>
+                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-28">Category</th>
+                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-32">Tags</th>
+                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-24">Brand</th>
+                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-24">Origin</th>
+                <th className="px-3 py-4 text-center text-sm font-medium text-gray-300 w-20">
+                  <Link href={getSortLink('showcaseOrder')} className="hover:text-white flex items-center justify-center gap-1">
+                    Order {getSortIndicator('showcaseOrder')}
+                  </Link>
+                </th>
+                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-24">
+                  <Link href={getSortLink('price')} className="hover:text-white flex items-center gap-1">
+                    Price {getSortIndicator('price')}
+                  </Link>
+                </th>
+                <th className="px-3 py-4 text-center text-sm font-medium text-gray-300 w-20">
+                  <Link href={getSortLink('stockQuantity')} className="hover:text-white flex items-center justify-center gap-1">
+                    Stock {getSortIndicator('stockQuantity')}
+                  </Link>
+                </th>
+                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-28">Status</th>
+                <th className="px-3 py-4 text-right text-sm font-medium text-gray-300 w-32">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((product) => (
+                <tr key={product.id} className="border-b border-[#2a2a2a] hover:bg-[#0a0a0a] transition-colors">
+                  <td className="px-3 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(product.id)}
+                      onChange={() => toggleProduct(product.id)}
+                      className="w-4 h-4 rounded border-[#2a2a2a] bg-[#0a0a0a] checked:bg-brand-maroon focus:ring-brand-maroon"
+                    />
+                  </td>
+                  <td className="px-3 py-4">
+                    {product.images && product.images.length > 0 ? (
+                      <Image
+                        src={product.images[0]}
+                        alt={product.name}
+                        width={48}
+                        height={48}
+                        className="rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-gray-100 border-2 border-gray-300 relative p-1.5">
+                        <Image
+                          src="/images/default-logo.png"
+                          alt="GW Logo"
+                          fill
+                          className="object-contain opacity-90 p-1"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/images/GW_LOGO-removebg.png';
+                          }}
+                        />
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-3 py-4">
+                    <div className="max-w-[180px]">
+                      <p className="text-white font-medium text-sm truncate">{product.name}</p>
+                      <div className="flex items-center gap-1 mt-1 flex-wrap">
+                        {product.featured && (
+                          <span className="inline-block px-1.5 py-0.5 bg-[#6e0000] text-white text-xs rounded">
+                            Featured
+                          </span>
+                        )}
+                        {product.published && (
+                          <span className="inline-block px-1.5 py-0.5 bg-blue-900/30 text-blue-400 border border-blue-800 text-xs rounded">
+                            Published
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-4 text-gray-300 font-mono text-sm">{product.partNumber}</td>
+                  <td className="px-3 py-4 text-gray-300 text-sm truncate max-w-[120px]">{product.category?.name || '-'}</td>
+                  {/* Tags Column */}
+                  <td className="px-3 py-4">
+                    <div className="flex flex-wrap gap-1 max-w-[120px]">
+                      {product.tags && product.tags.length > 0 ? (
+                        <>
+                          {product.tags.slice(0, 2).map((tag: string, idx: number) => (
+                            <span
+                              key={idx}
+                              className="inline-block px-1.5 py-0.5 bg-maroon/10 text-maroon text-xs rounded truncate max-w-[50px]"
+                              title={tag}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                          {product.tags.length > 2 && (
+                            <span className="text-gray-400 text-xs">
+                              +{product.tags.length - 2}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-gray-500 text-xs">-</span>
+                      )}
+                    </div>
+                  </td>
+                  {/* Brand Column */}
+                  <td className="px-3 py-4 text-gray-300 text-sm truncate max-w-[100px]" title={product.brand || ''}>
+                    {product.brand || '-'}
+                  </td>
+                  {/* Origin Column */}
+                  <td className="px-3 py-4 text-gray-300 text-sm truncate max-w-[100px]" title={product.origin || ''}>
+                    {product.origin || '-'}
+                  </td>
+                  {/* Showcase Order Column */}
+                  <td className="px-3 py-4 text-center">
+                    <span className="inline-block px-2 py-1 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-300 text-xs rounded font-mono">
+                      {product.showcaseOrder || 999}
+                    </span>
+                  </td>
+                  <td className="px-3 py-4">
+                    <div>
+                      <p className="text-white font-medium text-sm whitespace-nowrap">${product.price.toFixed(2)}</p>
+                      {product.comparePrice && (
+                        <p className="text-gray-500 text-xs line-through whitespace-nowrap">
+                          ${product.comparePrice.toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-4 text-gray-300 text-sm text-center">{product.stockQuantity}</td>
+                  <td className="px-3 py-4">
+                    {product.inStock ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/30 text-green-400 border border-green-800 whitespace-nowrap">
+                        In Stock
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-900/30 text-red-400 border border-red-800 whitespace-nowrap">
+                        Out Stock
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-4">
+                    <div className="flex items-center justify-end gap-1">
+                      <Link
+                        href={`/products/${product.slug}`}
+                        target="_blank"
+                        className="p-1.5 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                        title="View on site"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Link>
+                      <Link
+                        href={`/admin/parts/${product.id}/edit`}
+                        className="p-1.5 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                        title="Edit"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteClick({ id: product.id, name: product.name })}
+                        className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {productToDelete && (
+        <DeleteConfirmModal
+          isOpen={deleteModalOpen}
+          onClose={() => {
+            setDeleteModalOpen(false);
+            setProductToDelete(null);
+          }}
+          onConfirm={handleDeleteConfirm}
+          productName={productToDelete.name}
+        />
+      )}
+    </>
+  );
+}

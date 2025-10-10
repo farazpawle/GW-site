@@ -1,0 +1,130 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Aclonica&family=Oswald:wght@200..700&display=swap');
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  
+  /* Theme Variables for Menu Buttons */
+  --theme-font-family: Aclonica, Sans-Serif;
+  --theme-font-weight: 400;
+  --theme-text-transform: uppercase;
+  --theme-font-size: 21px;
+  --theme-line-height: 1.3;
+  --theme-link-initial-color: #000000;
+  --theme-link-hover-color: #c5c5c5;
+  --theme-link-active-color: #8B1538;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #171717;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Font Families */
+.font-oswald {
+  font-family: 'Oswald', sans-serif !important;
+}
+
+.font-aclonica {
+  font-family: 'Aclonica', sans-serif !important;
+}
+
+/* Navigation Link Styles */
+.nav-menu-link {
+  font-family: 'Aclonica', sans-serif;
+  font-size: 21px;
+  line-height: 1.3;
+  text-transform: uppercase;
+  font-weight: 400;
+  text-decoration: none;
+  color: #000000;
+  transition: color 0.3s ease;
+  padding-bottom: 4px;
+  border-bottom: 3px solid transparent;
+}
+
+.nav-menu-link:hover {
+  color: #c5c5c5;
+}
+
+.nav-menu-link-active {
+  color: #932020;
+  border-bottom-color: #932020;
+}
+
+.nav-menu-link-active:hover {
+  color: #932020;
+}
+
+/* Secondary Navigation Styles (optional - smaller font size) */
+.secondary-nav-link {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  text-transform: var(--theme-text-transform);
+  font-size: calc(var(--theme-font-size) * 0.8); /* Slightly smaller for secondary nav */
+  line-height: var(--theme-line-height);
+  transition: color 0.3s ease;
+  text-decoration: none;
+}
+
+/* Button Hover Effects */
+.group:hover .group-hover\:translate-x-1 {
+  transform: translateX(0.25rem);
+}
+
+/* Category Card Hover Effect - Gradient Glow on Hover */
+.category-card {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.category-card::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 15px;
+  background: linear-gradient(45deg, #3a1c71, #d76d77);
+  z-index: -1;
+  filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-8px);
+}
+
+.category-card:hover::before {
+  opacity: 1 !important;
+}
+
+.category-card h3 {
+  font-family: 'Oswald', sans-serif !important;
+  font-size: 1.6rem !important;
+  margin-bottom: 10px !important;
+  color: #d76d77 !important;
+  font-weight: bold;
+}
+
+/* Precision Card Hover Effect - Scale and Shadow */
+.precision-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.precision-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+}
