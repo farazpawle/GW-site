@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { Search, Plus, Package } from 'lucide-react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import ProductTable from '@/components/admin/parts/ProductTable';
+import CSVActions from '@/components/admin/products/CSVActions';
 
 interface SearchParams {
   search?: string;
   category?: string;
-  stock?: 'all' | 'in-stock' | 'out-of-stock';
+  stock?: 'all' | 'in-stock' | 'out-of-stock' | 'low-stock';
   page?: string;
   sort?: string;
 }
@@ -47,6 +48,11 @@ export default async function ProductListPage({ searchParams }: ProductListPageP
     where.inStock = true;
   } else if (stockFilter === 'out-of-stock') {
     where.inStock = false;
+  } else if (stockFilter === 'low-stock') {
+    where.AND = [
+      { inStock: true },
+      { stockQuantity: { lt: 10 } },
+    ];
   }
 
   // Build orderBy clause
@@ -82,7 +88,8 @@ export default async function ProductListPage({ searchParams }: ProductListPageP
     ...product,
     price: Number(product.price),
     comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
-  })) as Array<Omit<typeof productsRaw[0], 'price' | 'comparePrice'> & { price: number; comparePrice: number | null }>;
+    compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+  }));
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -150,6 +157,7 @@ export default async function ProductListPage({ searchParams }: ProductListPageP
                   <option value="all">All Stock</option>
                   <option value="in-stock">In Stock</option>
                   <option value="out-of-stock">Out of Stock</option>
+                  <option value="low-stock">Low Stock (&lt;10)</option>
                 </select>
               </div>
             </div>
@@ -174,18 +182,30 @@ export default async function ProductListPage({ searchParams }: ProductListPageP
           </form>
         </div>
 
-        {/* Add Product Button */}
-        <div className="flex justify-between items-center mb-6">
+        {/* Product Actions Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <p className="text-gray-400">
             Showing {products.length} of {totalCount} product{totalCount !== 1 ? 's' : ''}
           </p>
-          <Link
-            href="/admin/parts/new"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#6e0000] text-white rounded-lg hover:bg-[#8a0000] transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            New Product
-          </Link>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <CSVActions
+              totalProducts={totalCount}
+              currentFilters={{
+                search,
+                categoryId,
+                stockFilter,
+              }}
+            />
+
+            <Link
+              href="/admin/parts/new"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#6e0000] text-white rounded-lg hover:bg-[#8a0000] transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              New Product
+            </Link>
+          </div>
         </div>
 
         {/* Product Table */}

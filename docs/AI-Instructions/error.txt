@@ -1,0 +1,208 @@
+main-app.js?v=1761331152721:1170 Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+auth.ts:16  Server  🔍 [getCurrentUser] Clerk userId: user_34BSCJu27mPBy3fqTqLqEGGZ9rf
+auth.ts:28  Server  🔍 [getCurrentUser] Database user found: farazpawle@gmail.com (SUPER_ADMIN)
+auth.ts:88  Server  🔍 [requireAdmin] Current user: user_34BSCJu27mPBy3fqTqLqEGGZ9rf Role: SUPER_ADMIN
+auth.ts:100  Server  ✅ [requireAdmin] Admin access granted
+clerk.browser.js:19  Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+warnOnce @ clerk.browser.js:19
+load @ clerk.browser.js:2
+loadClerkJS @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\@clerk\clerk-react\dist\index.mjs:1561
+_IsomorphicClerk @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\@clerk\clerk-react\dist\index.mjs:1434
+getOrCreateInstance @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\@clerk\clerk-react\dist\index.mjs:1460
+useLoadedIsomorphicClerk @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\@clerk\clerk-react\dist\index.mjs:1734
+ClerkContextProvider @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\@clerk\clerk-react\dist\index.mjs:1665
+react_stack_bottom_frame @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:23583
+renderWithHooks @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:6792
+updateFunctionComponent @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:9246
+beginWork @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:10857
+runWithFiberInDEV @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:871
+performUnitOfWork @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15726
+workLoopConcurrentByScheduler @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15720
+renderRootConcurrent @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15695
+performWorkOnRoot @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:14989
+performWorkOnRootViaSchedulerTask @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:16815
+performWorkUntilDeadline @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\scheduler\cjs\scheduler.development.js:45
+<ClerkContextProvider>
+exports.createElement @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react\cjs\react.development.js:1044
+ClerkProviderBase @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\@clerk\clerk-react\dist\index.mjs:1765
+react_stack_bottom_frame @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:23583
+renderWithHooksAgain @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:6892
+renderWithHooks @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:6804
+updateFunctionComponent @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:9246
+beginWork @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:10857
+runWithFiberInDEV @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:871
+performUnitOfWork @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15726
+workLoopConcurrentByScheduler @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15720
+renderRootConcurrent @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15695
+performWorkOnRoot @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:14989
+performWorkOnRootViaSchedulerTask @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:16815
+performWorkUntilDeadline @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\scheduler\cjs\scheduler.development.js:45
+<ClerkProviderBase>
+exports.createElement @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react\cjs\react.development.js:1044
+Hoc @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\@clerk\clerk-react\dist\chunk-SOK75ZUK.mjs:73
+react_stack_bottom_frame @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:23583
+renderWithHooksAgain @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:6892
+renderWithHooks @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:6804
+updateFunctionComponent @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:9246
+beginWork @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:10857
+runWithFiberInDEV @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:871
+performUnitOfWork @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15726
+workLoopConcurrentByScheduler @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15720
+renderRootConcurrent @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15695
+performWorkOnRoot @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:14989
+performWorkOnRootViaSchedulerTask @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:16815
+performWorkUntilDeadline @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\scheduler\cjs\scheduler.development.js:45
+<ClerkProvider>
+exports.createElement @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react\cjs\react.development.js:1044
+NextClientClerkProvider @ C:\Users\src\app-router\client\ClerkProvider.tsx:131
+react_stack_bottom_frame @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:23583
+renderWithHooksAgain @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:6892
+renderWithHooks @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:6804
+updateFunctionComponent @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:9246
+beginWork @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:10857
+runWithFiberInDEV @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:871
+performUnitOfWork @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15726
+workLoopConcurrentByScheduler @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15720
+renderRootConcurrent @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15695
+performWorkOnRoot @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:14989
+performWorkOnRootViaSchedulerTask @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:16815
+performWorkUntilDeadline @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\scheduler\cjs\scheduler.development.js:45
+<NextClientClerkProvider>
+exports.createElement @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react\cjs\react.development.js:1044
+ClientClerkProvider @ C:\Users\src\app-router\client\ClerkProvider.tsx:145
+react_stack_bottom_frame @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:23583
+renderWithHooksAgain @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:6892
+renderWithHooks @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:6804
+updateFunctionComponent @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:9246
+beginWork @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:10806
+runWithFiberInDEV @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:871
+performUnitOfWork @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15726
+workLoopConcurrentByScheduler @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15720
+renderRootConcurrent @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15695
+performWorkOnRoot @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:14989
+performWorkOnRootViaSchedulerTask @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:16815
+performWorkUntilDeadline @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\scheduler\cjs\scheduler.development.js:45
+"use client"
+initializeElement @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:1344
+eval @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:3066
+initializeModelChunk @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:1246
+readChunk @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:935
+react_stack_bottom_frame @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:23690
+resolveLazy @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:5176
+createChild @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:5493
+reconcileChildrenArray @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:5800
+reconcileChildFibersImpl @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:6123
+eval @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:6228
+reconcileChildren @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:8782
+beginWork @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:11205
+runWithFiberInDEV @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:871
+performUnitOfWork @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15726
+workLoopConcurrentByScheduler @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15720
+renderRootConcurrent @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:15695
+performWorkOnRoot @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:14989
+performWorkOnRootViaSchedulerTask @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:16815
+performWorkUntilDeadline @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\scheduler\cjs\scheduler.development.js:45
+<ClerkProvider>
+RootLayout @ layout.tsx:101
+initializeFakeTask @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2531
+initializeDebugInfo @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2554
+initializeDebugChunk @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:1193
+processFullStringRow @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2850
+processFullBinaryRow @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2766
+processBinaryChunk @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2969
+progress @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:3233
+<RootLayout>
+initializeFakeTask @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2529
+initializeDebugInfo @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2554
+initializeDebugChunk @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:1193
+processFullStringRow @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2850
+processFullBinaryRow @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2766
+processBinaryChunk @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2969
+progress @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:3233
+"use server"
+ResponseInstance @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2041
+createResponseFromOptions @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:3094
+exports.createFromReadableStream @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:3478
+eval @ C:\Users\rosto\OneDrive\src\client\app-index.tsx:156
+(app-pages-browser)/./node_modules/next/dist/client/app-index.js @ main-app.js?v=1761331152721:160
+options.factory @ webpack.js?v=1761331152721:704
+__webpack_require__ @ webpack.js?v=1761331152721:29
+fn @ webpack.js?v=1761331152721:361
+eval @ C:\Users\rosto\OneDrive\src\client\app-next-dev.ts:14
+eval @ C:\Users\rosto\OneDrive\src\client\app-bootstrap.ts:76
+loadScriptsInSequence @ C:\Users\rosto\OneDrive\src\client\app-bootstrap.ts:22
+appBootstrap @ C:\Users\rosto\OneDrive\src\client\app-bootstrap.ts:58
+eval @ C:\Users\rosto\OneDrive\src\client\app-next-dev.ts:13
+(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js @ main-app.js?v=1761331152721:182
+options.factory @ webpack.js?v=1761331152721:704
+__webpack_require__ @ webpack.js?v=1761331152721:29
+__webpack_exec__ @ main-app.js?v=1761331152721:1878
+(anonymous) @ main-app.js?v=1761331152721:1879
+webpackJsonpCallback @ webpack.js?v=1761331152721:1380
+(anonymous) @ main-app.js?v=1761331152721:9
+C:\Users\rosto\OneDrive\Desktop\GW site - Copy\src\app\admin\settings\page.tsx:103 💾 Saving settings. FormData: {product_card_showBrand: 'false', product_card_showCategory: 'false', product_card_showComparePrice: 'false', product_card_showDescription: 'false', product_card_showDiscountBadge: 'false', …}
+C:\Users\rosto\OneDrive\Desktop\GW site - Copy\src\app\admin\settings\page.tsx:104 💾 Product card settings being saved: {product_card_showBrand: 'false', product_card_showCategory: 'false', product_card_showComparePrice: 'false', product_card_showDescription: 'false', product_card_showDiscountBadge: 'false', …}
+settings:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+videoStreamBlocker.js:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+C:\src\client\dev\hot-reloader\app\hot-reloader-app.tsx:278 [Fast Refresh] rebuilding
+C:\Users\rosto\src\client\dev\report-hmr-latency.ts:26 [Fast Refresh] done in 1522ms
+C:\src\client\dev\hot-reloader\app\hot-reloader-app.tsx:278 [Fast Refresh] rebuilding
+C:\Users\rosto\src\client\dev\report-hmr-latency.ts:26 [Fast Refresh] done in 1974ms
+C:\src\client\dev\hot-reloader\app\hot-reloader-app.tsx:278 [Fast Refresh] rebuilding
+C:\Users\rosto\src\client\dev\report-hmr-latency.ts:26 [Fast Refresh] done in 872ms
+C:\src\client\dev\hot-reloader\app\hot-reloader-app.tsx:278 [Fast Refresh] rebuilding
+C:\Users\rosto\src\client\dev\report-hmr-latency.ts:26 [Fast Refresh] done in 1156ms
+auth.ts:16  Server  🔍 [getCurrentUser] Clerk userId: user_34BSCJu27mPBy3fqTqLqEGGZ9rf
+auth.ts:28  Server  🔍 [getCurrentUser] Database user found: farazpawle@gmail.com (SUPER_ADMIN)
+auth.ts:88  Server  🔍 [requireAdmin] Current user: user_34BSCJu27mPBy3fqTqLqEGGZ9rf Role: SUPER_ADMIN
+auth.ts:100  Server  ✅ [requireAdmin] Admin access granted
+VM1971 <anonymous>:1   Server   ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+react_stack_bottom_frame @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:3423
+resolveConsoleEntry @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2626
+processFullStringRow @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2864
+processFullBinaryRow @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2766
+processBinaryChunk @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2969
+progress @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:3233
+<StreamingMetadataOutletImpl>
+Function.all @ VM1971 <anonymous>:1
+Function.all @ VM1971 <anonymous>:1
+Function.all @ VM1971 <anonymous>:1
+initializeFakeTask @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2529
+initializeDebugInfo @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2554
+initializeDebugChunk @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:1193
+processFullStringRow @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2850
+processFullBinaryRow @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2766
+processBinaryChunk @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2969
+progress @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:3233
+"use server"
+ResponseInstance @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:2041
+createResponseFromOptions @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:3094
+exports.createFromReadableStream @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-server-dom-webpack\cjs\react-server-dom-webpack-client.browser.development.js:3478
+createFromNextReadableStream @ C:\Users\src\client\components\router-reducer\fetch-server-response.ts:388
+fetchServerResponse @ C:\Users\src\client\components\router-reducer\fetch-server-response.ts:216
+await in fetchServerResponse
+hmrRefreshReducerImpl @ C:\src\client\components\router-reducer\reducers\hmr-refresh-reducer.ts:38
+clientReducer @ C:\Users\src\client\components\router-reducer\router-reducer.ts:44
+action @ C:\Users\rosto\src\client\components\app-router-instance.ts:221
+runAction @ C:\Users\rosto\src\client\components\app-router-instance.ts:108
+dispatchAction @ C:\Users\rosto\src\client\components\app-router-instance.ts:173
+dispatch @ C:\Users\rosto\src\client\components\app-router-instance.ts:219
+eval @ C:\Users\rosto\src\client\components\use-action-queue.ts:45
+startTransition @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react-dom\cjs\react-dom-client.development.js:7967
+dispatch @ C:\Users\rosto\src\client\components\use-action-queue.ts:44
+dispatchAppRouterAction @ C:\Users\rosto\src\client\components\use-action-queue.ts:22
+eval @ C:\Users\rosto\src\client\components\app-router-instance.ts:410
+exports.startTransition @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react\cjs\react.development.js:1148
+hmrRefresh @ C:\Users\rosto\src\client\components\app-router-instance.ts:409
+eval @ C:\src\client\dev\hot-reloader\app\hot-reloader-app.tsx:404
+exports.startTransition @ C:\Users\rosto\OneDrive\Desktop\GW site - Copy\node_modules\next\dist\compiled\react\cjs\react.development.js:1148
+processMessage @ C:\src\client\dev\hot-reloader\app\hot-reloader-app.tsx:403
+handler @ C:\src\client\dev\hot-reloader\app\hot-reloader-app.tsx:527
+auth.ts:16  Server  🔍 [getCurrentUser] Clerk userId: user_34BSCJu27mPBy3fqTqLqEGGZ9rf
+auth.ts:28  Server  🔍 [getCurrentUser] Database user found: farazpawle@gmail.com (SUPER_ADMIN)
+auth.ts:88  Server  🔍 [requireAdmin] Current user: user_34BSCJu27mPBy3fqTqLqEGGZ9rf Role: SUPER_ADMIN
+auth.ts:100  Server  ✅ [requireAdmin] Admin access granted
+auth.ts:16  Server  🔍 [getCurrentUser] Clerk userId: user_34BSCJu27mPBy3fqTqLqEGGZ9rf
+auth.ts:28  Server  🔍 [getCurrentUser] Database user found: farazpawle@gmail.com (SUPER_ADMIN)
+auth.ts:88  Server  🔍 [requireAdmin] Current user: user_34BSCJu27mPBy3fqTqLqEGGZ9rf Role: SUPER_ADMIN
+auth.ts:100  Server  ✅ [requireAdmin] Admin access granted

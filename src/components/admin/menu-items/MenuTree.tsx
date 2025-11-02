@@ -12,6 +12,7 @@ interface MenuItem {
   parentId: string | null;
   pageId: string | null;
   externalUrl: string | null;
+  isPermanent: boolean;
   page?: {
     id: string;
     title: string;
@@ -125,6 +126,14 @@ export default function MenuTree({ items, onEdit, onDelete, onReorder }: MenuTre
               <h4 className="font-semibold text-gray-100 truncate">
                 {item.label}
               </h4>
+              {item.isPermanent && (
+                <span 
+                  className="px-2 py-0.5 text-xs font-semibold rounded bg-purple-900/40 text-purple-300 border border-purple-800"
+                  title="Protected system menu - Cannot be deleted"
+                >
+                  🔒 Protected
+                </span>
+              )}
               {!item.visible && (
                 <span className="px-2 py-0.5 text-xs font-medium bg-gray-700 text-gray-300 rounded">
                   Hidden
@@ -177,13 +186,22 @@ export default function MenuTree({ items, onEdit, onDelete, onReorder }: MenuTre
             >
               <Edit2 className="w-5 h-5" />
             </button>
-            <button
-              onClick={() => onDelete(item.id)}
-              className="p-2 text-red-400 hover:bg-red-900/40 rounded-lg transition-colors"
-              title="Delete menu item"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
+            {!item.isPermanent ? (
+              <button
+                onClick={() => onDelete(item.id)}
+                className="p-2 text-red-400 hover:bg-red-900/40 rounded-lg transition-colors"
+                title="Delete menu item"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            ) : (
+              <span
+                className="p-2 text-gray-600 cursor-not-allowed"
+                title="This is a protected system menu item and cannot be deleted"
+              >
+                🔒
+              </span>
+            )}
           </div>
         </div>
 

@@ -43,17 +43,17 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Prisma generated client
 /src/generated/prisma
 
-# clerk configuration (can include secrets)
+# Clerk configuration (runtime secrets)
 /.clerk/
 
-# Project documentation and memory
-/docs/
-/memory-bank/
-
-# GitHub folder (internal use only)
-/.github/
+# Editor/IDE temporary files
+.cursor/
+.superdesign/
+.vscode/
+.idea/
 
 # Credential and key files
 *.pem
@@ -61,26 +61,14 @@ next-env.d.ts
 *.p12
 *.pfx
 *.jks
-*secret*
-*password*
-*credentials*
-!node_modules/**
-!package*.json
 
-# Old subfolder structure
-/garrit-wulf-clone
-
-# Nginx configuration (not needed - using NPM on VPS)
+# Nginx configuration (not needed)
 nginx.conf
 nginx.prod.conf
-/ssl
+/ssl/
 
-# Sensitive implementation files (keep project incomplete on GitHub)
-.env.example
-.env.local.example
-src/lib/minio.ts
-src/lib/auth.ts
-src/middleware.ts
-prisma/seed.ts
-src/app/api/webhooks/
-src/app/api/admin/
+# NOTE: The following should be committed to git:
+# ✅ /docs/ - Project documentation
+# ✅ /memory-bank/ - AI context and project knowledge
+# ✅ .env.example files - Template files for environment setup
+# ✅ All source code including lib/, middleware, API routes

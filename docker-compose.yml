@@ -16,9 +16,16 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/garritwulf
       - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_USE_SSL=false
+      - MINIO_BUCKET_NAME=garritwulf
     depends_on:
       - postgres
       - redis
+      - minio
     networks:
       - garrit-network
 
@@ -45,9 +52,29 @@ services:
     networks:
       - garrit-network
 
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - garrit-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
 volumes:
   postgres_data:
   redis_data:
+  minio_data:
 
 networks:
   garrit-network:

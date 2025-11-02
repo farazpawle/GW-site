@@ -1,8 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
+  log      = ["warn", "error"]
 }
 
 datasource db {
@@ -10,21 +8,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User Model - Synced from Clerk
 model User {
-  id        String   @id // Clerk user ID (not auto-generated)
-  email     String   @unique
-  name      String?
-  role      UserRole @default(VIEWER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  id           String        @id
+  email        String        @unique
+  name         String?
+  role         UserRole      @default(VIEWER)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  activityLogs ActivityLog[]
+
   @@map("users")
 }
 
-enum UserRole {
-  ADMIN      // Can manage everything
-  VIEWER     // Read-only access (future)
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String // order, product, user, category, system, collection, page, menu
+  action      String // created, updated, deleted, published, unpublished
+  title       String
+  description String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+  @@index([createdAt])
+  @@map("activity_logs")
 }
 
 model Category {
@@ -35,143 +45,107 @@ model Category {
   image       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
   parts       Part[]
-  
+
   @@map("categories")
 }
 
 model Part {
-  id            String   @id @default(cuid())
-  name          String
-  slug          String   @unique
-  description   String?
-  shortDesc     String?
-  partNumber    String   @unique
-  price         Decimal  @db.Decimal(10, 2)
-  comparePrice  Decimal? @db.Decimal(10, 2)
-  inStock       Boolean  @default(true)
-  stockQuantity Int      @default(0)
-  images        String[]
-  specifications Json?
-  compatibility String[] // Compatible vehicle models
-  categoryId    String
-  featured      Boolean  @default(false)
-  
-  // Showcase fields (Phase 4.5)
-  published     Boolean   @default(false)
-  publishedAt   DateTime?
-  views         Int       @default(0)
-  showcaseOrder Int       @default(999)
-  tags          String[]  @default([])
-  brand         String?
-  origin        String?
-  certifications String[] @default([])
-  warranty      String?
-  difficulty    String?
-  application   String[]  @default([])
-  videoUrl      String?
-  pdfUrl        String?
-  
-  // NEW Phase 5: Shopify-style inventory fields
-  sku String? // Stock Keeping Unit (optional for backward compatibility)
-  barcode String? // Barcode for scanning
-  lowStockThreshold Int? @default(10) // Alert when stock below this
-  trackInventory Boolean @default(true) // Track stock levels
-  
-  // NEW Phase 5: Shopify-style pricing fields
-  hasVariants Boolean @default(false) // Product has variants (color, size, etc.)
-  compareAtPrice Decimal? @db.Decimal(10, 2) // "Was $100, Now $80" display
-  costPrice Decimal? @db.Decimal(10, 2) // Cost for profit calculation
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  orderItems    OrderItem[]
-  variants      ProductVariant[] // NEW Phase 5: Product variants relation
-  collections   CollectionProduct[] // NEW Phase 5: Manual collection assignment
-  
+  id                   String                 @id @default(cuid())
+  name                 String
+  slug                 String                 @unique
+  description          String?
+  shortDesc            String?
+  partNumber           String                 @unique
+  price                Decimal                @db.Decimal(10, 2)
+  comparePrice         Decimal?               @db.Decimal(10, 2)
+  inStock              Boolean                @default(true)
+  stockQuantity        Int                    @default(0)
+  images               String[]
+  specifications       Json?
+  compatibility        String[]
+  categoryId           String
+  featured             Boolean                @default(false)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  application          String[]               @default([])
+  brand                String?
+  certifications       String[]               @default([])
+  origin               String?
+  pdfUrl               String?
+  published            Boolean                @default(false)
+  publishedAt          DateTime?
+  showcaseOrder        Int                    @default(999)
+  tags                 String[]               @default([])
+  views                Int                    @default(0)
+  warranty             String?
+  compareAtPrice       Decimal?               @db.Decimal(10, 2)
+  hasVariants          Boolean                @default(false)
+  sku                  String                 @unique
+  relatedProductIds    String[]               @default([])
+  collections          CollectionProduct[]
+  oemPartNumbers       OEMPartNumber[]
+  crossReferences      PartCrossReference[]   @relation("PartReferences")
+  referencedBy         PartCrossReference[]   @relation("ReferencedBy")
+  category             Category               @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  variants             ProductVariant[]
+  vehicleCompatibility VehicleCompatibility[]
+  productViews         ProductView[]
+
   @@index([published, showcaseOrder])
   @@index([published, categoryId])
   @@index([published, featured])
-  @@index([sku])
   @@map("parts")
 }
 
-model Customer {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  firstName String
-  lastName  String
-  phone     String?
-  company   String?
-  address   Json?    // Store address as JSON
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  orders    Order[]
-  
-  @@map("customers")
-}
+model QuoteRequest {
+  id          String             @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  company     String?
+  message     String?
+  status      QuoteRequestStatus @default(PENDING)
+  products    Json?
+  adminNotes  String?
+  respondedAt DateTime?
+  respondedBy String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
-model Order {
-  id            String      @id @default(cuid())
-  orderNumber   String      @unique
-  customerId    String
-  status        OrderStatus @default(PENDING)
-  totalAmount   Decimal     @db.Decimal(10, 2)
-  shippingCost  Decimal     @default(0) @db.Decimal(10, 2)
-  notes         String?
-  shippingAddress Json
-  billingAddress  Json?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  
-  customer      Customer    @relation(fields: [customerId], references: [id])
-  orderItems    OrderItem[]
-  
-  @@map("orders")
-}
-
-model OrderItem {
-  id       String  @id @default(cuid())
-  orderId  String
-  partId   String
-  quantity Int
-  price    Decimal @db.Decimal(10, 2)
-  
-  order    Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  part     Part    @relation(fields: [partId], references: [id])
-  
-  @@map("order_items")
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+  @@map("quote_requests")
 }
 
 model ContactMessage {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   name      String
   email     String
   phone     String?
   subject   String?
   message   String
   status    MessageStatus @default(UNREAD)
-  createdAt DateTime @default(now())
-  
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @default(now()) @updatedAt
+  repliedAt DateTime?
+
   @@map("contact_messages")
 }
 
 model BlogPost {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  content     String
-  excerpt     String?
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  content       String
+  excerpt       String?
   featuredImage String?
-  published   Boolean  @default(false)
-  publishedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  published     Boolean   @default(false)
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
   @@map("blog_posts")
 }
 
@@ -180,178 +154,261 @@ model SiteSettings {
   key       String   @unique
   value     Json
   updatedAt DateTime @updatedAt
-  
+
   @@map("site_settings")
 }
 
-enum OrderStatus {
+model SearchQuery {
+  id           String   @id @default(cuid())
+  query        String
+  filters      Json?
+  resultsCount Int
+  userId       String?
+  createdAt    DateTime @default(now())
+
+  @@index([query])
+  @@index([createdAt])
+  @@map("search_queries")
+}
+
+model SearchAnalytics {
+  id           String   @id @default(cuid())
+  term         String   @unique
+  count        Int      @default(1)
+  lastSearched DateTime @default(now())
+
+  @@index([count])
+  @@map("search_analytics")
+}
+
+model PageAnalytics {
+  id              String   @id @default(cuid())
+  date            DateTime @unique
+  pageViews       Int      @default(0)
+  productViews    Int      @default(0)
+  categoryViews   Int      @default(0)
+  inquiries       Int      @default(0)
+  quoteRequests   Int      @default(0)
+  newProducts     Int      @default(0)
+  updatedProducts Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  @@index([date])
+  @@map("page_analytics")
+}
+
+model ProductView {
+  id        String   @id @default(cuid())
+  partId    String
+  part      Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+  userId    String?
+  ipAddress String?
+  userAgent String?
+  viewedAt  DateTime @default(now())
+
+  @@index([partId, viewedAt])
+  @@index([userId, viewedAt])
+  @@map("product_views")
+}
+
+model Settings {
+  id        String           @id @default(cuid())
+  key       String           @unique
+  value     String
+  category  SettingsCategory
+  updatedBy String?
+  updatedAt DateTime         @updatedAt
+  createdAt DateTime         @default(now())
+
+  @@index([category])
+  @@map("settings")
+}
+
+model Page {
+  id           String     @id @default(cuid())
+  title        String
+  slug         String     @unique
+  description  String?
+  groupType    String?
+  groupValues  Json?
+  layout       String     @default("grid")
+  sortBy       String     @default("name")
+  itemsPerPage Int        @default(12)
+  metaTitle    String?
+  metaDesc     String?
+  published    Boolean    @default(false)
+  publishedAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  content      String?
+  pageType     String     @default("dynamic")
+  isPermanent  Boolean    @default(false) // Permanent pages cannot be deleted
+  menuItems    MenuItem[]
+
+  @@index([slug])
+  @@index([published])
+  @@index([pageType])
+  @@map("pages")
+}
+
+model MenuItem {
+  id          String     @id @default(cuid())
+  label       String
+  position    Int
+  visible     Boolean    @default(true)
+  openNewTab  Boolean    @default(false)
+  parentId    String?
+  pageId      String?
+  externalUrl String?
+  isPermanent Boolean    @default(false) // Permanent menu items cannot be deleted
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  page        Page?      @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  parent      MenuItem?  @relation("MenuHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    MenuItem[] @relation("MenuHierarchy")
+
+  @@index([parentId])
+  @@index([position])
+  @@index([visible])
+  @@map("menu_items")
+}
+
+model Collection {
+  id             String              @id @default(cuid())
+  name           String
+  slug           String              @unique
+  description    String?
+  filterRules    Json?
+  useManual      Boolean             @default(false)
+  layout         String              @default("grid")
+  sortBy         String              @default("name")
+  itemsPerPage   Int                 @default(12)
+  metaTitle      String?
+  metaDesc       String?
+  published      Boolean             @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  manualProducts CollectionProduct[]
+
+  @@index([slug])
+  @@index([published])
+  @@map("collections")
+}
+
+model CollectionProduct {
+  id           String     @id @default(cuid())
+  collectionId String
+  partId       String
+  position     Int        @default(0)
+  createdAt    DateTime   @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  part         Part       @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, partId])
+  @@index([collectionId])
+  @@index([partId])
+  @@map("collection_products")
+}
+
+model ProductVariant {
+  id             String   @id @default(cuid())
+  partId         String
+  title          String
+  price          Decimal? @db.Decimal(10, 2)
+  compareAtPrice Decimal? @db.Decimal(10, 2)
+  options        Json
+  available      Boolean  @default(true)
+  image          String?
+  position       Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  part           Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@index([partId])
+  @@map("product_variants")
+}
+
+model PartCrossReference {
+  id               String   @id @default(cuid())
+  partId           String
+  referencedPartId String?
+  referenceType    String
+  brandName        String
+  partNumber       String
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  part             Part     @relation("PartReferences", fields: [partId], references: [id], onDelete: Cascade)
+  referencedPart   Part?    @relation("ReferencedBy", fields: [referencedPartId], references: [id])
+
+  @@index([partId])
+  @@index([referencedPartId])
+  @@index([brandName])
+  @@map("part_cross_references")
+}
+
+model OEMPartNumber {
+  id            String   @id @default(cuid())
+  partId        String
+  manufacturer  String
+  oemPartNumber String
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  part          Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@unique([partId, manufacturer, oemPartNumber])
+  @@index([partId])
+  @@index([manufacturer])
+  @@index([oemPartNumber])
+  @@map("oem_part_numbers")
+}
+
+model VehicleCompatibility {
+  id        String   @id @default(cuid())
+  partId    String
+  make      String
+  model     String
+  yearStart Int
+  yearEnd   Int
+  engine    String?
+  trim      String?
+  position  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  part      Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@index([partId])
+  @@index([make, model])
+  @@index([yearStart, yearEnd])
+  @@map("vehicle_compatibility")
+}
+
+enum UserRole {
+  ADMIN
+  VIEWER
+  SUPER_ADMIN
+}
+
+enum QuoteRequestStatus {
   PENDING
-  CONFIRMED
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
+  REVIEWED
+  RESPONDED
+  CLOSED
+}
+
+enum SettingsCategory {
+  GENERAL
+  CONTACT
+  SEO
+  EMAIL
+  SHIPPING
 }
 
 enum MessageStatus {
   UNREAD
   READ
   REPLIED
-}
-
-// ============================================================
-// Phase 5: Navigation & Product System Models
-// ============================================================
-
-// Page Model - Custom pages with product group assignment
-model Page {
-  id String @id @default(cuid())
-  title String
-  slug String @unique
-  description String? @db.Text
-  
-  // Product Group Assignment (what products to show)
-  groupType String // "category" | "tag" | "collection" | "all"
-  groupValues Json // { categoryIds?: string[], tags?: string[], collectionId?: string, showAll?: boolean, brands?: string[], origins?: string[], minPrice?: number, maxPrice?: number, inStock?: boolean }
-  
-  // Display Options
-  layout String @default("grid") // "grid" | "list"
-  sortBy String @default("name") // "name" | "price" | "newest"
-  itemsPerPage Int @default(12)
-  
-  // SEO
-  metaTitle String?
-  metaDesc String?
-  
-  // Publishing
-  published Boolean @default(false)
-  publishedAt DateTime?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  menuItems MenuItem[]
-  
-  @@map("pages")
-  @@index([slug])
-  @@index([published])
-}
-
-// MenuItem Model - Multi-level navigation with parent-child hierarchy
-model MenuItem {
-  id String @id @default(cuid())
-  label String // Display text in menu
-  position Int // Order in navigation (0, 1, 2, ...)
-  visible Boolean @default(true)
-  openNewTab Boolean @default(false)
-  
-  // Multi-level Support (self-referential relation)
-  parentId String? // NULL = top-level, ID = submenu item
-  parent MenuItem? @relation("MenuHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children MenuItem[] @relation("MenuHierarchy")
-  
-  // Link Type: Either page or external URL
-  pageId String?
-  page Page? @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  externalUrl String? // For external links (e.g., "/about", "https://...")
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("menu_items")
-  @@index([parentId])
-  @@index([position])
-  @@index([visible])
-}
-
-// Collection Model - Group products by auto-filter rules or manual selection
-model Collection {
-  id String @id @default(cuid())
-  name String
-  slug String @unique
-  description String? @db.Text
-  
-  // Auto-Filter Rules (products matching these rules auto-join collection)
-  filterRules Json? // { categoryIds?: string[], brands?: string[], tags?: string[], origins?: string[], difficulties?: string[], minPrice?: number, maxPrice?: number, inStock?: boolean, featured?: boolean }
-  
-  // Manual Product Selection (optional - overrides filters)
-  useManual Boolean @default(false) // Use manual selection instead of filters
-  
-  // Display Options
-  layout String @default("grid")
-  sortBy String @default("name")
-  itemsPerPage Int @default(12)
-  
-  // SEO
-  metaTitle String?
-  metaDesc String?
-  
-  published Boolean @default(false)
-  publishedAt DateTime?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  manualProducts CollectionProduct[]
-  
-  @@map("collections")
-  @@index([slug])
-  @@index([published])
-}
-
-// Join table for Collection <-> Part (manual product selection)
-model CollectionProduct {
-  id String @id @default(cuid())
-  collectionId String
-  partId String
-  position Int @default(0) // Manual ordering in collection
-  
-  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  part Part @relation(fields: [partId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  
-  @@unique([collectionId, partId]) // Prevent duplicate products in same collection
-  @@map("collection_products")
-  @@index([collectionId])
-  @@index([partId])
-}
-
-// ProductVariant Model - Shopify-style product options
-model ProductVariant {
-  id String @id @default(cuid())
-  partId String
-  part Part @relation(fields: [partId], references: [id], onDelete: Cascade)
-  
-  // Variant Info
-  title String // e.g., "Red / Large", "2020-2023 Model"
-  sku String? // Optional SKU for variant
-  barcode String?
-  
-  // Pricing (can override parent product)
-  price Decimal? @db.Decimal(10, 2)
-  compareAtPrice Decimal? @db.Decimal(10, 2)
-  
-  // Inventory
-  stockQuantity Int @default(0)
-  
-  // Options (stored as JSON)
-  options Json // { "Color": "Red", "Size": "Large", "Year": "2020-2023" }
-  
-  // Status
-  available Boolean @default(true)
-  
-  // Image
-  image String? // Variant-specific image
-  
-  position Int @default(0) // Display order
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("product_variants")
-  @@index([partId])
-  @@index([sku])
 }

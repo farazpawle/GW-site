@@ -8,11 +8,21 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/garritwulf
-      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:password@postgres:5432/garritwulf}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio}
+      - MINIO_PORT=${MINIO_PORT:-9000}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_USE_SSL=${MINIO_USE_SSL:-false}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME:-garritwulf}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     depends_on:
       - postgres
       - redis
+      - minio
     networks:
       - garrit-network
     restart: unless-stopped
@@ -37,9 +47,27 @@ services:
       - garrit-network
     restart: unless-stopped
 
+  minio:
+    image: minio/minio:latest
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin123}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - garrit-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
 volumes:
   postgres_data:
   redis_data:
+  minio_data:
 
 networks:
   garrit-network:

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import AdminHeader from '@/components/admin/AdminHeader';
 import CategoryForm from '@/components/admin/categories/CategoryForm';
 import { type CategoryFormData } from '@/lib/validations/category';
+import Toast from '@/components/ui/Toast';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
@@ -12,10 +13,12 @@ export default function NewCategoryPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (data: CategoryFormData) => {
     setIsLoading(true);
     setError('');
+    setSuccess(false);
 
     try {
       const response = await fetch('/api/admin/categories', {
@@ -32,9 +35,12 @@ export default function NewCategoryPage() {
         throw new Error(result.error || 'Failed to create category');
       }
 
-      // Success - show alert and redirect
-      alert('Category created successfully!');
-      router.push('/admin/categories');
+      // Success - show toast and redirect
+      setSuccess(true);
+      setTimeout(() => {
+        router.push('/admin/categories');
+        router.refresh();
+      }, 1500);
     } catch (err) {
       console.error('Create category error:', err);
       setError(err instanceof Error ? err.message : 'Failed to create category');
@@ -45,6 +51,22 @@ export default function NewCategoryPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
+      {/* Toast Notifications */}
+      <Toast
+        message="Category created successfully! Redirecting..."
+        type="success"
+        show={success}
+        onClose={() => setSuccess(false)}
+        duration={1500}
+      />
+      <Toast
+        message={error}
+        type="error"
+        show={!!error}
+        onClose={() => setError('')}
+        duration={5000}
+      />
+
       <AdminHeader
         pageTitle="Add Category"
         description="Create a new product category"
@@ -59,13 +81,6 @@ export default function NewCategoryPage() {
           <ArrowLeft className="w-4 h-4" />
           Back to Categories
         </Link>
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-900/30 border border-red-800/50 rounded-lg">
-            <p className="text-red-300">{error}</p>
-          </div>
-        )}
 
         {/* Form Container */}
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6">

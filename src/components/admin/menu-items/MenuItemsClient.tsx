@@ -15,6 +15,7 @@ interface MenuItem {
   parentId: string | null;
   pageId: string | null;
   externalUrl: string | null;
+  isPermanent: boolean;
   page?: {
     id: string;
     title: string;
@@ -59,6 +60,24 @@ export default function MenuItemsClient({ initialMenuItems, initialIncludeHidden
   };
 
   const handleDelete = async (id: string) => {
+    // Find the item to check if it's permanent
+    const findItem = (items: MenuItem[], targetId: string): MenuItem | null => {
+      for (const item of items) {
+        if (item.id === targetId) return item;
+        if (item.children.length > 0) {
+          const found = findItem(item.children, targetId);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const item = findItem(menuItems, id);
+    if (item?.isPermanent) {
+      alert(`Cannot delete "${item.label}" because it is a protected system menu item.`);
+      return;
+    }
+
     if (!confirm('Are you sure you want to delete this menu item and all its children?')) {
       return;
     }

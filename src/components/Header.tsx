@@ -2,11 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import ClientOnly from './ui/ClientOnly';
 import Logo from './ui/Logo';
 import Navigation from './ui/Navigation';
 import AnnouncementBar from './ui/AnnouncementBar';
 
-export default function Header() {
+interface HeaderProps {
+  logoUrl: string;
+  siteName: string;
+}
+
+export default function Header({ logoUrl, siteName }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -42,16 +48,20 @@ export default function Header() {
               <div className={`relative z-10 transform transition-all duration-500 ease-out hover:scale-110 ${
                 isScrolled ? 'scale-95' : 'scale-100'
               }`}>
-                <Logo size={isScrolled ? 'sm' : 'md'} />
+                <Logo 
+                  size={isScrolled ? 'sm' : 'md'} 
+                  logoUrl={logoUrl}
+                  siteName={siteName}
+                />
               </div>
             </div>
             
             {/* Navigation - Premium Layout */}
-            <div className="flex-1 flex justify-end items-center gap-6">
+            <div className="flex items-center gap-6">
               <Navigation />
               
               {/* Clerk Authentication UI */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-shrink-0">
                 <SignedOut>
                   <SignInButton mode="modal">
                     <button className="px-4 py-2 text-sm font-medium text-[#6e0000] hover:text-[#8b0000] transition-colors duration-300">
@@ -65,13 +75,15 @@ export default function Header() {
                   </SignUpButton>
                 </SignedOut>
                 <SignedIn>
-                  <UserButton 
-                    appearance={{
-                      elements: {
-                        avatarBox: "w-9 h-9"
-                      }
-                    }}
-                  />
+                  <ClientOnly fallback={<div className="w-9 h-9" />}>
+                    <UserButton 
+                      appearance={{
+                        elements: {
+                          avatarBox: "w-9 h-9"
+                        }
+                      }}
+                    />
+                  </ClientOnly>
                 </SignedIn>
               </div>
             </div>

@@ -14,6 +14,7 @@ interface Page {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  isPermanent: boolean;
   _count: {
     menuItems: number;
   };
@@ -57,6 +58,13 @@ export default function PagesListClient({ initialPages }: PagesListClientProps) 
   }, [searchQuery, publishedFilter, pages]);
 
   const handleDelete = async (page: Page) => {
+    // Check if page is permanent
+    if (page.isPermanent) {
+      alert(`Cannot delete "${page.title}" because it is a protected system page.`);
+      setDeleteModal({ isOpen: false, page: null });
+      return;
+    }
+
     if (page._count.menuItems > 0) {
       alert(`Cannot delete page "${page.title}" because it is linked to ${page._count.menuItems} menu item(s). Please remove the menu items first.`);
       setDeleteModal({ isOpen: false, page: null });
@@ -169,7 +177,17 @@ export default function PagesListClient({ initialPages }: PagesListClientProps) 
                 <tr key={page.id} className="hover:bg-gray-800 transition-colors">
                   <td className="px-6 py-4">
                     <div>
-                      <div className="font-semibold text-gray-100">{page.title}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-100">{page.title}</span>
+                        {page.isPermanent && (
+                          <span 
+                            className="px-2 py-0.5 text-xs font-semibold rounded bg-purple-900/40 text-purple-300 border border-purple-800"
+                            title="System page - Cannot be deleted"
+                          >
+                            🔒 Protected
+                          </span>
+                        )}
+                      </div>
                       <div className="text-sm text-gray-400">/{page.slug}</div>
                     </div>
                   </td>
@@ -210,13 +228,22 @@ export default function PagesListClient({ initialPages }: PagesListClientProps) 
                       <Edit className="w-4 h-4" />
                       Edit
                     </Link>
-                    <button
-                      onClick={() => setDeleteModal({ isOpen: true, page })}
-                      className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 ml-3 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </button>
+                    {!page.isPermanent ? (
+                      <button
+                        onClick={() => setDeleteModal({ isOpen: true, page })}
+                        className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 ml-3 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </button>
+                    ) : (
+                      <span
+                        className="inline-flex items-center gap-1 text-gray-600 ml-3 cursor-not-allowed"
+                        title="This is a system page and cannot be deleted"
+                      >
+                        🔒 Protected
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}

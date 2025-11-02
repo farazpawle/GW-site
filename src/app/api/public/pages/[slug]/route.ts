@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Disable caching for this API route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -25,6 +29,22 @@ export async function GET(
       );
     }
 
+    // If it's a static page, return just the page data with content
+    if (pageData.pageType === 'static') {
+      return NextResponse.json({
+        page: {
+          id: pageData.id,
+          title: pageData.title,
+          slug: pageData.slug,
+          description: pageData.description,
+          pageType: pageData.pageType,
+          content: pageData.content,
+          metaTitle: pageData.metaTitle,
+          metaDescription: pageData.metaDesc,
+        },
+      });
+    }
+
     const itemsPerPage = pageData.itemsPerPage || 24;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const groupValues = pageData.groupValues as any;
@@ -33,34 +53,34 @@ export async function GET(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { published: true };
 
+    // Apply filters based on groupType and groupValues
     switch (pageData.groupType) {
       case 'category':
-        if (groupValues?.categoryIds?.length) {
+        if (groupValues?.categoryIds?.length > 0) {
           where.categoryId = { in: groupValues.categoryIds };
         }
         break;
 
       case 'tag':
-        if (groupValues?.tags?.length) {
+        if (groupValues?.tags?.length > 0) {
           where.tags = { hasSome: groupValues.tags };
         }
         break;
 
       case 'brand':
-        if (groupValues?.brands?.length) {
+        if (groupValues?.brands?.length > 0) {
           where.brand = { in: groupValues.brands };
         }
         break;
 
       case 'origin':
-        if (groupValues?.origins?.length) {
+        if (groupValues?.origins?.length > 0) {
           where.origin = { in: groupValues.origins };
         }
         break;
 
       case 'collection':
         if (groupValues?.collectionId) {
-          // Fetch collection products
           const collection = await prisma.collection.findUnique({
             where: { id: groupValues.collectionId },
             include: {
@@ -72,10 +92,8 @@ export async function GET(
 
           if (collection) {
             if (collection.useManual) {
-              // Manual collection
               where.id = { in: collection.manualProducts.map((mp) => mp.partId) };
             } else {
-              // Automatic collection with filters
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const filterRules = collection.filterRules as any;
               if (filterRules?.categoryIds?.length) {
@@ -96,9 +114,6 @@ export async function GET(
               if (filterRules?.inStock) {
                 where.stockQuantity = { gt: 0 };
               }
-              if (filterRules?.featured) {
-                where.featured = true;
-              }
             }
           }
         }
@@ -106,41 +121,29 @@ export async function GET(
 
       case 'all':
       default:
-        // No additional filters for "all" type
+        // No additional filters - show all published products
         break;
     }
 
-    // Apply additional filters from groupValues
-    if (groupValues?.brands?.length && pageData.groupType !== 'brand') {
-      where.brand = { in: groupValues.brands };
-    }
-    if (groupValues?.origins?.length && pageData.groupType !== 'origin') {
-      where.origin = { in: groupValues.origins };
-    }
+    // Apply additional optional filters from groupValues (if specified)
     if (groupValues?.minPrice !== undefined) {
       where.price = { ...where.price, gte: groupValues.minPrice };
     }
     if (groupValues?.maxPrice !== undefined) {
       where.price = { ...where.price, lte: groupValues.maxPrice };
     }
-    if (groupValues?.inStock) {
+    if (groupValues?.inStock === true) {
       where.stockQuantity = { gt: 0 };
     }
-    if (groupValues?.featured) {
-      where.featured = true;
-    }
 
-    // Determine sort order
+    // Determine sort order based on page settings
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sortMap: Record<string, any> = {
-      createdAt: { createdAt: 'desc' },
-      updatedAt: { updatedAt: 'desc' },
       name: { name: 'asc' },
-      price_asc: { price: 'asc' },
-      price_desc: { price: 'desc' },
-      popular: { viewCount: 'desc' },
+      price: { price: 'asc' },
+      newest: { createdAt: 'desc' },
     };
-    const orderBy = sortMap[pageData.sortBy || 'createdAt'] || { createdAt: 'desc' };
+    const orderBy = sortMap[pageData.sortBy || 'name'] || { name: 'asc' };
 
     // Fetch products and total count
     const [products, total] = await Promise.all([
@@ -164,10 +167,37 @@ export async function GET(
 
     // Convert Decimal types to numbers for JSON serialization
     const serializedProducts = products.map(product => ({
-      ...product,
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      partNumber: product.partNumber,
+      sku: product.sku,
+      description: product.description,
       price: product.price ? Number(product.price) : 0,
       comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
+      images: product.images,
+      image: product.images[0] || '',
+      brand: product.brand,
+      origin: product.origin,
+      tags: product.tags,
+      category: product.category,
+      inStock: product.inStock,
+      stockQuantity: product.stockQuantity,
+      difficulty: product.difficulty,
     }));
+
+    // Debug logging - REMOVE AFTER VERIFICATION
+    if (serializedProducts.length > 0) {
+      console.log('🔧 Pages API Debug - First product:', {
+        name: serializedProducts[0].name,
+        partNumber: serializedProducts[0].partNumber,
+        sku: serializedProducts[0].sku,
+        brand: serializedProducts[0].brand,
+        origin: serializedProducts[0].origin,
+        category: serializedProducts[0].category,
+        hasAllFields: !!(serializedProducts[0].partNumber && serializedProducts[0].brand && serializedProducts[0].category)
+      });
+    }
 
     return NextResponse.json({
       page: {
@@ -175,6 +205,7 @@ export async function GET(
         title: pageData.title,
         slug: pageData.slug,
         description: pageData.description,
+        pageType: pageData.pageType,
         groupType: pageData.groupType,
         layout: pageData.layout,
         metaTitle: pageData.metaTitle,

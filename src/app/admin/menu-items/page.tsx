@@ -23,6 +23,7 @@ interface MenuItem {
   parentId: string | null;
   pageId: string | null;
   externalUrl: string | null;
+  isPermanent: boolean;
   page?: {
     id: string;
     title: string;
@@ -117,7 +118,7 @@ export default async function MenuItemsPage({ searchParams }: PageProps) {
   const menuItems = await getMenuItems(includeHidden);
 
   return (
-    <div className="p-8">
+    <div className="px-8 py-6">
       <AdminHeader
         pageTitle="Menu Items"
         description="Manage navigation menu structure with drag-and-drop ordering"

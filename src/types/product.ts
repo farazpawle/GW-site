@@ -20,9 +20,7 @@ export type ShowcaseFields = {
   origin: string | null
   certifications: string[]
   warranty: string | null
-  difficulty: string | null
   application: string[]
-  videoUrl: string | null
   pdfUrl: string | null
 }
 
@@ -37,6 +35,7 @@ export type ProductFormData = {
   description?: string
   shortDesc?: string
   partNumber: string
+  sku: string
   
   // Pricing & inventory
   price: number
@@ -62,10 +61,11 @@ export type ProductFormData = {
   origin?: string
   certifications: string[]
   warranty?: string
-  difficulty?: string
   application: string[]
-  videoUrl?: string
   pdfUrl?: string
+  
+  // Related products (You May Also Like)
+  relatedProductIds: string[]
 }
 
 /**
@@ -122,7 +122,6 @@ export type ProductFilters = {
   tags?: string[]
   brand?: string
   origin?: string
-  difficulty?: string
   application?: string[]
   featured?: boolean
   published?: boolean
@@ -148,7 +147,6 @@ export type ProductApiResponse = {
     tags: string[]
     brands: string[]
     origins: string[]
-    difficulties: string[]
     applications: string[]
   }
 }

@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import AdminHeader from '@/components/admin/AdminHeader';
 import CategoryForm from '@/components/admin/categories/CategoryForm';
 import type { CategoryFormData } from '@/lib/validations/category';
+import Toast from '@/components/ui/Toast';
 import { Loader2, AlertTriangle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -167,6 +168,22 @@ export default function EditCategoryPage() {
   // UI STATE 4 & 5: Loaded (with form) or Submitting
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
+      {/* Toast Notifications */}
+      <Toast
+        message="Category updated successfully! Redirecting..."
+        type="success"
+        show={success}
+        onClose={() => setSuccess(false)}
+        duration={1000}
+      />
+      <Toast
+        message={error || 'Failed to update category'}
+        type="error"
+        show={!!error && !success}
+        onClose={() => setError(null)}
+        duration={5000}
+      />
+
       <AdminHeader
         pageTitle="Edit Category"
         description={categoryData?.name || 'Update category information'}
@@ -181,22 +198,6 @@ export default function EditCategoryPage() {
           <ArrowLeft className="w-4 h-4" />
           Back to Categories
         </Link>
-
-        {/* Success Message */}
-        {success && (
-          <div className="mb-6 p-4 bg-green-900/30 border border-green-800/50 rounded-lg">
-            <p className="text-green-300">
-              ✓ Category updated successfully! Redirecting...
-            </p>
-          </div>
-        )}
-
-        {/* Error Message (during submission) */}
-        {error && !success && (
-          <div className="mb-6 p-4 bg-red-900/30 border border-red-800/50 rounded-lg">
-            <p className="text-red-300">{error}</p>
-          </div>
-        )}
 
         {/* Form Container */}
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6">

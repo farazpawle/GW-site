@@ -11,6 +11,8 @@ interface PageData {
   title: string;
   slug: string;
   description: string | null;
+  pageType: string; // 'static' | 'dynamic'
+  content: string | null; // For static pages
   groupType: string;
   layout: string;
   metaTitle: string | null;
@@ -102,6 +104,20 @@ export default function DynamicPageRenderer() {
     );
   }
 
+  // STATIC PAGE RENDERING
+  if (pageData.pageType === 'static') {
+    return (
+      <div className="min-h-screen bg-white">
+        {/* Render HTML content */}
+        <div 
+          dangerouslySetInnerHTML={{ __html: pageData.content || '' }}
+          className="static-page-content"
+        />
+      </div>
+    );
+  }
+
+  // DYNAMIC PRODUCT PAGE RENDERING
   const totalPages = Math.ceil(total / itemsPerPage);
 
   return (

@@ -1,14 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
+import { UserButton } from '@clerk/nextjs';
 import { Home, Bell } from 'lucide-react';
-
-// Dynamically import UserButton to avoid hydration mismatch
-const UserButton = dynamic(
-  () => import('@clerk/nextjs').then((mod) => mod.UserButton),
-  { ssr: false }
-);
+import ClientOnly from '@/components/ui/ClientOnly';
 
 export default function AdminTopBar() {
   return (
@@ -47,19 +42,21 @@ export default function AdminTopBar() {
           {/* Divider */}
           <div className="h-8 w-px bg-[#2a2a2a]"></div>
 
-          {/* User Profile */}
+          {/* User Profile - Wrapped in ClientOnly to prevent hydration mismatch */}
           <div className="flex items-center gap-3">
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: "w-10 h-10",
-                  userButtonPopoverCard: "bg-[#1a1a1a] border border-[#2a2a2a]",
-                  userButtonPopoverActionButton: "hover:bg-[#2a2a2a]",
-                  userButtonPopoverActionButtonText: "text-gray-300",
-                  userButtonPopoverFooter: "hidden", // Hide the footer
-                },
-              }}
-            />
+            <ClientOnly fallback={<div className="w-10 h-10 rounded-full bg-[#2a2a2a] animate-pulse"></div>}>
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "w-10 h-10",
+                    userButtonPopoverCard: "bg-[#1a1a1a] border border-[#2a2a2a]",
+                    userButtonPopoverActionButton: "hover:bg-[#2a2a2a]",
+                    userButtonPopoverActionButtonText: "text-gray-300",
+                    userButtonPopoverFooter: "hidden", // Hide the footer
+                  },
+                }}
+              />
+            </ClientOnly>
           </div>
         </div>
       </div>

@@ -46,18 +46,17 @@ async function main() {
       name: true,
       partNumber: true,
       price: true,
-      // New Phase 5 fields
+      // Phase 5 fields (only those that exist in current schema)
       sku: true,
-      barcode: true,
-      trackInventory: true,
       hasVariants: true,
       compareAtPrice: true,
-      costPrice: true
+      stockQuantity: true,
+      inStock: true,
     }
   })
   console.log(`   ✓ Found ${parts.length} part(s) (showing first 5)`)
   parts.forEach(part => {
-    console.log(`   ✓ ${part.name} - $${part.price} (SKU: ${part.sku || 'N/A'})`)
+    console.log(`   ✓ ${part.name} - $${part.price} (SKU: ${part.sku || 'N/A'}, Stock: ${part.stockQuantity}, In Stock: ${part.inStock})`)
   })
 
   // 5. Check Product Variants

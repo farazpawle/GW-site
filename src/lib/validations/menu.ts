@@ -12,17 +12,17 @@ export const menuItemSchema = z
     openNewTab: z.boolean(),
     
     // Multi-level menu support
-    parentId: z.string().optional(), // NULL = top-level, ID = submenu item
+    parentId: z.string().nullable().optional(), // NULL = top-level, ID = submenu item
     
     // Link options (XOR - either page or external URL)
-    pageId: z.string().optional(),
-    externalUrl: z.string().optional(),
+    pageId: z.string().nullable().optional(),
+    externalUrl: z.string().nullable().optional(),
   })
   .refine(
     (data) => {
       // Either pageId OR externalUrl must be set, not both, not neither
-      const hasPage = !!data.pageId;
-      const hasUrl = !!data.externalUrl;
+      const hasPage = !!data.pageId && data.pageId !== null;
+      const hasUrl = !!data.externalUrl && data.externalUrl !== null;
       
       // XOR: (hasPage AND NOT hasUrl) OR (hasUrl AND NOT hasPage)
       return (hasPage && !hasUrl) || (hasUrl && !hasPage);
@@ -41,8 +41,11 @@ export const updateMenuItemSchema = menuItemSchema.partial().refine(
   (data) => {
     // If either is provided, ensure XOR rule
     if (data.pageId !== undefined || data.externalUrl !== undefined) {
-      const hasPage = !!data.pageId;
-      const hasUrl = !!data.externalUrl;
+      // Check for actual values, not just null
+      const hasPage = !!data.pageId && data.pageId !== null;
+      const hasUrl = !!data.externalUrl && data.externalUrl !== null;
+      
+      // XOR: exactly one must be true
       return (hasPage && !hasUrl) || (hasUrl && !hasPage);
     }
     return true; // If neither field is being updated, allow it

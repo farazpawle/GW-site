@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isEcommerceEnabled } from '@/lib/settings';
+import type { Part } from '@prisma/client';
 
 /**
  * Public Product Detail API - Mode-Aware
@@ -23,7 +24,7 @@ export async function GET(
     const ecommerceEnabled = await isEcommerceEnabled();
     const mode = ecommerceEnabled ? 'ecommerce' : 'showcase';
 
-    // Fetch product by slug with category relation
+    // Fetch product by slug with category relation and cross-reference data
     const product = await prisma.part.findUnique({
       where: {
         slug,
@@ -35,6 +36,35 @@ export async function GET(
             name: true,
             slug: true,
           },
+        },
+        crossReferences: {
+          include: {
+            referencedPart: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                brand: true,
+                price: true,
+                comparePrice: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+        oemPartNumbers: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+        vehicleCompatibility: {
+          orderBy: [
+            { make: 'asc' },
+            { model: 'asc' },
+            { yearStart: 'desc' },
+          ],
         },
       },
     });
@@ -60,14 +90,61 @@ export async function GET(
       },
     });
 
+    // Serialize cross-references with price conversion for referencedPart
+    const serializedCrossReferences = (product.crossReferences || []).map((ref) => ({
+      id: ref.id,
+      referenceType: ref.referenceType,
+      brandName: ref.brandName,
+      partNumber: ref.partNumber,
+      referencedPartId: ref.referencedPartId,
+      notes: ref.notes,
+      createdAt: ref.createdAt,
+      referencedPart: ref.referencedPart ? {
+        id: ref.referencedPart.id,
+        name: ref.referencedPart.name,
+        slug: ref.referencedPart.slug,
+        brand: ref.referencedPart.brand,
+        price: ecommerceEnabled ? ref.referencedPart.price.toNumber() : null,
+        comparePrice: ecommerceEnabled && ref.referencedPart.comparePrice
+          ? ref.referencedPart.comparePrice.toNumber()
+          : null,
+      } : null,
+    }));
+
+    // Serialize OEM part numbers
+    const serializedOEMNumbers = (product.oemPartNumbers || []).map((oem) => ({
+      id: oem.id,
+      manufacturer: oem.manufacturer,
+      oemPartNumber: oem.oemPartNumber,
+      notes: oem.notes,
+      createdAt: oem.createdAt,
+    }));
+
+    // Serialize vehicle compatibility
+    const serializedVehicleCompatibility = (product.vehicleCompatibility || []).map((compat) => ({
+      id: compat.id,
+      make: compat.make,
+      model: compat.model,
+      yearStart: compat.yearStart,
+      yearEnd: compat.yearEnd,
+      engine: compat.engine,
+      trim: compat.trim,
+      position: compat.position,
+      notes: compat.notes,
+      createdAt: compat.createdAt,
+    }));
+
     // Serialize product and apply mode-aware logic
+    const defaultImage = '/images/placeholder-product.svg';
     const baseProduct = {
       id: product.id,
       name: product.name,
       slug: product.slug,
       description: product.description,
-      image: product.images[0] || '',
-      images: product.images, // Include full images array for gallery
+      partNumber: product.partNumber,
+      sku: product.sku,
+      image: product.images && product.images.length > 0 ? product.images[0] : defaultImage,
+      images: product.images && product.images.length > 0 ? product.images : [defaultImage], // Include full images array for gallery
       categoryId: product.categoryId,
       category: product.category,
       featured: product.featured,
@@ -82,49 +159,79 @@ export async function GET(
       origin: product.origin,
       certifications: product.certifications,
       warranty: product.warranty,
-      difficulty: product.difficulty,
       application: product.application,
-      videoUrl: product.videoUrl,
       pdfUrl: product.pdfUrl,
+      crossReferences: serializedCrossReferences,
+      oemPartNumbers: serializedOEMNumbers,
+      vehicleCompatibility: serializedVehicleCompatibility,
     };
 
-    // Include pricing only in e-commerce mode
+    // Include pricing and inventory only in e-commerce mode
     let serializedProduct;
     if (ecommerceEnabled) {
       serializedProduct = {
         ...baseProduct,
         price: product.price.toNumber(),
         comparePrice: product.comparePrice?.toNumber() || null,
-        inStock: product.inStock,
-        stockQuantity: product.stockQuantity,
+        inStock: (product as any).inStock,
+        stockQuantity: (product as any).stockQuantity,
       };
     } else {
       serializedProduct = baseProduct;
     }
 
-    // Fetch related products (same category, published, exclude current product)
-    const relatedProducts = await prisma.part.findMany({
-      where: {
-        categoryId: product.categoryId,
-        published: true,
-        id: {
-          not: product.id,
+    // Fetch related products
+    // Priority: 1) Manually selected relatedProductIds, 2) Fallback to same category
+    let relatedProducts = [];
+    
+    // Access relatedProductIds field (new field may not be in TS cache yet)
+    const productRelatedIds = (product as typeof product & { relatedProductIds: string[] }).relatedProductIds;
+    
+    if (productRelatedIds && productRelatedIds.length > 0) {
+      // Use manually selected related products
+      relatedProducts = await prisma.part.findMany({
+        where: {
+          id: {
+            in: productRelatedIds,
+          },
+          published: true, // Only show published products
         },
-      },
-      orderBy: {
-        showcaseOrder: 'asc',
-      },
-      take: 4,
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
+        take: 4,
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
           },
         },
-      },
-    });
+      });
+    } else {
+      // Fallback: same category, published, exclude current product
+      relatedProducts = await prisma.part.findMany({
+        where: {
+          categoryId: product.categoryId,
+          published: true,
+          id: {
+            not: product.id,
+          },
+        },
+        orderBy: {
+          showcaseOrder: 'asc',
+        },
+        take: 4,
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      });
+    }
 
     // Serialize related products with mode-aware logic
     const serializedRelatedProducts = relatedProducts.map((relatedProduct) => {
@@ -133,7 +240,9 @@ export async function GET(
         name: relatedProduct.name,
         slug: relatedProduct.slug,
         description: relatedProduct.description,
-        image: relatedProduct.images[0] || '',
+        image: relatedProduct.images && relatedProduct.images.length > 0 
+          ? relatedProduct.images[0] 
+          : defaultImage,
         categoryId: relatedProduct.categoryId,
         category: relatedProduct.category,
         featured: relatedProduct.featured,
@@ -148,20 +257,18 @@ export async function GET(
         origin: relatedProduct.origin,
         certifications: relatedProduct.certifications,
         warranty: relatedProduct.warranty,
-        difficulty: relatedProduct.difficulty,
         application: relatedProduct.application,
-        videoUrl: relatedProduct.videoUrl,
         pdfUrl: relatedProduct.pdfUrl,
       };
 
-      // Include pricing only in e-commerce mode
+      // Include pricing and inventory only in e-commerce mode
       if (ecommerceEnabled) {
         return {
           ...baseRelated,
           price: relatedProduct.price.toNumber(),
           comparePrice: relatedProduct.comparePrice?.toNumber() || null,
-          inStock: relatedProduct.inStock,
-          stockQuantity: relatedProduct.stockQuantity,
+          inStock: (relatedProduct as any).inStock,
+          stockQuantity: (relatedProduct as any).stockQuantity,
         };
       }
 

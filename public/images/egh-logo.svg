@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="400" height="80">
+  <!-- Background -->
+  <rect width="400" height="80" fill="white"/>
+  
+  <!-- Icon Circle with EG symbol -->
+  <circle cx="30" cy="40" r="25" fill="none" stroke="#4169E1" stroke-width="2"/>
+  <text x="30" y="48" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#4169E1" text-anchor="middle">EG</text>
+  
+  <!-- "A Member of" text -->
+  <text x="100" y="25" font-family="Arial, sans-serif" font-size="16" fill="#4169E1" font-weight="normal">A Member of</text>
+  
+  <!-- Arabic Text (Economic Group Holdings in Arabic) -->
+  <text x="100" y="48" font-family="Arial, sans-serif" font-size="14" fill="#4169E1" text-anchor="start" direction="rtl">إيكونوميك جروب هولدينجز</text>
+  
+  <!-- English Text -->
+  <text x="100" y="68" font-family="Arial, sans-serif" font-size="13" fill="#4169E1" font-weight="600" letter-spacing="0.5">ECONOMIC GROUP HOLDINGS</text>
+</svg>

@@ -39,8 +39,9 @@ export const productSchema = z.object({
   inStock: z.boolean(),
   
   images: z.array(z.string().url('Invalid image URL'))
-    .min(1, 'At least one image is required')
-    .max(10, 'Maximum 10 images allowed'),
+    .max(10, 'Maximum 10 images allowed')
+    .optional()
+    .default([]), // Images are optional, empty array will automatically get default placeholder on save
   
   specifications: z.record(z.string(), z.any())
     .optional()
@@ -51,25 +52,21 @@ export const productSchema = z.object({
   featured: z.boolean(),
 });
 
+// Related products field schema (max 4 similar products)
+export const relatedProductsFieldSchema = z.object({
+  relatedProductIds: z.array(z.string())
+    .max(4, 'Maximum 4 related products allowed')
+    .default([]),
+});
+
 // Shopify-style inventory fields schema (Phase 5)
+// NOTE: Only includes fields that exist in the Prisma schema
+// Fields removed (not in DB): barcode, lowStockThreshold, trackInventory, costPrice
 export const shopifyInventoryFieldsSchema = z.object({
   sku: z.string()
+    .min(1, 'SKU is required')
     .max(100, 'SKU must not exceed 100 characters')
-    .optional()
-    .nullable(),
-  
-  barcode: z.string()
-    .max(100, 'Barcode must not exceed 100 characters')
-    .optional()
-    .nullable(),
-  
-  lowStockThreshold: z.number()
-    .int('Low stock threshold must be a whole number')
-    .min(0, 'Low stock threshold cannot be negative')
-    .default(10),
-  
-  trackInventory: z.boolean()
-    .default(true),
+    .regex(/^[A-Z0-9-]+$/, 'SKU must contain only uppercase letters, numbers, and hyphens'),
   
   hasVariants: z.boolean()
     .default(false),
@@ -77,12 +74,6 @@ export const shopifyInventoryFieldsSchema = z.object({
   compareAtPrice: z.number()
     .positive('Compare at price must be greater than 0')
     .max(999999.99, 'Compare at price must not exceed 999,999.99')
-    .optional()
-    .nullable(),
-  
-  costPrice: z.number()
-    .positive('Cost price must be greater than 0')
-    .max(999999.99, 'Cost price must not exceed 999,999.99')
     .optional()
     .nullable(),
 });
@@ -128,20 +119,10 @@ export const showcaseFieldsSchema = z.object({
     .optional()
     .nullable(),
   
-  difficulty: z.enum(['Easy', 'Moderate', 'Professional', 'Advanced'])
-    .optional()
-    .nullable(),
-  
   application: z.array(z.string())
     .default([]),
   
   // Enhanced media (allow empty string or valid URL)
-  videoUrl: z.string()
-    .url('Invalid video URL')
-    .optional()
-    .or(z.literal(''))
-    .nullable(),
-  
   pdfUrl: z.string()
     .url('Invalid PDF URL')
     .optional()
@@ -152,7 +133,8 @@ export const showcaseFieldsSchema = z.object({
 // Extended product schema with showcase fields and Shopify inventory fields
 export const productSchemaWithShowcase = productSchema
   .merge(showcaseFieldsSchema)
-  .merge(shopifyInventoryFieldsSchema);
+  .merge(shopifyInventoryFieldsSchema)
+  .merge(relatedProductsFieldSchema);
 
 // Schema for creating a new product
 export const createProductSchema = productSchemaWithShowcase;
@@ -193,20 +175,11 @@ export const bulkOperationSchema = z.object({
 });
 
 // Product Variant schema (Phase 5 - Shopify-style variants)
+// NOTE: Removed barcode field (not in Prisma schema)
 export const productVariantSchema = z.object({
   title: z.string()
     .min(1, 'Variant title is required')
     .max(200, 'Variant title must not exceed 200 characters'),
-  
-  sku: z.string()
-    .max(100, 'SKU must not exceed 100 characters')
-    .optional()
-    .nullable(),
-  
-  barcode: z.string()
-    .max(100, 'Barcode must not exceed 100 characters')
-    .optional()
-    .nullable(),
   
   price: z.number()
     .positive('Price must be greater than 0')
@@ -219,11 +192,6 @@ export const productVariantSchema = z.object({
     .max(999999.99, 'Compare at price must not exceed 999,999.99')
     .optional()
     .nullable(),
-  
-  stockQuantity: z.number()
-    .int('Stock quantity must be a whole number')
-    .min(0, 'Stock quantity cannot be negative')
-    .default(0),
   
   options: z.record(z.string(), z.string())
     .optional()
@@ -239,8 +207,8 @@ export const productVariantSchema = z.object({
   
   position: z.number()
     .int('Position must be a whole number')
-    .min(1, 'Position must be at least 1')
-    .default(1),
+    .min(0, 'Position cannot be negative')
+    .default(0),
 });
 
 // Helper function to generate slug from product name

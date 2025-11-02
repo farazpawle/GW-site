@@ -1,95 +1,75 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-// GET /api/menu-items - Public endpoint for website navigation
+/**
+ * GET /api/menu-items
+ * Public endpoint to fetch visible menu items for navigation
+ */
 export async function GET() {
   try {
-    // Fetch only visible menu items, ordered by position
+    // For public access, only show visible items
+    const where = {
+      visible: true,
+    };
+
+    // Fetch menu items with their relationships
     const menuItems = await prisma.menuItem.findMany({
-      where: {
+      where,
+      select: {
+        id: true,
+        label: true,
+        position: true,
         visible: true,
-        parentId: null, // Only top-level items for main navigation
-      },
-      orderBy: {
-        position: 'asc',
-      },
-      include: {
+        openNewTab: true,
+        parentId: true,
+        pageId: true,
+        externalUrl: true,
         page: {
           select: {
-            slug: true,
+            id: true,
             title: true,
-          },
-        },
-        children: {
-          where: {
-            visible: true,
-          },
-          orderBy: {
-            position: 'asc',
-          },
-          include: {
-            page: {
-              select: {
-                slug: true,
-                title: true,
-              },
-            },
+            slug: true,
+            published: true,
           },
         },
       },
+      orderBy: {
+        position: "asc",
+      },
     });
 
-    // Transform menu items to navigation format
-    const navigationItems = menuItems.map((item) => {
-      // Build href based on link type
-      let href = '#';
-      if (item.pageId && item.page) {
-        // Special handling: map 'all-products' page to '/products' route
-        if (item.page.slug === 'all-products') {
-          href = '/products';
-        } else {
-          // All other pages use /pages/ prefix
-          href = `/pages/${item.page.slug}`;
-        }
-      } else if (item.externalUrl) {
-        href = item.externalUrl;
-      }
+    // Filter out menu items linked to unpublished pages
+    const publishedMenuItems = menuItems.filter(
+      (item) => !item.page || item.page.published
+    );
 
-      return {
-        id: item.id,
-        label: item.label,
-        href,
-        openNewTab: item.openNewTab,
-        children: item.children.map((child) => {
-          // Build child href based on link type
-          let childHref = '#';
-          if (child.pageId && child.page) {
-            // Special handling for children as well
-            if (child.page.slug === 'all-products') {
-              childHref = '/products';
-            } else {
-              // All other pages use /pages/ prefix
-              childHref = `/pages/${child.page.slug}`;
-            }
-          } else if (child.externalUrl) {
-            childHref = child.externalUrl;
-          }
+    // Build hierarchical tree structure
+    type MenuItemWithChildren = typeof publishedMenuItems[number] & {
+      children: MenuItemWithChildren[];
+    };
 
-          return {
-            id: child.id,
-            label: child.label,
-            href: childHref,
-            openNewTab: child.openNewTab,
-          };
-        }),
-      };
+    const buildTree = (
+      items: typeof publishedMenuItems,
+      parentId: string | null = null
+    ): MenuItemWithChildren[] => {
+      return items
+        .filter((item) => item.parentId === parentId)
+        .map((item) => ({
+          ...item,
+          children: buildTree(items, item.id),
+        }));
+    };
+
+    const tree = buildTree(publishedMenuItems);
+
+    return NextResponse.json({
+      menuItems: tree,
+      total: publishedMenuItems.length,
     });
-
-    return NextResponse.json({ menuItems: navigationItems });
   } catch (error) {
-    console.error('Failed to fetch menu items:', error);
+    console.error("Error fetching menu items:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch menu items' },
+      { error: "Failed to fetch menu items" },
       { status: 500 }
     );
   }

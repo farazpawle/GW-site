@@ -22,8 +22,8 @@ export const pageGroupValuesSchema = z.object({
   inStock: z.boolean().optional(),
 });
 
-// Main Page Schema
-export const pageSchema = z.object({
+// Static Page Schema (for content pages like About Us, Contact, etc.)
+export const staticPageSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
   slug: z
     .string()
@@ -31,7 +31,24 @@ export const pageSchema = z.object({
     .max(100, "Slug must be less than 100 characters")
     .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens only"),
   description: z.string().optional(),
-  groupType: z.enum(["category", "tag", "collection", "all"]),
+  pageType: z.literal("static"),
+  content: z.string().min(1, "Content is required for static pages"),
+  metaTitle: z.string().max(60, "Meta title must be 60 characters or less").optional(),
+  metaDesc: z.string().max(160, "Meta description must be 160 characters or less").optional(),
+  published: z.boolean().optional(),
+});
+
+// Dynamic Page Schema (for product listing pages)
+export const dynamicPageSchema = z.object({
+  title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .max(100, "Slug must be less than 100 characters")
+    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens only"),
+  description: z.string().optional(),
+  pageType: z.literal("dynamic"),
+  groupType: z.enum(["category", "tag", "collection", "brand", "origin", "all"]),
   groupValues: pageGroupValuesSchema,
   layout: z.enum(["grid", "list"]),
   sortBy: z.enum(["name", "price", "newest"]),
@@ -44,14 +61,25 @@ export const pageSchema = z.object({
   published: z.boolean().optional(),
 });
 
+// Main Page Schema using discriminated union
+export const pageSchema = z.discriminatedUnion("pageType", [
+  staticPageSchema,
+  dynamicPageSchema,
+]);
+
 // Create Page Schema (without id, timestamps)
 export const createPageSchema = pageSchema;
 
-// Update Page Schema (all fields optional except slug for conflict check)
-export const updatePageSchema = pageSchema.partial();
+// Update Page Schema (all fields optional, but maintains type discrimination)
+export const updatePageSchema = z.union([
+  staticPageSchema.partial(),
+  dynamicPageSchema.partial(),
+]);
 
 // Type exports
 export type PageFormData = z.infer<typeof pageSchema>;
+export type StaticPageData = z.infer<typeof staticPageSchema>;
+export type DynamicPageData = z.infer<typeof dynamicPageSchema>;
 export type PageGroupValues = z.infer<typeof pageGroupValuesSchema>;
 
 /**

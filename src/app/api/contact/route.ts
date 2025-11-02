@@ -1,36 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
-import { z } from 'zod'
+import { contactMessageSchema } from '@/lib/validation'
+import { handleApiError, successResponse } from '@/lib/error-handler'
+import { BadRequestError } from '@/lib/errors'
 
 const prisma = new PrismaClient()
-
-// Validation schema
-const contactMessageSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name is too long'),
-  email: z.string().email('Invalid email address').max(255, 'Email is too long'),
-  phone: z.string().optional(),
-  subject: z.string().min(3, 'Subject must be at least 3 characters').max(200, 'Subject is too long'),
-  message: z.string().min(10, 'Message must be at least 10 characters').max(2000, 'Message is too long'),
-})
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    console.log('📝 Contact form submission received:', body)
     
-    // Validate input
-    const validationResult = contactMessageSchema.safeParse(body)
-    
-    if (!validationResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'Validation failed', 
-          details: validationResult.error.issues 
-        },
-        { status: 400 }
-      )
+    // Honeypot check - reject if filled (bot detected)
+    if (body.website && body.website.trim() !== '') {
+      console.warn('🤖 Bot detected via honeypot field')
+      throw new BadRequestError('Invalid submission', 'BOT_DETECTED')
     }
     
-    const data = validationResult.data
+    // Validate input using centralized schema
+    const data = contactMessageSchema.parse(body)
+    console.log('✅ Validation passed, saving to database...')
     
     // Sanitize and save message
     const message = await prisma.contactMessage.create({
@@ -38,25 +27,20 @@ export async function POST(request: NextRequest) {
         name: data.name.trim(),
         email: data.email.trim().toLowerCase(),
         phone: data.phone?.trim() || null,
-        subject: data.subject.trim(),
+        subject: data.subject?.trim() || null,
         message: data.message.trim()
       }
     })
 
-    return NextResponse.json(
-      { 
-        success: true, 
-        message: 'Your message has been received. We will get back to you soon!',
-        id: message.id 
-      }, 
-      { status: 201 }
+    console.log('✅ Message saved successfully with ID:', message.id)
+    
+    return successResponse(
+      { id: message.id },
+      'Your message has been received. We will get back to you soon!',
+      201
     )
   } catch (error) {
-    console.error('Error saving contact message:', error)
-    return NextResponse.json(
-      { error: 'Internal server error. Please try again later.' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   } finally {
     await prisma.$disconnect()
   }
@@ -66,7 +50,7 @@ export async function GET(request: NextRequest) {
   try {
     // Optional: Add authentication check here
     // const session = await getServerSession()
-    // if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // if (!session) throw new UnauthorizedError()
     
     // Pagination support
     const searchParams = request.nextUrl.searchParams
@@ -94,8 +78,8 @@ export async function GET(request: NextRequest) {
       prisma.contactMessage.count()
     ])
 
-    return NextResponse.json({
-      data: messages,
+    return successResponse({
+      messages,
       pagination: {
         page,
         limit,
@@ -104,11 +88,7 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Error fetching contact messages:', error)
-    return NextResponse.json(
-      { error: 'Internal server error. Please try again later.' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   } finally {
     await prisma.$disconnect()
   }

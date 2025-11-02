@@ -1,27 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient, Prisma } from '@prisma/client'
-import { z } from 'zod'
+import { partCreateSchema } from '@/lib/validation'
+import { handleApiError, successResponse } from '@/lib/error-handler'
+import { NotFoundError, ConflictError } from '@/lib/errors'
 
 const prisma = new PrismaClient()
-
-// Validation schema for part creation
-const partSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(200, 'Name is too long'),
-  slug: z.string().min(2, 'Slug must be at least 2 characters').max(200, 'Slug is too long')
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase with hyphens only'),
-  description: z.string().max(5000, 'Description is too long').optional(),
-  shortDesc: z.string().max(500, 'Short description is too long').optional(),
-  partNumber: z.string().min(1, 'Part number is required').max(100, 'Part number is too long'),
-  price: z.number().positive('Price must be positive'),
-  comparePrice: z.number().positive().optional(),
-  inStock: z.boolean().default(true),
-  stockQuantity: z.number().int().min(0).optional(),
-  images: z.array(z.string().url()).optional(),
-  specifications: z.record(z.string(), z.any()).optional(),
-  compatibility: z.array(z.string()).optional(),
-  categoryId: z.string().uuid('Invalid category ID'),
-  featured: z.boolean().default(false),
-})
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,7 +31,8 @@ export async function GET(request: NextRequest) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
-        { partNumber: { contains: search, mode: 'insensitive' } }
+        { partNumber: { contains: search, mode: 'insensitive' } },
+        { sku: { contains: search, mode: 'insensitive' } }
       ]
     }
 
@@ -67,9 +51,8 @@ export async function GET(request: NextRequest) {
       prisma.part.count({ where })
     ])
 
-    return NextResponse.json({
-      success: true,
-      data: parts,
+    return successResponse({
+      parts,
       pagination: {
         total,
         page,
@@ -78,11 +61,7 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Error fetching parts:', error)
-    return NextResponse.json(
-      { error: 'Internal server error. Please try again later.' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   } finally {
     await prisma.$disconnect()
   }
@@ -92,20 +71,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // Validate input
-    const validationResult = partSchema.safeParse(body)
-    
-    if (!validationResult.success) {
-      return NextResponse.json(
-        { 
-          error: 'Validation failed', 
-          details: validationResult.error.issues 
-        },
-        { status: 400 }
-      )
-    }
-    
-    const data = validationResult.data
+    // Validate input using centralized schema
+    const data = partCreateSchema.parse(body)
     
     // Check if slug already exists
     const existingPart = await prisma.part.findUnique({
@@ -113,10 +80,7 @@ export async function POST(request: NextRequest) {
     })
     
     if (existingPart) {
-      return NextResponse.json(
-        { error: 'A part with this slug already exists' },
-        { status: 409 }
-      )
+      throw new ConflictError('A part with this slug already exists', 'DUPLICATE_SLUG')
     }
     
     // Check if category exists
@@ -125,10 +89,7 @@ export async function POST(request: NextRequest) {
     })
     
     if (!category) {
-      return NextResponse.json(
-        { error: 'Category not found' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Category not found', 'CATEGORY_NOT_FOUND')
     }
     
     // Create part
@@ -139,6 +100,7 @@ export async function POST(request: NextRequest) {
         description: data.description?.trim() || null,
         shortDesc: data.shortDesc?.trim() || null,
         partNumber: data.partNumber.trim(),
+        sku: data.sku.trim(),
         price: data.price,
         comparePrice: data.comparePrice || null,
         inStock: data.inStock,
@@ -154,20 +116,9 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Part created successfully',
-        data: part
-      },
-      { status: 201 }
-    )
+    return successResponse(part, 'Part created successfully', 201)
   } catch (error) {
-    console.error('Error creating part:', error)
-    return NextResponse.json(
-      { error: 'Internal server error. Please try again later.' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   } finally {
     await prisma.$disconnect()
   }

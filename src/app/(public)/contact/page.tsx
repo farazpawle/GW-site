@@ -9,7 +9,8 @@ export default function Contact() {
     email: "",
     phone: "",
     subject: "",
-    message: ""
+    message: "",
+    website: "" // Honeypot field
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,6 +26,8 @@ export default function Contact() {
     e.preventDefault();
     setIsSubmitting(true);
     
+    console.log('📤 Submitting form data:', formData);
+    
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
@@ -34,6 +37,11 @@ export default function Contact() {
         body: JSON.stringify(formData),
       });
 
+      console.log('📥 Response status:', response.status, response.statusText);
+      
+      const result = await response.json();
+      console.log('📥 Response data:', result);
+
       if (response.ok) {
         alert("Thank you for your message. We will get back to you soon!");
         setFormData({
@@ -41,13 +49,18 @@ export default function Contact() {
           email: "",
           phone: "",
           subject: "",
-          message: ""
+          message: "",
+          website: ""
         });
       } else {
-        alert("There was an error sending your message. Please try again.");
+        const errorMessage = result.details 
+          ? result.details.map((d: any) => d.message).join(', ')
+          : result.error || "There was an error sending your message. Please try again.";
+        alert(errorMessage);
+        console.error("❌ Validation errors:", result);
       }
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("❌ Error submitting form:", error);
       alert("There was an error sending your message. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -58,7 +71,7 @@ export default function Contact() {
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
       {/* Hero Section with Diagonal Design */}
       <section 
-        className="relative text-white py-24 overflow-hidden"
+        className="relative text-white py-32 overflow-hidden"
         style={{ backgroundColor: '#6e0000' }}
       >
         {/* Decorative Background Pattern */}
@@ -67,21 +80,21 @@ export default function Contact() {
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
         </div>
         
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-block mb-4">
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+            <div className="inline-block mb-6">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2.5 rounded-full">
                 <Building2 className="w-4 h-4" />
                 <span className="text-sm font-medium">Get In Touch</span>
               </div>
             </div>
             <h1 
-              className="text-6xl font-oswald font-bold mb-6"
+              className="text-5xl sm:text-6xl lg:text-7xl font-oswald font-bold mb-8 px-4"
               style={{ fontFamily: "'Oswald', sans-serif" }}
             >
               Contact Us
             </h1>
-            <p className="text-xl text-white/90 leading-relaxed">
+            <p className="text-lg sm:text-xl lg:text-2xl text-white/90 leading-relaxed px-6 sm:px-8">
               Have questions about our premium auto parts? Our expert team is ready to assist you with inquiries, quotes, and technical support.
             </p>
           </div>
@@ -261,6 +274,19 @@ export default function Contact() {
                   ></textarea>
                 </div>
                 
+                {/* Honeypot field - hidden from users, bots will fill it */}
+                <input
+                  type="text"
+                  name="website"
+                  id="website"
+                  value={formData.website}
+                  onChange={handleChange}
+                  className="hidden"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                />
+                
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -298,7 +324,31 @@ export default function Contact() {
 
               {/* Info Cards */}
               <div className="space-y-6">
-                {/* Address */}
+                {/* Main Headquarters - Germany */}
+                <div 
+                  className="p-6 rounded-xl border group hover:border-[#6e0000] transition-all duration-300"
+                  style={{ backgroundColor: '#1a1a1a', borderColor: '#2a2a2a' }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div 
+                      className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform"
+                      style={{ backgroundColor: '#6e0000' }}
+                    >
+                      <Building2 className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white text-lg mb-2">Corporate Headquarters</h4>
+                      <p className="text-gray-400 leading-relaxed">
+                        ET EUROTECHNIK HANDELS GmBH<br />
+                        Kurt-Blaum-Platz 8<br />
+                        63450 Hanau, Hessen<br />
+                        Germany
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* UAE Office */}
                 <div 
                   className="p-6 rounded-xl border group hover:border-[#6e0000] transition-all duration-300"
                   style={{ backgroundColor: '#1a1a1a', borderColor: '#2a2a2a' }}
@@ -311,7 +361,7 @@ export default function Contact() {
                       <MapPin className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-white text-lg mb-2">Our Location</h4>
+                      <h4 className="font-semibold text-white text-lg mb-2">UAE Office</h4>
                       <p className="text-gray-400 leading-relaxed">
                         Corporate Office: 26 6A Street - Al Quoz<br />
                         Al Quoz Industrial Area 3<br />

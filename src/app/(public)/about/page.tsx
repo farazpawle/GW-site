@@ -5,7 +5,7 @@ export default function About() {
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
       {/* Hero Section with Diagonal Design */}
       <section 
-        className="relative text-white py-24 overflow-hidden"
+        className="relative text-white py-32 overflow-hidden"
         style={{ backgroundColor: '#6e0000' }}
       >
         {/* Decorative Background Pattern */}
@@ -14,21 +14,21 @@ export default function About() {
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
         </div>
         
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-block mb-4">
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+            <div className="inline-block mb-6">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2.5 rounded-full">
                 <Sparkles className="w-4 h-4" />
                 <span className="text-sm font-medium">Our Story</span>
               </div>
             </div>
             <h1 
-              className="text-6xl font-oswald font-bold mb-6"
+              className="text-5xl sm:text-6xl lg:text-7xl font-oswald font-bold mb-8 px-4"
               style={{ fontFamily: "'Oswald', sans-serif" }}
             >
               About Garrit & Wulf
             </h1>
-            <p className="text-xl text-white/90 leading-relaxed">
+            <p className="text-lg sm:text-xl lg:text-2xl text-white/90 leading-relaxed px-6 sm:px-8">
               Leading the automotive parts industry with innovation, quality, and exceptional service since 2008.
             </p>
           </div>

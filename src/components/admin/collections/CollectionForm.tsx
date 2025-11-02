@@ -6,7 +6,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { collectionSchema } from '@/lib/validations/collection';
 import { Loader2, Save } from 'lucide-react';
-import FilterRuleBuilder, { type FilterRules } from './FilterRuleBuilder';
+import FilterBuilder from './FilterBuilder';
+
+interface FilterRules {
+  categoryIds?: string[];
+  brands?: string[];
+  tags?: string[];
+  origins?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+  featured?: boolean;
+}
 import type { z } from 'zod';
 
 type CollectionFormValues = z.infer<typeof collectionSchema>;
@@ -29,10 +40,10 @@ export default function CollectionForm({ initialData, collectionId }: Collection
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mode, setMode] = useState<'automatic' | 'manual'>(
-    initialData?.useManual ? 'manual' : 'automatic'
+    initialData?.collectionType === 'manual' ? 'manual' : 'automatic'
   );
   const [filterRules, setFilterRules] = useState<FilterRules>(
-    (initialData?.filterRules as FilterRules) || {}
+    {} // Will be converted to conditions format on submit
   );
   const [manualProductIds, setManualProductIds] = useState<string[]>(
     initialData?.manualProducts?.map((mp) => mp.partId) || []
@@ -43,16 +54,14 @@ export default function CollectionForm({ initialData, collectionId }: Collection
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<CollectionFormValues>({
-    resolver: zodResolver(collectionSchema),
+  } = useForm({
     defaultValues: initialData || {
       name: '',
       slug: '',
       description: '',
-      useManual: false,
-      layout: 'grid' as const,
-      sortBy: 'createdAt' as const,
-      itemsPerPage: 24,
+      sortBy: 'manual',
+      metaTitle: '',
+      metaDescription: '',
       published: false,
     },
   });
@@ -65,16 +74,80 @@ export default function CollectionForm({ initialData, collectionId }: Collection
       .catch(() => alert('Failed to load products'));
   }, []);
 
-  const onSubmit = async (data: CollectionFormValues) => {
+  const onSubmit = async (data: any) => {
     try {
       setIsSubmitting(true);
+      
+      // Validation
+      if (!data.name || !data.slug) {
+        alert('Name and slug are required');
+        return;
+      }
+      
+      if (mode === 'manual' && manualProductIds.length === 0) {
+        alert('Please select at least one product for manual collection');
+        return;
+      }
+      
+      if (mode === 'automatic' && Object.keys(filterRules).length === 0) {
+        alert('Please set at least one filter for automatic collection');
+        return;
+      }
+
       const url = collectionId ? `/api/admin/collections/${collectionId}` : '/api/admin/collections';
       const method = collectionId ? 'PUT' : 'POST';
 
+      // Convert filterRules to conditions format for the API
+      const conditions = mode === 'automatic' && Object.keys(filterRules).length > 0
+        ? {
+            match: 'all' as const,
+            conditions: Object.entries(filterRules)
+              .filter(([_, value]) => value !== undefined && value !== null && (Array.isArray(value) ? value.length > 0 : true))
+              .flatMap(([key, value]): any[] => {
+                if (key === 'categoryIds' && Array.isArray(value)) {
+                  return value.map(id => ({
+                    field: 'product_tag',
+                    operator: 'equals',
+                    value: id,
+                  }));
+                }
+                if (Array.isArray(value)) {
+                  return value.map(v => ({
+                    field: key === 'brands' ? 'product_vendor' : 'product_tag',
+                    operator: 'equals',
+                    value: v,
+                  }));
+                }
+                if (key === 'minPrice') {
+                  return [{
+                    field: 'variant_price',
+                    operator: 'greater_than',
+                    value: value as number,
+                  }];
+                }
+                if (key === 'maxPrice') {
+                  return [{
+                    field: 'variant_price',
+                    operator: 'less_than',
+                    value: value as number,
+                  }];
+                }
+                if (typeof value === 'boolean') {
+                  return [{
+                    field: 'product_tag',
+                    operator: 'equals',
+                    value: key,
+                  }];
+                }
+                return [];
+              }),
+          }
+        : null;
+
       const payload = {
         ...data,
-        useManual: mode === 'manual',
-        filterRules: mode === 'automatic' ? filterRules : null,
+        collectionType: mode === 'manual' ? 'manual' : 'smart',
+        conditions: conditions,
         manualProductIds: mode === 'manual' ? manualProductIds : [],
       };
 
@@ -176,7 +249,7 @@ export default function CollectionForm({ initialData, collectionId }: Collection
         {/* Automatic Mode: Filter Rules */}
         {mode === 'automatic' && (
           <div className="mt-4">
-            <FilterRuleBuilder
+            <FilterBuilder
               filterRules={filterRules}
               onChange={setFilterRules}
             />

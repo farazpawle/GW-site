@@ -110,11 +110,6 @@ export async function GET(
           where.origin = { in: filterRules.origins };
         }
 
-        // Difficulty filter
-        if (filterRules.difficulties && filterRules.difficulties.length > 0) {
-          where.difficulty = { in: filterRules.difficulties };
-        }
-
         // Price range
         if (filterRules.minPrice !== undefined || filterRules.maxPrice !== undefined) {
           where.price = {};

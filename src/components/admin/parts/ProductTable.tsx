@@ -3,22 +3,23 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Edit, Trash2, ExternalLink, Check, X, Eye, EyeOff } from 'lucide-react';
+import { Edit, Trash2, ExternalLink, Eye, EyeOff } from 'lucide-react';
 import type { Category, Prisma } from '@prisma/client';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import { Badge } from '@/components/ui/badge';
 
 // Serialized product type for client components (Decimal converted to number)
 interface ProductWithCategory {
   id: string;
   name: string;
   partNumber: string;
+  sku: string;
   description: string | null;
   shortDesc: string | null;
   price: number; // Serialized from Decimal
   comparePrice: number | null; // Serialized from Decimal
+  compareAtPrice: number | null; // Serialized from Decimal
   categoryId: string;
-  stockQuantity: number;
-  inStock: boolean;
   images: string[];
   specifications: Prisma.JsonValue | null;
   compatibility: string[];
@@ -36,11 +37,13 @@ interface ProductWithCategory {
   origin: string | null;
   certifications: string[];
   warranty: string | null;
-  difficulty: string | null;
   application: string[];
-  videoUrl: string | null;
   pdfUrl: string | null;
+  hasVariants: boolean;
   category: Category | null;
+  // Inventory fields (Phase 6)
+  stockQuantity?: number;
+  inStock?: boolean;
 }
 
 interface ProductTableProps {
@@ -147,8 +150,9 @@ export default function ProductTable({ products, currentSort }: ProductTableProp
     }
   };
 
-  // Handle bulk stock update
-  const handleBulkStock = async (inStock: boolean) => {
+  // Handle bulk stock update (currently unused but kept for future feature)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleBulkStock = async (inStock: boolean) => {
     setBulkActionLoading(true);
     try {
       const response = await fetch('/api/admin/parts/bulk', {
@@ -246,22 +250,7 @@ export default function ProductTable({ products, currentSort }: ProductTableProp
             <span className="font-semibold">{selectedIds.size}</span> product{selectedIds.size !== 1 ? 's' : ''} selected
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => handleBulkStock(true)}
-              disabled={bulkActionLoading}
-              className="px-4 py-2 bg-green-900/30 text-green-400 border border-green-800 rounded-lg hover:bg-green-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
-            >
-              <Check className="w-4 h-4" />
-              Set In Stock
-            </button>
-            <button
-              onClick={() => handleBulkStock(false)}
-              disabled={bulkActionLoading}
-              className="px-4 py-2 bg-red-900/30 text-red-400 border border-red-800 rounded-lg hover:bg-red-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
-            >
-              <X className="w-4 h-4" />
-              Set Out of Stock
-            </button>
+
             <button
               onClick={() => handleBulkFeatured(true)}
               disabled={bulkActionLoading}
@@ -312,7 +301,7 @@ export default function ProductTable({ products, currentSort }: ProductTableProp
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#2a2a2a] bg-[#0a0a0a]">
-                <th className="px-3 py-4 text-left w-10">
+                <th className="px-2 py-3 text-left w-8">
                   <input
                     type="checkbox"
                     checked={selectedIds.size === products.length && products.length > 0}
@@ -320,44 +309,47 @@ export default function ProductTable({ products, currentSort }: ProductTableProp
                     className="w-4 h-4 rounded border-[#2a2a2a] bg-[#0a0a0a] checked:bg-brand-maroon focus:ring-brand-maroon"
                   />
                 </th>
-                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-20">Image</th>
-                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                <th className="px-2 py-3 text-left text-sm font-medium text-gray-300 w-16">Image</th>
+                <th className="px-2 py-3 text-left text-sm font-medium text-gray-300 w-[15%]">
                   <Link href={getSortLink('name')} className="hover:text-white flex items-center gap-1">
                     Name {getSortIndicator('name')}
                   </Link>
                 </th>
-                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-32">
+                <th className="px-2 py-3 text-left text-sm font-medium text-gray-300 w-[9%]">
                   <Link href={getSortLink('partNumber')} className="hover:text-white flex items-center gap-1">
                     Part # {getSortIndicator('partNumber')}
                   </Link>
                 </th>
-                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-28">Category</th>
-                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-32">Tags</th>
-                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-24">Brand</th>
-                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-24">Origin</th>
-                <th className="px-3 py-4 text-center text-sm font-medium text-gray-300 w-20">
+                <th className="px-2 py-3 text-left text-sm font-medium text-gray-300 w-[8%]">
+                  <Link href={getSortLink('sku')} className="hover:text-white flex items-center gap-1">
+                    SKU {getSortIndicator('sku')}
+                  </Link>
+                </th>
+                <th className="px-2 py-3 text-left text-sm font-medium text-gray-300 w-[8%]">Category</th>
+                <th className="px-2 py-3 text-left text-sm font-medium text-gray-300 w-[8%]">Brand</th>
+                <th className="px-2 py-3 text-left text-sm font-medium text-gray-300 w-[7%]">Origin</th>
+                <th className="px-2 py-3 text-center text-sm font-medium text-gray-300 w-[5%]">
                   <Link href={getSortLink('showcaseOrder')} className="hover:text-white flex items-center justify-center gap-1">
                     Order {getSortIndicator('showcaseOrder')}
                   </Link>
                 </th>
-                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-24">
+                <th className="px-2 py-3 text-left text-sm font-medium text-gray-300 w-[7%]">
                   <Link href={getSortLink('price')} className="hover:text-white flex items-center gap-1">
                     Price {getSortIndicator('price')}
                   </Link>
                 </th>
-                <th className="px-3 py-4 text-center text-sm font-medium text-gray-300 w-20">
-                  <Link href={getSortLink('stockQuantity')} className="hover:text-white flex items-center justify-center gap-1">
-                    Stock {getSortIndicator('stockQuantity')}
+                <th className="px-2 py-3 text-left text-sm font-medium text-gray-300 w-[10%]">
+                  <Link href={getSortLink('stockQuantity')} className="hover:text-white flex items-center gap-1">
+                    Stock Status {getSortIndicator('stockQuantity')}
                   </Link>
                 </th>
-                <th className="px-3 py-4 text-left text-sm font-medium text-gray-300 w-28">Status</th>
-                <th className="px-3 py-4 text-right text-sm font-medium text-gray-300 w-32">Actions</th>
+                <th className="px-2 py-3 text-right text-sm font-medium text-gray-300 w-[8%]">Actions</th>
               </tr>
             </thead>
             <tbody>
               {products.map((product) => (
                 <tr key={product.id} className="border-b border-[#2a2a2a] hover:bg-[#0a0a0a] transition-colors">
-                  <td className="px-3 py-4">
+                  <td className="px-2 py-3">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(product.id)}
@@ -365,22 +357,22 @@ export default function ProductTable({ products, currentSort }: ProductTableProp
                       className="w-4 h-4 rounded border-[#2a2a2a] bg-[#0a0a0a] checked:bg-brand-maroon focus:ring-brand-maroon"
                     />
                   </td>
-                  <td className="px-3 py-4">
+                  <td className="px-2 py-3">
                     {product.images && product.images.length > 0 ? (
                       <Image
                         src={product.images[0]}
                         alt={product.name}
-                        width={48}
-                        height={48}
+                        width={40}
+                        height={40}
                         className="rounded-lg object-cover"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-lg bg-gray-100 border-2 border-gray-300 relative p-1.5">
+                      <div className="w-10 h-10 rounded-lg bg-gray-100 border-2 border-gray-300 relative p-1">
                         <Image
                           src="/images/default-logo.png"
                           alt="GW Logo"
                           fill
-                          className="object-contain opacity-90 p-1"
+                          className="object-contain opacity-90 p-0.5"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.src = '/images/GW_LOGO-removebg.png';
@@ -389,9 +381,9 @@ export default function ProductTable({ products, currentSort }: ProductTableProp
                       </div>
                     )}
                   </td>
-                  <td className="px-3 py-4">
-                    <div className="max-w-[180px]">
-                      <p className="text-white font-medium text-sm truncate">{product.name}</p>
+                  <td className="px-2 py-3">
+                    <div>
+                      <p className="text-white font-medium text-sm truncate max-w-[200px]">{product.name}</p>
                       <div className="flex items-center gap-1 mt-1 flex-wrap">
                         {product.featured && (
                           <span className="inline-block px-1.5 py-0.5 bg-[#6e0000] text-white text-xs rounded">
@@ -406,48 +398,24 @@ export default function ProductTable({ products, currentSort }: ProductTableProp
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-4 text-gray-300 font-mono text-sm">{product.partNumber}</td>
-                  <td className="px-3 py-4 text-gray-300 text-sm truncate max-w-[120px]">{product.category?.name || '-'}</td>
-                  {/* Tags Column */}
-                  <td className="px-3 py-4">
-                    <div className="flex flex-wrap gap-1 max-w-[120px]">
-                      {product.tags && product.tags.length > 0 ? (
-                        <>
-                          {product.tags.slice(0, 2).map((tag: string, idx: number) => (
-                            <span
-                              key={idx}
-                              className="inline-block px-1.5 py-0.5 bg-maroon/10 text-maroon text-xs rounded truncate max-w-[50px]"
-                              title={tag}
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {product.tags.length > 2 && (
-                            <span className="text-gray-400 text-xs">
-                              +{product.tags.length - 2}
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-gray-500 text-xs">-</span>
-                      )}
-                    </div>
-                  </td>
+                  <td className="px-2 py-3 text-gray-300 font-mono text-xs truncate">{product.partNumber}</td>
+                  <td className="px-2 py-3 text-gray-400 font-mono text-xs truncate">{'sku' in product ? (product.sku as string) : '-'}</td>
+                  <td className="px-2 py-3 text-gray-300 text-xs truncate">{product.category?.name || '-'}</td>
                   {/* Brand Column */}
-                  <td className="px-3 py-4 text-gray-300 text-sm truncate max-w-[100px]" title={product.brand || ''}>
+                  <td className="px-2 py-3 text-gray-300 text-xs truncate" title={product.brand || ''}>
                     {product.brand || '-'}
                   </td>
                   {/* Origin Column */}
-                  <td className="px-3 py-4 text-gray-300 text-sm truncate max-w-[100px]" title={product.origin || ''}>
+                  <td className="px-2 py-3 text-gray-300 text-xs truncate" title={product.origin || ''}>
                     {product.origin || '-'}
                   </td>
                   {/* Showcase Order Column */}
-                  <td className="px-3 py-4 text-center">
-                    <span className="inline-block px-2 py-1 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-300 text-xs rounded font-mono">
+                  <td className="px-2 py-3 text-center">
+                    <span className="inline-block px-1.5 py-0.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-300 text-xs rounded font-mono">
                       {product.showcaseOrder || 999}
                     </span>
                   </td>
-                  <td className="px-3 py-4">
+                  <td className="px-2 py-3">
                     <div>
                       <p className="text-white font-medium text-sm whitespace-nowrap">${product.price.toFixed(2)}</p>
                       {product.comparePrice && (
@@ -457,38 +425,40 @@ export default function ProductTable({ products, currentSort }: ProductTableProp
                       )}
                     </div>
                   </td>
-                  <td className="px-3 py-4 text-gray-300 text-sm text-center">{product.stockQuantity}</td>
-                  <td className="px-3 py-4">
-                    {product.inStock ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/30 text-green-400 border border-green-800 whitespace-nowrap">
-                        In Stock
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-900/30 text-red-400 border border-red-800 whitespace-nowrap">
-                        Out Stock
-                      </span>
-                    )}
+                  <td className="px-2 py-3">
+                    {(() => {
+                      const inStock = (product as any).inStock ?? true;
+                      const stockQty = (product as any).stockQuantity ?? 0;
+                      
+                      if (!inStock) {
+                        return <Badge variant="danger">Out of Stock</Badge>;
+                      } else if (stockQty < 10) {
+                        return <Badge variant="warning">Low Stock ({stockQty})</Badge>;
+                      } else {
+                        return <Badge variant="success">In Stock</Badge>;
+                      }
+                    })()}
                   </td>
-                  <td className="px-3 py-4">
+                  <td className="px-2 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <Link
                         href={`/products/${product.slug}`}
                         target="_blank"
-                        className="p-1.5 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                        className="p-1 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
                         title="View on site"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </Link>
                       <Link
                         href={`/admin/parts/${product.id}/edit`}
-                        className="p-1.5 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                        className="p-1 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Edit className="w-4 h-4" />
                       </Link>
                       <button
                         onClick={() => handleDeleteClick({ id: product.id, name: product.name })}
-                        className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                        className="p-1 text-gray-400 hover:text-red-400 hover:bg-[#2a2a2a] rounded-lg transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />

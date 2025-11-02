@@ -94,8 +94,8 @@ export default function MenuItemModal({ item, allItems, onClose, onSuccess }: Me
         visible: boolean;
         openNewTab: boolean;
         parentId: string | null;
-        pageId?: string;
-        externalUrl?: string;
+        pageId?: string | null;
+        externalUrl?: string | null;
       } = {
         label: data.label,
         position: data.position,
@@ -106,10 +106,10 @@ export default function MenuItemModal({ item, allItems, onClose, onSuccess }: Me
 
       if (linkType === 'page' && data.pageId) {
         payload.pageId = data.pageId;
-        // Don't send externalUrl at all when using pageId
+        payload.externalUrl = null; // Explicitly set to null
       } else if (linkType === 'external' && data.externalUrl) {
         payload.externalUrl = data.externalUrl;
-        // Don't send pageId at all when using externalUrl
+        payload.pageId = null; // Explicitly set to null
       } else {
         // If neither is provided, show error instead of sending invalid data
         alert('Please select a page or enter an external URL');
@@ -125,7 +125,22 @@ export default function MenuItemModal({ item, allItems, onClose, onSuccess }: Me
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to save menu item');
+        console.error('=== MENU ITEM SAVE FAILED ===');
+        console.error('Status:', response.status);
+        console.error('Full Error Object:', JSON.stringify(error, null, 2));
+        console.error('Payload Sent:', JSON.stringify(payload, null, 2));
+        console.error('Link Type:', linkType);
+        console.error('PageId value:', payload.pageId);
+        console.error('PageId type:', typeof payload.pageId);
+        console.error('ExternalUrl value:', payload.externalUrl);
+        console.error('ExternalUrl type:', typeof payload.externalUrl);
+        
+        // Show detailed error message
+        const errorMessage = error.details 
+          ? `Validation failed: ${error.details.map((d: { message: string }) => d.message).join(', ')}`
+          : error.error || 'Failed to save menu item';
+        
+        throw new Error(errorMessage);
       }
 
       onSuccess();

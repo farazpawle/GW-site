@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminHeader from '@/components/admin/AdminHeader';
+import Toast from '@/components/ui/Toast';
 import { Plus, Search, Loader2, Edit2, Trash2 } from 'lucide-react';
 
 interface Collection {
@@ -23,6 +24,8 @@ export default function CollectionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [modeFilter, setModeFilter] = useState<'all' | 'automatic' | 'manual'>('all');
+  const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; collection: Collection | null }>({
     isOpen: false,
     collection: null,
@@ -36,9 +39,9 @@ export default function CollectionsPage() {
       const data = await response.json();
       setCollections(data.collections || []);
       setFilteredCollections(data.collections || []);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to load collections';
-      alert(message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load collections';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -79,20 +82,37 @@ export default function CollectionsPage() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete collection');
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to delete collection');
       }
 
       setDeleteModal({ isOpen: false, collection: null });
+      setSuccess('Collection deleted successfully!');
       await fetchCollections();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete collection';
-      alert(message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete collection';
+      setError(message);
     }
   };
 
   return (
-    <div className="p-8">
+    <div className="px-8 py-6">
+      {/* Toast Notifications */}
+      <Toast
+        message={success}
+        type="success"
+        show={!!success}
+        onClose={() => setSuccess('')}
+        duration={3000}
+      />
+      <Toast
+        message={error}
+        type="error"
+        show={!!error}
+        onClose={() => setError('')}
+        duration={5000}
+      />
+
       <AdminHeader
         pageTitle="Collections"
         description="Manage product collections with automatic filtering or manual selection"

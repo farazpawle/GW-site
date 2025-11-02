@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, FolderOpen, FileText, Menu, Layers, Settings } from 'lucide-react';
+import { LayoutDashboard, Package, FolderOpen, FileText, Menu, Layers, Settings, Users, Image as ImageIcon, Mail } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
 interface NavLink {
@@ -18,6 +19,11 @@ const navLinks: NavLink[] = [
     icon: LayoutDashboard,
   },
   {
+    name: 'Users',
+    href: '/admin/users',
+    icon: Users,
+  },
+  {
     name: 'Products',
     href: '/admin/parts',
     icon: Package,
@@ -26,6 +32,11 @@ const navLinks: NavLink[] = [
     name: 'Categories',
     href: '/admin/categories',
     icon: FolderOpen,
+  },
+  {
+    name: 'Media Library',
+    href: '/admin/media',
+    icon: ImageIcon,
   },
   {
     name: 'Collections',
@@ -41,6 +52,11 @@ const navLinks: NavLink[] = [
     name: 'Menu Items',
     href: '/admin/menu-items',
     icon: Menu,
+  },
+  {
+    name: 'Messages',
+    href: '/admin/messages',
+    icon: Mail,
   },
   {
     name: 'Settings',

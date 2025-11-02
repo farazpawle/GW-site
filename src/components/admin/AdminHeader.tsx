@@ -1,4 +1,7 @@
+'use client';
+
 import { UserButton } from '@clerk/nextjs';
+import ClientOnly from '@/components/ui/ClientOnly';
 
 interface AdminHeaderProps {
   pageTitle: string;
@@ -16,14 +19,16 @@ export default function AdminHeader({ pageTitle, description }: AdminHeaderProps
           )}
         </div>
         <div className="flex items-center gap-4">
-          <UserButton 
-            afterSignOutUrl="/"
-            appearance={{
-              elements: {
-                avatarBox: 'w-10 h-10',
-              },
-            }}
-          />
+          <ClientOnly fallback={<div className="w-10 h-10" />}>
+            <UserButton 
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: 'w-10 h-10',
+                },
+              }}
+            />
+          </ClientOnly>
         </div>
       </div>
     </header>

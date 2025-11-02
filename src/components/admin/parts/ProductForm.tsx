@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import ImageUploader from './ImageUploader';
+import RelatedProductsSelector from './RelatedProductsSelector';
 import { TagInput } from '@/components/ui/TagInput';
 import { Loader2, Plus, X } from 'lucide-react';
 import { z } from 'zod';
@@ -18,17 +19,19 @@ interface Category {
 const productFormSchema = z.object({
   name: z.string().min(3).max(200),
   partNumber: z.string().min(1).max(50).regex(/^[A-Z0-9-]+$/),
+  sku: z.string().min(1, 'SKU is required').max(100).regex(/^[A-Z0-9-]+$/, 'SKU must contain only uppercase letters, numbers, and hyphens'),
   description: z.string().max(5000).optional(),
   shortDesc: z.string().max(200).optional(),
   price: z.number().positive().max(999999.99),
   comparePrice: z.number().positive().max(999999.99).optional().nullable(),
   categoryId: z.string().min(1),
-  stockQuantity: z.number().int().min(0),
-  inStock: z.boolean(),
-  images: z.array(z.string().url()).min(1).max(10),
+  images: z.array(z.string().url()).max(10).catch([]), // Empty array is valid - server will add default placeholder if empty
   specifications: z.record(z.string(), z.any()).optional().nullable(),
   compatibility: z.array(z.string()),
   featured: z.boolean(),
+  // Shopify inventory fields (only fields that exist in database)
+  hasVariants: z.boolean().optional(),
+  compareAtPrice: z.number().positive().max(999999.99).optional().nullable(),
   // Showcase fields (all optional in form)
   published: z.boolean().optional(),
   showcaseOrder: z.number().int().min(1).optional(),
@@ -37,10 +40,13 @@ const productFormSchema = z.object({
   origin: z.string().max(100).optional().nullable(),
   certifications: z.array(z.string()).optional(),
   warranty: z.string().max(200).optional().nullable(),
-  difficulty: z.enum(['Easy', 'Moderate', 'Professional', 'Advanced']).optional().nullable(),
   application: z.array(z.string()).optional(),
-  videoUrl: z.string().url().optional().or(z.literal('')).nullable(),
   pdfUrl: z.string().url().optional().or(z.literal('')).nullable(),
+  // Inventory fields
+  stockQuantity: z.number().int().min(0).optional(),
+  inStock: z.boolean().optional(),
+  // Related products (You May Also Like)
+  relatedProductIds: z.array(z.string()).max(4, 'Maximum 4 related products allowed').catch([]),
 });
 
 // Infer form data type from the form-specific schema
@@ -80,17 +86,19 @@ export default function ProductForm({
     defaultValues: {
       name: initialData?.name || '',
       partNumber: initialData?.partNumber || '',
+      sku: initialData?.sku || '',
       description: initialData?.description || '',
       shortDesc: initialData?.shortDesc || '',
       price: initialData?.price || 0,
       comparePrice: initialData?.comparePrice,
       categoryId: initialData?.categoryId || '',
-      stockQuantity: initialData?.stockQuantity || 0,
-      inStock: initialData?.inStock !== undefined ? initialData.inStock : true,
       images: initialData?.images || [],
       specifications: initialData?.specifications || {},
       compatibility: initialData?.compatibility || [],
       featured: initialData?.featured !== undefined ? initialData.featured : false,
+      // Shopify inventory fields (only fields that exist in database)
+      hasVariants: initialData?.hasVariants !== undefined ? initialData.hasVariants : false,
+      compareAtPrice: initialData?.compareAtPrice || undefined,
       // Showcase fields defaults
       published: initialData?.published !== undefined ? initialData.published : false,
       showcaseOrder: initialData?.showcaseOrder || 999,
@@ -99,10 +107,13 @@ export default function ProductForm({
       origin: initialData?.origin || undefined,
       certifications: initialData?.certifications || [],
       warranty: initialData?.warranty || undefined,
-      difficulty: initialData?.difficulty || undefined,
       application: initialData?.application || [],
-      videoUrl: initialData?.videoUrl || undefined,
       pdfUrl: initialData?.pdfUrl || undefined,
+      // Inventory fields
+      stockQuantity: initialData?.stockQuantity ?? 0,
+      inStock: initialData?.inStock ?? true,
+      // Related products
+      relatedProductIds: initialData?.relatedProductIds || [],
     },
   });
 
@@ -164,6 +175,7 @@ export default function ProductForm({
 
   const handleFormSubmit = async (data: ProductFormData) => {
     try {
+      console.log('Form data being submitted:', data);
       await onSubmit(data);
     } catch (error) {
       console.error('Form submission error:', error);
@@ -172,6 +184,20 @@ export default function ProductForm({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
+      {/* Validation Errors Display */}
+      {Object.keys(errors).length > 0 && (
+        <div className="bg-red-900/20 border border-red-500/50 rounded-xl p-4">
+          <h3 className="text-red-400 font-semibold mb-2">Please fix the following errors:</h3>
+          <ul className="list-disc list-inside space-y-1">
+            {Object.entries(errors).map(([field, error]) => (
+              <li key={field} className="text-red-300 text-sm">
+                <span className="font-medium">{field}:</span> {error?.message?.toString()}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Basic Information Section */}
       <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
         <h2 className="text-xl font-bold text-white mb-6">Basic Information</h2>
@@ -211,6 +237,23 @@ export default function ProductForm({
             )}
           </div>
 
+          {/* SKU */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              SKU <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              {...register('sku')}
+              className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg 
+                       text-white focus:outline-none focus:border-brand-maroon transition-colors uppercase"
+              placeholder="e.g., SKU-BRA-001"
+            />
+            {errors.sku && (
+              <p className="mt-1 text-sm text-red-400">{errors.sku.message}</p>
+            )}
+          </div>
+
           {/* Category */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -231,6 +274,23 @@ export default function ProductForm({
             </select>
             {errors.categoryId && (
               <p className="mt-1 text-sm text-red-400">{errors.categoryId.message}</p>
+            )}
+          </div>
+
+          {/* Brand */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Brand
+            </label>
+            <input
+              type="text"
+              {...register('brand')}
+              className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg 
+                       text-white focus:outline-none focus:border-brand-maroon transition-colors"
+              placeholder="e.g., Bosch, Brembo"
+            />
+            {errors.brand && (
+              <p className="mt-1 text-sm text-red-400">{errors.brand.message}</p>
             )}
           </div>
 
@@ -312,23 +372,6 @@ export default function ProductForm({
             />
             {errors.tags && (
               <p className="mt-1 text-sm text-red-400">{errors.tags.message}</p>
-            )}
-          </div>
-
-          {/* Brand */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Brand
-            </label>
-            <input
-              type="text"
-              {...register('brand')}
-              className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg 
-                       text-white focus:outline-none focus:border-brand-maroon transition-colors"
-              placeholder="e.g., Bosch, Brembo"
-            />
-            {errors.brand && (
-              <p className="mt-1 text-sm text-red-400">{errors.brand.message}</p>
             )}
           </div>
 
@@ -496,42 +539,11 @@ export default function ProductForm({
           </div>
         </div>
 
-        {/* Inventory Fields */}
-        <h3 className="text-lg font-semibold text-white mt-8 mb-4">Inventory</h3>
+        {/* Product Features */}
+        <h3 className="text-lg font-semibold text-white mt-8 mb-4">Product Features</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Stock Quantity */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Stock Quantity <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              {...register('stockQuantity', { valueAsNumber: true })}
-              className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg 
-                       text-white focus:outline-none focus:border-brand-maroon transition-colors"
-              placeholder="0"
-              min="0"
-            />
-            {errors.stockQuantity && (
-              <p className="mt-1 text-sm text-red-400">{errors.stockQuantity.message}</p>
-            )}
-          </div>
-
-          {/* Stock Status */}
-          <div className="flex items-end">
-            <label className="flex items-center space-x-3 cursor-pointer">
-              <input
-                type="checkbox"
-                {...register('inStock')}
-                className="w-5 h-5 rounded border-[#2a2a2a] bg-[#0a0a0a] 
-                         checked:bg-brand-maroon focus:ring-brand-maroon"
-              />
-              <span className="text-white font-medium">In Stock</span>
-            </label>
-          </div>
-
           {/* Featured Product */}
-          <div className="flex items-end">
+          <div className="flex items-center">
             <label className="flex items-center space-x-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -541,15 +553,21 @@ export default function ProductForm({
               />
               <span className="text-white font-medium">Featured Product</span>
             </label>
+            <p className="text-xs text-gray-400 ml-3">Display this product prominently</p>
           </div>
         </div>
       </div>
 
       {/* Product Images Section */}
       <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
-        <h2 className="text-xl font-bold text-white mb-6">
-          Product Images <span className="text-red-500">*</span>
-        </h2>
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-white mb-2">
+            Product Images <span className="text-gray-500 text-sm font-normal">(Optional)</span>
+          </h2>
+          <p className="text-sm text-gray-400">
+            Upload up to 10 images. If no image is provided, a default placeholder will be used.
+          </p>
+        </div>
         
         <Controller
           name="images"
@@ -563,6 +581,34 @@ export default function ProductForm({
         />
         {errors.images && (
           <p className="mt-2 text-sm text-red-400">{errors.images.message}</p>
+        )}
+      </div>
+
+      {/* Related Products Section */}
+      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-white mb-2">
+            Related Products
+          </h2>
+          <p className="text-sm text-gray-400">
+            Select up to 4 products to display as &quot;You May Also Like&quot; on this product&apos;s page
+          </p>
+        </div>
+        
+        <Controller
+          name="relatedProductIds"
+          control={control}
+          render={({ field }) => (
+            <RelatedProductsSelector
+              value={field.value}
+              onChange={field.onChange}
+              currentProductId={initialData?.id}
+              maxSelections={4}
+            />
+          )}
+        />
+        {errors.relatedProductIds && (
+          <p className="mt-2 text-sm text-red-400">{errors.relatedProductIds.message}</p>
         )}
       </div>
 
@@ -671,6 +717,63 @@ export default function ProductForm({
             ))}
           </div>
         )}
+      </div>
+
+      {/* Inventory Management Section */}
+      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+        <h2 className="text-xl font-bold text-white mb-6">Inventory Management</h2>
+        <p className="text-sm text-gray-400 mb-6">
+          Track product availability and stock quantities. When "Show Availability" is enabled in settings, 
+          this information will be visible on the public product pages.
+        </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Stock Quantity */}
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Stock Quantity
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              {...register('stockQuantity', { valueAsNumber: true })}
+              className="w-full px-4 py-3 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] 
+                       text-white placeholder-gray-500 focus:border-brand-maroon 
+                       focus:outline-none transition-colors"
+              placeholder="0"
+            />
+            {errors.stockQuantity && (
+              <p className="mt-1 text-sm text-red-400">{errors.stockQuantity.message}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">
+              Enter the number of units available in stock
+            </p>
+          </div>
+
+          {/* In Stock Checkbox */}
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Availability Status
+            </label>
+            <label className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#0a0a0a] 
+                            border border-[#2a2a2a] cursor-pointer hover:border-brand-maroon 
+                            transition-colors">
+              <input
+                type="checkbox"
+                {...register('inStock')}
+                className="w-5 h-5 rounded border-gray-600 text-brand-maroon 
+                         focus:ring-brand-maroon focus:ring-offset-0"
+              />
+              <div>
+                <span className="text-white font-medium">In Stock / Available</span>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Check if product is currently available for display
+                </p>
+              </div>
+            </label>
+          </div>
+        </div>
       </div>
 
       {/* Submit Button */}

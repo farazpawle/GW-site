@@ -131,19 +131,6 @@ export default function HeroSection() {
               fontFamily: "'Oswald', sans-serif"
             }}
           >
-            {/* Mouse Glow Effect */}
-            <div
-              className="pointer-events-none fixed rounded-full blur-3xl opacity-40 transition-all duration-200"
-              style={{
-                width: '500px',
-                height: '500px',
-                background: 'radial-gradient(circle, rgba(110, 0, 0, 0.8) 0%, transparent 70%)',
-                left: mousePosition.x - 250,
-                top: mousePosition.y - 250,
-                zIndex: 1
-              }}
-            />
-
             <div className="relative z-10">
               <div>
                 {'Transform Your Drive with'.split('').map((char, index) => (
@@ -199,55 +186,6 @@ export default function HeroSection() {
           {/* Statistics Component */}
           <div className="mb-16 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <Statistics />
-          </div>
-          
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.6s' }}>
-            <Link 
-              href="/products" 
-              className="group transition-all duration-300 hover:transform hover:scale-105 hover:shadow-2xl"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '18px 40px',
-                background: '#6e0000',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '12px',
-                fontWeight: '600',
-                fontSize: '18px',
-                boxShadow: '0 8px 20px rgba(110, 0, 0, 0.4)'
-              }}
-            >
-              <span>Shop Now</span>
-              <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Link>
-            
-            <Link 
-              href="/about" 
-              className="group transition-all duration-300 hover:transform hover:scale-105"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '18px 40px',
-                background: 'transparent',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '12px',
-                fontWeight: '600',
-                fontSize: '18px',
-                border: '2px solid rgba(255, 255, 255, 0.2)'
-              }}
-            >
-              <span>Learn More</span>
-              <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
           </div>
         </div>
 

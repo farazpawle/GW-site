@@ -13,15 +13,15 @@ export default function StatCard({ title, value, icon: Icon, description }: Stat
       {/* Animated background gradient on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-brand-maroon/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       
-      <div className="relative flex items-center justify-between">
+      <div className="relative flex items-center justify-between gap-4">
         <div className="flex-1">
           <p className="text-gray-400 text-sm font-medium mb-2 group-hover:text-gray-300 transition-colors">{title}</p>
-          <p className="text-4xl font-bold text-white mb-1 group-hover:scale-105 transition-transform duration-300">{value}</p>
+          <p className="text-4xl font-bold text-white mb-1">{value}</p>
           {description && (
             <p className="text-gray-500 text-xs mt-2 group-hover:text-gray-400 transition-colors">{description}</p>
           )}
         </div>
-        <div className="bg-brand-maroon/10 group-hover:bg-brand-maroon/20 p-4 rounded-xl group-hover:scale-110 transition-all duration-300 shadow-lg">
+        <div className="bg-brand-maroon/10 group-hover:bg-brand-maroon/20 p-4 rounded-xl transition-all duration-300 shadow-lg flex-shrink-0">
           <Icon className="text-brand-maroon group-hover:text-brand-red" size={28} />
         </div>
       </div>

@@ -1,488 +1,301 @@
+/**
+ * Settings Management UI
+ * 
+ * Main settings page with tab navigation for 4 categories:
+ * - General: Site name, tagline, logo, footer logo, timezone, currency
+ * - Contact: Email, phone, address, business hours, social media
+ * - SEO: Title, description, keywords, OG image, analytics
+ * - Email: SMTP configuration
+ * 
+ * Features:
+ * - Tab-based UI for organized settings management
+ * - Real-time data fetching from Settings API
+ * - Bulk save functionality with toast notifications
+ * - Media Library integration for footer logo selection
+ * - Loading and error states
+ * - Admin access required
+ */
+
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Loader2, Save, ShoppingCart, Eye, AlertCircle, ExternalLink } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Save, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import AdminHeader from '@/components/admin/AdminHeader';
+import GeneralSettings from '@/components/admin/settings/GeneralSettings';
+import ContactSettings from '@/components/admin/settings/ContactSettings';
+import SEOSettings from '@/components/admin/settings/SEOSettings';
+import EmailSettings from '@/components/admin/settings/EmailSettings';
+import ProductCardSettings from '@/components/admin/settings/ProductCardSettings';
 
-interface Settings {
-  ecommerce_enabled: boolean;
-  currency: {
-    code: string;
-    symbol: string;
-    position: 'before' | 'after';
-  };
-  contact_info: {
-    email: string;
-    phone: string;
-    whatsapp: string;
-  };
+type SettingsCategory = 'GENERAL' | 'CONTACT' | 'SEO' | 'EMAIL' | 'PRODUCT_CARD';
+
+interface Tab {
+  id: SettingsCategory;
+  label: string;
+  icon: string;
 }
 
+const tabs: Tab[] = [
+  { id: 'GENERAL', label: 'General', icon: '⚙️' },
+  { id: 'CONTACT', label: 'Contact & Social', icon: '📧' },
+  { id: 'SEO', label: 'SEO & Analytics', icon: '🔍' },
+  { id: 'EMAIL', label: 'Email Config', icon: '📬' },
+  { id: 'PRODUCT_CARD', label: 'Product Display', icon: '🎴' },
+];
+
 export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState<SettingsCategory>('GENERAL');
+  const [formData, setFormData] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [pendingEcommerceState, setPendingEcommerceState] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Fetch current settings
+  // Fetch all settings on mount
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await fetch('/api/admin/settings');
-        if (!response.ok) throw new Error('Failed to fetch settings');
-        
-        const data = await response.json();
-        if (data.success) {
-          setSettings(data.data);
-        }
-      } catch (error) {
-        console.error('Error fetching settings:', error);
-        setErrorMessage('Failed to load settings');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchSettings();
   }, []);
 
-  // Handle e-commerce toggle with confirmation
-  const handleEcommerceToggle = (newValue: boolean) => {
-    if (newValue !== settings?.ecommerce_enabled) {
-      setPendingEcommerceState(newValue);
-      setShowConfirmDialog(true);
-    }
-  };
-
-  const confirmEcommerceToggle = () => {
-    if (settings) {
-      setSettings({
-        ...settings,
-        ecommerce_enabled: pendingEcommerceState,
-      });
-    }
-    setShowConfirmDialog(false);
-  };
-
-  // Save settings
-  const handleSave = async () => {
-    if (!settings) return;
-
-    setSaving(true);
-    setSuccessMessage('');
-    setErrorMessage('');
-
+  const fetchSettings = async () => {
     try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/admin/settings');
+      
+      if (!response.ok) {
+        // Check if it's an authorization error
+        if (response.status === 403) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Access denied. SUPER_ADMIN role required.');
+        }
+        throw new Error('Failed to fetch settings');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setFormData(data.data);
+      } else {
+        throw new Error(data.error || 'Failed to load settings');
+      }
+    } catch (err) {
+      console.error('Error fetching settings:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (key: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      console.log('💾 Saving settings. FormData:', formData);
+      console.log('💾 Product card settings being saved:', 
+        Object.fromEntries(
+          Object.entries(formData).filter(([key]) => key.startsWith('product_card_'))
+        )
+      );
+
       const response = await fetch('/api/admin/settings', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
 
-      if (!response.ok || !data.success) {
+      if (!response.ok) {
+        // Check if it's an authorization error
+        if (response.status === 403) {
+          throw new Error(data.message || 'Access denied. SUPER_ADMIN role required.');
+        }
         throw new Error(data.error || 'Failed to save settings');
       }
 
-      setSuccessMessage('Settings saved successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to save settings');
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to save settings');
+      }
+
+      setSuccessMessage(
+        activeTab === 'PRODUCT_CARD' 
+          ? `Successfully updated ${data.updated} settings! Changes will appear within 5 seconds. Hard refresh (Ctrl+Shift+R) any product pages to see updates immediately.`
+          : `Successfully updated ${data.updated} settings!`
+      );
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setSuccessMessage(null), 5000);
+
+      // Reload settings to ensure consistency
+      await fetchSettings();
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save settings');
     } finally {
       setSaving(false);
     }
   };
 
+  // Get settings for active tab
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _getTabSettings = (category: SettingsCategory): Record<string, string> => {
+    return Object.fromEntries(
+      Object.entries(formData).filter(([key]) => {
+        // Filter by category based on key prefix
+        const categoryPrefixes: Record<SettingsCategory, string[]> = {
+          GENERAL: ['site_', 'logo_', 'timezone', 'currency'],
+          CONTACT: ['contact_', 'social_', 'business_', 'egh_logo'],
+          SEO: ['seo_', 'google_'],
+          EMAIL: ['email_'],
+          PRODUCT_CARD: ['product_card_'],
+        };
+
+        return categoryPrefixes[category]?.some((prefix) => key.startsWith(prefix)) || false;
+      })
+    );
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-maroon" />
-      </div>
-    );
-  }
-
-  if (!settings) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-red-400">Failed to load settings</p>
+      <div className="min-h-screen bg-[#0a0a0a]">
+        <AdminHeader 
+          pageTitle="Settings" 
+          description="Manage site configuration and preferences"
+        />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-brand-maroon mx-auto mb-4" />
+            <p className="text-gray-400">Loading settings...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 w-full">
-      {/* Page Header */}
-      <div className="mb-6 lg:mb-8">
-        <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Site Settings</h1>
-        <p className="text-gray-400 text-sm lg:text-base">
-          Manage your site configuration and display modes
-        </p>
-      </div>
-
-      {/* Success/Error Messages */}
-      {successMessage && (
-        <div className="mb-6 p-4 bg-green-900/30 border border-green-800 rounded-lg text-green-400">
-          {successMessage}
-        </div>
-      )}
-      {errorMessage && (
-        <div className="mb-6 p-4 bg-red-900/30 border border-red-800 rounded-lg text-red-400">
-          {errorMessage}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
-        {/* E-commerce Mode Section */}
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-5 lg:p-6 2xl:col-span-2">
-          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
-            <div className="flex-1">
-              <h2 className="text-xl lg:text-2xl font-bold text-white mb-2 flex items-center gap-2">
-                {settings.ecommerce_enabled ? (
-                  <>
-                    <ShoppingCart className="w-6 h-6 text-brand-maroon" />
-                    E-commerce Mode
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-6 h-6 text-blue-400" />
-                    Showcase Mode
-                  </>
-                )}
-              </h2>
-              <p className="text-gray-400">
-                {settings.ecommerce_enabled
-                  ? 'Your site is currently in E-commerce Mode with full pricing and shopping features.'
-                  : 'Your site is currently in Showcase Mode displaying products without pricing.'}
-              </p>
-            </div>
-
-            {/* Enhanced Toggle Switch */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <span className={`text-sm font-medium transition-colors hidden sm:block ${!settings.ecommerce_enabled ? 'text-blue-400' : 'text-gray-500'}`}>
-                Showcase
-              </span>
-              <button
-                onClick={() => handleEcommerceToggle(!settings.ecommerce_enabled)}
-                className={`
-                  relative w-24 h-12 rounded-full transition-all duration-300 ease-in-out
-                  focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-[#1a1a1a]
-                  ${settings.ecommerce_enabled 
-                    ? 'bg-gradient-to-r from-brand-maroon to-red-800 focus:ring-brand-maroon/30 shadow-lg shadow-brand-maroon/20' 
-                    : 'bg-gradient-to-r from-blue-600 to-blue-800 focus:ring-blue-600/30 shadow-lg shadow-blue-600/20'}
-                  hover:scale-105 active:scale-95 hover:shadow-xl
-                  ${settings.ecommerce_enabled ? 'hover:shadow-brand-maroon/30' : 'hover:shadow-blue-600/30'}
-                `}
-                aria-label={`Switch to ${settings.ecommerce_enabled ? 'Showcase' : 'E-commerce'} Mode`}
-              >
-                {/* Toggle Circle */}
-                <div
-                  className={`
-                    absolute top-1.5 w-9 h-9 bg-white rounded-full transition-all duration-300 ease-in-out
-                    shadow-lg flex items-center justify-center
-                    ${settings.ecommerce_enabled ? 'right-1.5 rotate-0' : 'left-1.5 -rotate-12'}
-                  `}
-                >
-                  {/* Icon inside toggle */}
-                  {settings.ecommerce_enabled ? (
-                    <ShoppingCart className="w-5 h-5 text-brand-maroon transition-transform duration-300" />
-                  ) : (
-                    <Eye className="w-5 h-5 text-blue-600 transition-transform duration-300" />
-                  )}
-                </div>
-                
-                {/* Animated background effect */}
-                <div className={`
-                  absolute inset-0 rounded-full opacity-0 hover:opacity-20 transition-opacity duration-300
-                  bg-white
-                `} />
-              </button>
-              <span className={`text-sm font-medium transition-colors hidden sm:block ${settings.ecommerce_enabled ? 'text-brand-maroon' : 'text-gray-500'}`}>
-                E-commerce
-              </span>
-            </div>
+    <div className="min-h-screen bg-[#0a0a0a]">
+      {/* Header with Save Button */}
+      <div className="border-b border-[#2a2a2a] bg-[#0a0a0a] sticky top-0 z-10">
+        <div className="flex items-center justify-between px-8 py-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Settings</h1>
+            <p className="text-sm text-gray-400 mt-1">
+              Manage site configuration and preferences
+            </p>
           </div>
-
-          {/* Mode Comparison */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-            {/* Showcase Mode */}
-            <div
-              className={`p-4 rounded-lg border ${
-                !settings.ecommerce_enabled
-                  ? 'bg-blue-900/20 border-blue-800'
-                  : 'bg-[#0a0a0a] border-[#2a2a2a]'
-              }`}
-            >
-              <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                Showcase Mode
-              </h3>
-              <ul className="text-sm text-gray-400 space-y-1">
-                <li>• Display products without pricing</li>
-                <li>• Focus on specifications and features</li>
-                <li>• Ideal for catalog or portfolio sites</li>
-                <li>• No shopping cart or checkout</li>
-              </ul>
-            </div>
-
-            {/* E-commerce Mode */}
-            <div
-              className={`p-4 rounded-lg border ${
-                settings.ecommerce_enabled
-                  ? 'bg-maroon/10 border-brand-maroon'
-                  : 'bg-[#0a0a0a] border-[#2a2a2a]'
-              }`}
-            >
-              <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5" />
-                E-commerce Mode
-              </h3>
-              <ul className="text-sm text-gray-400 space-y-1">
-                <li>• Display products with full pricing</li>
-                <li>• Enable shopping cart and checkout</li>
-                <li>• Complete e-commerce functionality</li>
-                <li>• Stock and inventory management</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Preview Links */}
-          <div className="flex items-center gap-4">
-            <a
-              href="/products"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-gray-300 hover:text-white hover:border-brand-maroon transition-colors"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Preview Public Catalog
-            </a>
-          </div>
-        </div>
-
-        {/* Currency Settings */}
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-5 lg:p-6">
-          <h2 className="text-lg lg:text-xl font-bold text-white mb-3 lg:mb-4">Currency Settings</h2>
-          <p className="text-sm text-gray-400 mb-4 lg:mb-6">
-            Configure currency display for pricing (applies in E-commerce Mode)
-          </p>
-
-          <div className="grid grid-cols-1 gap-6">
-            {/* Currency Code */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Currency
-              </label>
-              <select
-                value={settings.currency.code}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    currency: {
-                      ...settings.currency,
-                      code: e.target.value,
-                      symbol: e.target.value === 'AED' ? 'د.إ' : e.target.value === 'USD' ? '$' : '€',
-                    },
-                  })
-                }
-                className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-brand-maroon transition-colors"
-              >
-                <option value="AED">AED - UAE Dirham (د.إ)</option>
-                <option value="USD">USD - US Dollar ($)</option>
-                <option value="EUR">EUR - Euro (€)</option>
-              </select>
-            </div>
-
-            {/* Symbol Position */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Symbol Position
-              </label>
-              <div className="flex gap-4 pt-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="symbolPosition"
-                    value="before"
-                    checked={settings.currency.position === 'before'}
-                    onChange={() =>
-                      setSettings({
-                        ...settings,
-                        currency: {
-                          ...settings.currency,
-                          position: 'before',
-                        },
-                      })
-                    }
-                    className="w-4 h-4 text-brand-maroon focus:ring-brand-maroon"
-                  />
-                  <span className="text-gray-300">
-                    Before ({settings.currency.symbol}100)
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="symbolPosition"
-                    value="after"
-                    checked={settings.currency.position === 'after'}
-                    onChange={() =>
-                      setSettings({
-                        ...settings,
-                        currency: {
-                          ...settings.currency,
-                          position: 'after',
-                        },
-                      })
-                    }
-                    className="w-4 h-4 text-brand-maroon focus:ring-brand-maroon"
-                  />
-                  <span className="text-gray-300">
-                    After (100{settings.currency.symbol})
-                  </span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Information */}
-        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-5 lg:p-6">
-          <h2 className="text-lg lg:text-xl font-bold text-white mb-3 lg:mb-4">Contact Information</h2>
-          <p className="text-sm text-gray-400 mb-4 lg:mb-6">
-            Displayed in footer and contact pages
-          </p>
-
-          <div className="grid grid-cols-1 gap-6">
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                value={settings.contact_info.email}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    contact_info: {
-                      ...settings.contact_info,
-                      email: e.target.value,
-                    },
-                  })
-                }
-                className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-brand-maroon transition-colors"
-                placeholder="contact@example.com"
-              />
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Phone
-              </label>
-              <input
-                type="tel"
-                value={settings.contact_info.phone}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    contact_info: {
-                      ...settings.contact_info,
-                      phone: e.target.value,
-                    },
-                  })
-                }
-                className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-brand-maroon transition-colors"
-                placeholder="+971 XX XXX XXXX"
-              />
-            </div>
-
-            {/* WhatsApp */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                WhatsApp
-              </label>
-              <input
-                type="tel"
-                value={settings.contact_info.whatsapp}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    contact_info: {
-                      ...settings.contact_info,
-                      whatsapp: e.target.value,
-                    },
-                  })
-                }
-                className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-brand-maroon transition-colors"
-                placeholder="+971 XX XXX XXXX"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Save Button */}
-        <div className="flex justify-end 2xl:col-span-2">
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full sm:w-auto px-6 lg:px-8 py-3 lg:py-4 bg-brand-maroon hover:bg-brand-red rounded-xl text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex items-center gap-2 px-6 py-2.5 bg-brand-maroon hover:bg-brand-red disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
           >
             {saving ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 Saving...
               </>
             ) : (
               <>
-                <Save className="w-5 h-5" />
-                Save Settings
+                <Save className="w-4 h-4" />
+                Save Changes
               </>
             )}
           </button>
         </div>
       </div>
 
-      {/* Confirmation Dialog */}
-      {showConfirmDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 max-w-md w-full mx-4">
-            <div className="flex items-start gap-4 mb-4">
-              <AlertCircle className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="text-lg font-bold text-white mb-2">
-                  Confirm Mode Change
-                </h3>
-                <p className="text-gray-400">
-                  Are you sure you want to switch to{' '}
-                  <span className="font-semibold text-white">
-                    {pendingEcommerceState ? 'E-commerce Mode' : 'Showcase Mode'}
-                  </span>
-                  ? This will change how products are displayed to visitors.
-                </p>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowConfirmDialog(false)}
-                className="px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white hover:bg-[#2a2a2a] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmEcommerceToggle}
-                className="px-4 py-2 bg-brand-maroon hover:bg-brand-red rounded-lg text-white transition-colors"
-              >
-                Confirm
-              </button>
+      <div className="px-8 py-6">
+        {/* Success/Error Messages */}
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-900/30 border border-green-800 rounded-lg flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-green-400 font-medium">Success</p>
+              <p className="text-green-300/80 text-sm">{successMessage}</p>
             </div>
           </div>
+        )}
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-900/30 border border-red-800 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-red-400 font-medium">Error</p>
+              <p className="text-red-300/80 text-sm">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Tab Navigation */}
+        <div className="mb-8">
+          <div className="flex gap-3 overflow-x-auto pb-2 px-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  flex items-center gap-3 px-6 py-4 rounded-xl font-medium transition-all whitespace-nowrap
+                  ${
+                    activeTab === tab.id
+                      ? 'bg-gradient-to-r from-[#6e0000] to-[#8e0000] text-white shadow-lg shadow-[#6e0000]/30'
+                      : 'bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#2a2a2a] border border-[#2a2a2a]'
+                  }
+                `}
+              >
+                <span className="text-2xl">{tab.icon}</span>
+                <div className="text-left">
+                  <div className="font-semibold">{tab.label}</div>
+                  <div className={`text-xs ${activeTab === tab.id ? 'text-white/70' : 'text-gray-500'}`}>
+                    {tab.id === 'GENERAL' && 'Site basics & branding'}
+                    {tab.id === 'CONTACT' && 'Contact info & links'}
+                    {tab.id === 'SEO' && 'Search & metadata'}
+                    {tab.id === 'EMAIL' && 'SMTP & email setup'}
+                    {tab.id === 'PRODUCT_CARD' && 'Product card settings'}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
-      )}
+
+        {/* Tab Content */}
+        <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-8">
+          {activeTab === 'GENERAL' && (
+            <GeneralSettings formData={formData} onChange={handleChange} />
+          )}
+          {activeTab === 'CONTACT' && (
+            <ContactSettings formData={formData} onChange={handleChange} />
+          )}
+          {activeTab === 'SEO' && (
+            <SEOSettings formData={formData} onChange={handleChange} />
+          )}
+          {activeTab === 'EMAIL' && (
+            <EmailSettings formData={formData} onChange={handleChange} />
+          )}
+          {activeTab === 'PRODUCT_CARD' && (
+            <ProductCardSettings formData={formData} onChange={handleChange} />
+          )}
+        </div>
+
+        {/* Info Section */}
+        <div className="mt-6 p-4 bg-blue-900/20 border border-blue-800 rounded-lg">
+          <p className="text-blue-400 text-sm">
+            <strong>Note:</strong> Changes are saved to the database and will take effect immediately.
+            Sensitive fields (passwords, API keys) are automatically encrypted.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

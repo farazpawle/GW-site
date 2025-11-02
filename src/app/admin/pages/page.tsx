@@ -15,6 +15,7 @@ interface Page {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  isPermanent: boolean;
   _count: {
     menuItems: number;
   };
@@ -37,7 +38,7 @@ async function getPages(): Promise<Page[]> {
     publishedAt: page.publishedAt?.toISOString() || null,
     createdAt: page.createdAt.toISOString(),
     updatedAt: page.updatedAt.toISOString(),
-  }));
+  })) as unknown as Page[];
 }
 
 // Loading component
@@ -62,7 +63,7 @@ export default async function PagesListPage() {
   const pages = await getPages();
 
   return (
-    <div className="p-8">
+    <div className="px-8 py-6">
       <AdminHeader 
         pageTitle="Pages" 
         description="Manage custom pages with product groups"

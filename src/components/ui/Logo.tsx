@@ -1,12 +1,23 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  logoUrl: string;
+  siteName: string;
 }
 
-export default function Logo({ size = 'md', className = '' }: LogoProps) {
+export default function Logo({ 
+  size = 'md', 
+  className = '', 
+  logoUrl, 
+  siteName 
+}: LogoProps) {
+  const [imgError, setImgError] = useState(false);
   const sizeMap = {
     sm: { width: 380, height: 100 },
     md: { width: 450, height: 120 },
@@ -26,18 +37,25 @@ export default function Logo({ size = 'md', className = '' }: LogoProps) {
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        <Image 
-          src="/images/GW_LOGO-removebg.png"
-          alt="Garrit & Wulf Logo"
-          width={dimensions.width}
-          height={dimensions.height}
-          priority
-          className="object-contain"
-          style={{
-            maxWidth: '100%',
-            maxHeight: '100%'
-          }}
-        />
+        {imgError ? (
+          <div className="flex items-center justify-center text-2xl font-bold text-brand-red">
+            {siteName}
+          </div>
+        ) : (
+          <Image 
+            src={logoUrl}
+            alt={`${siteName} Logo`}
+            width={dimensions.width}
+            height={dimensions.height}
+            priority
+            className="object-contain"
+            onError={() => setImgError(true)}
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%'
+            }}
+          />
+        )}
       </div>
     </Link>
   );

@@ -4,23 +4,30 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import AdminHeader from '@/components/admin/AdminHeader';
 import ProductForm from '@/components/admin/parts/ProductForm';
+import CrossReferenceManager from '@/components/admin/parts/CrossReferenceManager';
+import OEMNumbersManager from '@/components/admin/parts/OEMNumbersManager';
+import VehicleCompatibilityManager from '@/components/admin/parts/VehicleCompatibilityManager';
+import Toast from '@/components/ui/Toast';
 import { Loader2 } from 'lucide-react';
 
 // Type for form submission - matches ProductForm's internal type
 type ProductFormData = {
   name: string;
   partNumber: string;
+  sku: string;
   description?: string;
   shortDesc?: string;
   price: number;
   comparePrice?: number | null;
   categoryId: string;
-  stockQuantity: number;
-  inStock: boolean;
   images: string[];
   specifications?: Record<string, unknown> | null;
   compatibility: string[];
   featured: boolean;
+  // Shopify inventory fields (only fields that exist in database)
+  hasVariants?: boolean;
+  compareAtPrice?: number | null;
+  // Showcase fields
   published?: boolean;
   showcaseOrder?: number;
   tags?: string[];
@@ -28,10 +35,10 @@ type ProductFormData = {
   origin?: string | null;
   certifications?: string[];
   warranty?: string | null;
-  difficulty?: 'Easy' | 'Moderate' | 'Professional' | 'Advanced' | null;
   application?: string[];
-  videoUrl?: string | null;
   pdfUrl?: string | null;
+  // Related products
+  relatedProductIds: string[];
 };
 
 export default function EditProductPage() {
@@ -82,6 +89,8 @@ export default function EditProductPage() {
     setSuccess(false);
 
     try {
+      console.log('Submitting product data:', data);
+      
       const response = await fetch(`/api/admin/parts/${productId}`, {
         method: 'PUT',
         headers: {
@@ -91,18 +100,22 @@ export default function EditProductPage() {
       });
 
       const result = await response.json();
+      console.log('API Response:', { status: response.status, result });
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to update product');
+        const errorMessage = result.error || 'Failed to update product';
+        const errorDetails = result.details ? JSON.stringify(result.details, null, 2) : '';
+        throw new Error(`${errorMessage}${errorDetails ? '\n' + errorDetails : ''}`);
       }
 
       setSuccess(true);
+      setIsSubmitting(false);
 
-      // Show success message briefly, then redirect
+      // Show success message for 3 seconds, then redirect
       setTimeout(() => {
         router.push('/admin/parts');
         router.refresh();
-      }, 1000);
+      }, 3000);
 
     } catch (err) {
       console.error('Error updating product:', err);
@@ -187,65 +200,34 @@ export default function EditProductPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
+      {/* Toast Notifications */}
+      <Toast
+        message="Product updated successfully! Redirecting to products list..."
+        type="success"
+        show={success}
+        onClose={() => setSuccess(false)}
+        duration={3000}
+      />
+      <Toast
+        message={error || 'Failed to update product'}
+        type="error"
+        show={!!error}
+        onClose={() => setError(null)}
+        duration={5000}
+      />
+
       <AdminHeader
         pageTitle="Edit Product"
         description={productData?.name ? `Editing: ${productData.name}` : 'Update product information'}
       />
 
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-        {/* Success Message */}
-        {success && (
-          <div className="mb-6 p-4 bg-green-900/30 border border-green-800 rounded-lg">
-            <div className="flex items-center gap-2">
-              <svg
-                className="w-5 h-5 text-green-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              <p className="text-green-400 font-medium">
-                Product updated successfully! Redirecting...
-              </p>
-            </div>
-          </div>
-        )}
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-900/30 border border-red-800 rounded-lg">
-            <div className="flex items-start gap-2">
-              <svg
-                className="w-5 h-5 text-red-400 mt-0.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-              <div>
-                <p className="text-red-400 font-medium">Error updating product</p>
-                <p className="text-red-300 text-sm mt-1">{error}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Product Form */}
+        {/* Tabbed Interface */}
         {productData && (
-          <ProductForm
-            initialData={productData}
+          <TabsInterface
+            productData={productData}
+            productId={productId}
             onSubmit={handleSubmit}
             submitLabel="Update Product"
           />
@@ -262,6 +244,75 @@ export default function EditProductPage() {
             Cancel
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Tabbed Interface Component
+function TabsInterface({
+  productData,
+  productId,
+  onSubmit,
+  submitLabel,
+}: {
+  productData: Partial<ProductFormData> & { id: string };
+  productId: string;
+  onSubmit: (data: ProductFormData) => Promise<void>;
+  submitLabel: string;
+}) {
+  const [activeTab, setActiveTab] = useState<'product' | 'cross-references' | 'oem-numbers' | 'vehicle-compatibility'>('product');
+
+  const tabs = [
+    { id: 'product' as const, label: 'Product Info', icon: '📦' },
+    { id: 'cross-references' as const, label: 'Cross-References', icon: '🔗' },
+    { id: 'oem-numbers' as const, label: 'OEM Numbers', icon: '🏷️' },
+    { id: 'vehicle-compatibility' as const, label: 'Vehicle Compatibility', icon: '🚗' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Tabs */}
+      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-x-auto">
+        <div className="flex min-w-max">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 px-6 py-4 font-medium transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-brand-maroon text-white border-b-2 border-brand-red'
+                  : 'text-gray-400 hover:text-white hover:bg-[#0a0a0a]'
+              }`}
+            >
+              <span className="mr-2">{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div>
+        {activeTab === 'product' && (
+          <ProductForm
+            initialData={productData}
+            onSubmit={onSubmit}
+            submitLabel={submitLabel}
+          />
+        )}
+
+        {activeTab === 'cross-references' && (
+          <CrossReferenceManager partId={productId} />
+        )}
+
+        {activeTab === 'oem-numbers' && (
+          <OEMNumbersManager partId={productId} />
+        )}
+
+        {activeTab === 'vehicle-compatibility' && (
+          <VehicleCompatibilityManager partId={productId} />
+        )}
       </div>
     </div>
   );

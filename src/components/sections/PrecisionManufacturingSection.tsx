@@ -58,7 +58,7 @@ export default function PrecisionManufacturingSection() {
           {services.map((service, index) => (
             <div 
               key={index} 
-              className="group rounded-2xl overflow-hidden border hover:border-[#6e0000] transition-all duration-300 hover:transform hover:scale-105 cursor-pointer"
+              className="group rounded-2xl overflow-hidden border hover:border-[#6e0000] transition-all duration-300 hover:transform hover:scale-105 cursor-pointer flex flex-col"
               style={{ 
                 backgroundColor: '#0a0a0a',
                 borderColor: '#2a2a2a'
@@ -88,7 +88,7 @@ export default function PrecisionManufacturingSection() {
               </div>
 
               {/* Content Area */}
-              <div className="p-6">
+              <div className="p-6 flex flex-col flex-1">
                 <h3 className="text-xl font-bold mb-3 text-white group-hover:text-[#ff9999] transition-colors">
                   {service.title}
                 </h3>
@@ -96,7 +96,7 @@ export default function PrecisionManufacturingSection() {
                   {service.description}
                 </p>
                 <button 
-                  className="flex items-center gap-2 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-[#6e0000]/30 group-hover:gap-3 w-full justify-center"
+                  className="flex items-center gap-2 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-[#6e0000]/30 group-hover:gap-3 w-full justify-center mt-auto"
                   style={{ 
                     backgroundColor: '#6e0000',
                     fontSize: '0.875rem',
@@ -109,17 +109,6 @@ export default function PrecisionManufacturingSection() {
               </div>
             </div>
           ))}
-        </div>
-        
-        {/* Bottom CTA */}
-        <div className="text-center mt-16">
-          <Link 
-            href="/products"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-white font-medium transition-colors group"
-          >
-            <span>View All Products</span>
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
         </div>
       </div>
     </section>

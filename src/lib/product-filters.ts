@@ -1,248 +1,187 @@
 /**
- * Product Filtering Utility Module
+ * Product Filtering Utility Module (Shopify-style)
  * 
- * Centralized filtering logic for products used across:
- * - Page preview API (groupType filtering)
- * - Collection products API (filterRules)
- * - Future search/discovery features
+ * Centralized filtering logic for smart collections using condition-based rules
+ * Converts Shopify-style conditions into Prisma where clauses
  */
 
 import { Prisma } from "@prisma/client";
+import type { Condition, CollectionFilterRules } from "@/lib/validations/collection";
 
 /**
- * Product filter parameters
+ * Valid sort options for collections
  */
-export interface ProductFilters {
-  categoryIds?: string[];
-  tags?: string[];
-  brands?: string[];
-  origins?: string[];
-  difficulties?: string[];
-  minPrice?: number;
-  maxPrice?: number;
-  inStock?: boolean;
-  featured?: boolean;
-}
+export type CollectionSortBy = 
+  | "manual" 
+  | "best_selling" 
+  | "created_desc" 
+  | "created_asc" 
+  | "price_asc" 
+  | "price_desc" 
+  | "alpha_asc" 
+  | "alpha_desc";
 
 /**
- * Valid sort options for products
- */
-export type ProductSortBy = "name" | "price" | "createdAt" | "featured";
-
-/**
- * Builds a Prisma where clause for product filtering
+ * Builds a Prisma where clause from a single condition
  * 
- * @param filters - Filter parameters to apply
- * @returns Prisma where clause object for Part model
- * 
- * @example
- * ```typescript
- * const where = buildProductWhereClause({
- *   categoryIds: ['cat1', 'cat2'],
- *   minPrice: 10,
- *   maxPrice: 100,
- *   inStock: true
- * });
- * const products = await prisma.part.findMany({ where });
- * ```
+ * @param condition - Single condition object
+ * @returns Prisma where clause fragment
  */
-export function buildProductWhereClause(
-  filters: ProductFilters
-): Prisma.PartWhereInput {
+function buildConditionWhereClause(condition: Condition): Prisma.PartWhereInput {
+  const { field, operator, value } = condition;
   const where: Prisma.PartWhereInput = {};
 
-  // Category filter - match any of the provided category IDs
-  if (filters.categoryIds && filters.categoryIds.length > 0) {
-    where.categoryId = {
-      in: filters.categoryIds,
-    };
-  }
-
-  // Brand filter - match any of the provided brands
-  if (filters.brands && filters.brands.length > 0) {
-    where.brand = {
-      in: filters.brands,
-    };
-  }
-
-  // Tags filter - match products that have at least one of the provided tags
-  // Uses Prisma's hasSome for array fields
-  if (filters.tags && filters.tags.length > 0) {
-    where.tags = {
-      hasSome: filters.tags,
-    };
-  }
-
-  // Origin filter - match any of the provided origins
-  if (filters.origins && filters.origins.length > 0) {
-    where.origin = {
-      in: filters.origins,
-    };
-  }
-
-  // Difficulty filter - match any of the provided difficulty levels
-  if (filters.difficulties && filters.difficulties.length > 0) {
-    where.difficulty = {
-      in: filters.difficulties,
-    };
-  }
-
-  // Price range filter
-  if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-    where.price = {};
-    
-    if (filters.minPrice !== undefined) {
-      where.price.gte = filters.minPrice;
-    }
-    
-    if (filters.maxPrice !== undefined) {
-      where.price.lte = filters.maxPrice;
+  // Product Title conditions
+  if (field === 'product_title') {
+    if (operator === 'equals') {
+      where.name = { equals: String(value), mode: 'insensitive' };
+    } else if (operator === 'not_equals') {
+      where.name = { not: String(value), mode: 'insensitive' };
+    } else if (operator === 'contains') {
+      where.name = { contains: String(value), mode: 'insensitive' };
+    } else if (operator === 'not_contains') {
+      where.NOT = { name: { contains: String(value), mode: 'insensitive' } };
+    } else if (operator === 'starts_with') {
+      where.name = { startsWith: String(value), mode: 'insensitive' };
+    } else if (operator === 'ends_with') {
+      where.name = { endsWith: String(value), mode: 'insensitive' };
     }
   }
 
-  // Stock availability filter
-  if (filters.inStock !== undefined) {
-    where.inStock = filters.inStock;
+  // Product Vendor/Brand conditions
+  else if (field === 'product_vendor') {
+    if (operator === 'equals') {
+      where.brand = { equals: String(value), mode: 'insensitive' };
+    } else if (operator === 'not_equals') {
+      where.brand = { not: String(value), mode: 'insensitive' };
+    }
   }
 
-  // Featured status filter
-  if (filters.featured !== undefined) {
-    where.featured = filters.featured;
+  // Product Tag conditions
+  else if (field === 'product_tag') {
+    if (operator === 'equals') {
+      where.tags = { has: String(value) };
+    } else if (operator === 'not_equals') {
+      where.NOT = { tags: { has: String(value) } };
+    }
   }
+
+  // Variant Price conditions
+  else if (field === 'variant_price') {
+    const numValue = Number(value);
+    if (operator === 'equals') {
+      where.price = { equals: numValue };
+    } else if (operator === 'not_equals') {
+      where.price = { not: numValue };
+    } else if (operator === 'greater_than') {
+      where.price = { gt: numValue };
+    } else if (operator === 'less_than') {
+      where.price = { lt: numValue };
+    }
+  }
+
+  // Compare at Price conditions
+  else if (field === 'variant_compare_at_price') {
+    if (operator === 'is_set') {
+      where.compareAtPrice = { not: null };
+    } else if (operator === 'is_not_set') {
+      where.compareAtPrice = null;
+    } else {
+      const numValue = Number(value);
+      if (operator === 'equals') {
+        where.compareAtPrice = { equals: numValue };
+      } else if (operator === 'not_equals') {
+        where.compareAtPrice = { not: numValue };
+      } else if (operator === 'greater_than') {
+        where.compareAtPrice = { gt: numValue };
+      } else if (operator === 'less_than') {
+        where.compareAtPrice = { lt: numValue };
+      }
+    }
+  }
+
+  // Variant Weight conditions - NOT SUPPORTED (field doesn't exist in schema)
+  // Keeping for future expansion if weight field is added
+
+  // Variant Inventory conditions - NOT SUPPORTED (no stock field in schema)
+  // Keeping for future expansion if inventory tracking is added
 
   return where;
 }
 
 /**
- * Gets the Prisma orderBy object for product sorting
+ * Builds a Prisma where clause from collection filter rules (Shopify-style)
  * 
- * @param sortBy - Sort field name
+ * @param rules - Collection filter rules with conditions and match type
+ * @returns Prisma where clause object for Part model
+ * 
+ * @example
+ * ```typescript
+ * const rules = {
+ *   match: 'all',
+ *   conditions: [
+ *     { field: 'product_tag', operator: 'equals', value: 'summer' },
+ *     { field: 'variant_price', operator: 'less_than', value: 100 }
+ *   ]
+ * };
+ * const where = buildProductWhereClause(rules);
+ * const products = await prisma.part.findMany({ where });
+ * ```
+ */
+export function buildProductWhereClause(
+  rules: CollectionFilterRules
+): Prisma.PartWhereInput {
+  const conditionClauses = rules.conditions.map(buildConditionWhereClause);
+
+  // Use AND or OR logic based on match type
+  if (rules.match === 'all') {
+    return { AND: conditionClauses };
+  } else {
+    return { OR: conditionClauses };
+  }
+}
+
+/**
+ * Gets the Prisma orderBy object for collection sorting (Shopify-style)
+ * 
+ * @param sortBy - Sort option
  * @returns Prisma orderBy object for Part model
  * 
  * @example
  * ```typescript
- * const orderBy = getSortOrder('price');
- * const products = await prisma.part.findMany({
- *   orderBy,
- *   where: buildProductWhereClause(filters)
- * });
+ * const orderBy = getCollectionSortOrder('price_asc');
+ * const products = await prisma.part.findMany({ orderBy, where });
  * ```
  */
-export function getSortOrder(sortBy: ProductSortBy): Prisma.PartOrderByWithRelationInput {
+export function getCollectionSortOrder(sortBy: CollectionSortBy): Prisma.PartOrderByWithRelationInput {
   switch (sortBy) {
-    case "name":
-      return { name: "asc" };
+    case "manual":
+      // For manual collections, sort by the order products were added
+      return { createdAt: "desc" };
     
-    case "price":
+    case "best_selling":
+      // Sort by views as a proxy for best selling
+      return { views: "desc" };
+    
+    case "created_desc":
+      return { createdAt: "desc" };
+    
+    case "created_asc":
+      return { createdAt: "asc" };
+    
+    case "price_asc":
       return { price: "asc" };
     
-    case "featured":
-      // Featured items first, then by creation date
-      return { featured: "desc" };
+    case "price_desc":
+      return { price: "desc" };
     
-    case "createdAt":
+    case "alpha_asc":
+      return { name: "asc" };
+    
+    case "alpha_desc":
+      return { name: "desc" };
+    
     default:
       return { createdAt: "desc" };
   }
-}
-
-/**
- * Validates price range filters
- * 
- * @param minPrice - Minimum price
- * @param maxPrice - Maximum price
- * @returns True if price range is valid
- */
-export function validatePriceRange(
-  minPrice?: number,
-  maxPrice?: number
-): boolean {
-  if (minPrice !== undefined && minPrice < 0) {
-    return false;
-  }
-  
-  if (maxPrice !== undefined && maxPrice < 0) {
-    return false;
-  }
-  
-  if (minPrice !== undefined && maxPrice !== undefined) {
-    return minPrice < maxPrice;
-  }
-  
-  return true;
-}
-
-/**
- * Sanitizes filter values to ensure they are valid
- * Removes empty arrays, null values, and invalid data
- * 
- * @param filters - Raw filter object
- * @returns Sanitized filter object
- */
-export function sanitizeFilters(filters: Partial<ProductFilters>): ProductFilters {
-  const sanitized: ProductFilters = {};
-
-  // Remove empty arrays
-  if (filters.categoryIds && filters.categoryIds.length > 0) {
-    sanitized.categoryIds = filters.categoryIds.filter(id => id && id.trim().length > 0);
-  }
-
-  if (filters.tags && filters.tags.length > 0) {
-    sanitized.tags = filters.tags.filter(tag => tag && tag.trim().length > 0);
-  }
-
-  if (filters.brands && filters.brands.length > 0) {
-    sanitized.brands = filters.brands.filter(brand => brand && brand.trim().length > 0);
-  }
-
-  if (filters.origins && filters.origins.length > 0) {
-    sanitized.origins = filters.origins.filter(origin => origin && origin.trim().length > 0);
-  }
-
-  if (filters.difficulties && filters.difficulties.length > 0) {
-    sanitized.difficulties = filters.difficulties.filter(diff => diff && diff.trim().length > 0);
-  }
-
-  // Validate and include price filters
-  if (filters.minPrice !== undefined && filters.minPrice >= 0) {
-    sanitized.minPrice = filters.minPrice;
-  }
-
-  if (filters.maxPrice !== undefined && filters.maxPrice >= 0) {
-    sanitized.maxPrice = filters.maxPrice;
-  }
-
-  // Include boolean filters if explicitly set
-  if (filters.inStock !== undefined) {
-    sanitized.inStock = filters.inStock;
-  }
-
-  if (filters.featured !== undefined) {
-    sanitized.featured = filters.featured;
-  }
-
-  return sanitized;
-}
-
-/**
- * Counts the number of active filters
- * Useful for UI badges showing "5 filters applied"
- * 
- * @param filters - Filter object
- * @returns Number of active filters
- */
-export function countActiveFilters(filters: ProductFilters): number {
-  let count = 0;
-
-  if (filters.categoryIds && filters.categoryIds.length > 0) count++;
-  if (filters.tags && filters.tags.length > 0) count++;
-  if (filters.brands && filters.brands.length > 0) count++;
-  if (filters.origins && filters.origins.length > 0) count++;
-  if (filters.difficulties && filters.difficulties.length > 0) count++;
-  if (filters.minPrice !== undefined) count++;
-  if (filters.maxPrice !== undefined) count++;
-  if (filters.inStock !== undefined) count++;
-  if (filters.featured !== undefined) count++;
-
-  return count;
 }

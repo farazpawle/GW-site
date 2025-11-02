@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { isEcommerceEnabled } from '@/lib/settings';
+import { isEcommerceEnabled, getSiteSetting } from '@/lib/settings';
 import { Prisma } from '@prisma/client';
+
+// Disable caching for this API route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 /**
  * Public Product List API - Mode-Aware
@@ -26,8 +30,10 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     
-    // Check e-commerce mode
+    // Check e-commerce mode and price display setting
     const ecommerceEnabled = await isEcommerceEnabled();
+    const showPriceSetting = await getSiteSetting('product_card_showPrice');
+    const shouldShowPrice = ecommerceEnabled || showPriceSetting === 'true' || showPriceSetting === true;
     const mode = ecommerceEnabled ? 'ecommerce' : 'showcase';
 
     // Parse query parameters
@@ -175,25 +181,38 @@ export async function GET(request: NextRequest) {
         origin: product.origin,
         certifications: product.certifications,
         warranty: product.warranty,
-        difficulty: product.difficulty,
         application: product.application,
-        videoUrl: product.videoUrl,
         pdfUrl: product.pdfUrl,
+        sku: product.sku,
+        partNumber: product.partNumber,
       };
 
-      // Include pricing only in e-commerce mode
-      if (ecommerceEnabled) {
+      // Include pricing and inventory when ecommerce is enabled OR when show price setting is on
+      if (shouldShowPrice) {
         return {
           ...baseProduct,
           price: product.price.toNumber(),
           comparePrice: product.comparePrice?.toNumber() || null,
-          inStock: product.inStock,
-          stockQuantity: product.stockQuantity,
+          inStock: (product as any).inStock,
+          stockQuantity: (product as any).stockQuantity,
         };
       }
 
       return baseProduct;
     });
+
+    // Debug logging - REMOVE AFTER VERIFICATION
+    if (serializedProducts.length > 0) {
+      console.log('🔧 API Debug - First product being returned:', {
+        name: serializedProducts[0].name,
+        partNumber: serializedProducts[0].partNumber,
+        sku: serializedProducts[0].sku,
+        brand: serializedProducts[0].brand,
+        origin: serializedProducts[0].origin,
+        category: serializedProducts[0].category,
+        hasAllFields: !!(serializedProducts[0].partNumber && serializedProducts[0].brand && serializedProducts[0].category)
+      });
+    }
 
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalCount / limit);

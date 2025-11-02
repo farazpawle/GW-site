@@ -128,3 +128,23 @@ body {
   transform: scale(1.05);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
 }
+
+/* Custom animations for product page */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Reduced Motion Support - Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,396 +1,160 @@
-import { Metadata } from 'next';
+﻿import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { prisma } from '@/lib/prisma';
+import { Scale, FileCheck, Users, AlertCircle } from 'lucide-react';
+import styles from '../legal-pages.module.css';
 
-export const metadata: Metadata = {
-  title: 'Terms of Service | Garrit & Wulf',
-  description: 'Terms of Service for Garrit & Wulf Auto Parts. Read our terms and conditions for using our website and services.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await prisma.page.findUnique({
+    where: { slug: 'terms' },
+    select: { metaTitle: true, metaDesc: true, title: true, description: true },
+  });
 
-export default function TermsPage() {
+  return {
+    title: page?.metaTitle || 'Terms of Service | Garrit & Wulf',
+    description: page?.metaDesc || page?.description || 'Terms of Service for Garrit & Wulf Auto Parts.',
+  };
+}
+
+export default async function TermsPage() {
+  const page = await prisma.page.findUnique({
+    where: { slug: 'terms', published: true },
+    select: { title: true, content: true, description: true },
+  });
+
+  if (!page) {
+    notFound();
+  }
+
   return (
-    <main className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
-      {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 opacity-10 rounded-full blur-3xl" style={{ backgroundColor: '#6e0000' }}></div>
+    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0a' }}>
+      {/* Hero Section with Diagonal Design */}
+      <section 
+        className="relative text-white py-32 overflow-hidden"
+        style={{ backgroundColor: '#6e0000' }}
+      >
+        {/* Decorative Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
+        </div>
         
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-              Terms of Service
+            <div className="inline-block mb-6">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2.5 rounded-full">
+                <Scale className="w-4 h-4" />
+                <span className="text-sm font-medium">Legal</span>
+              </div>
+            </div>
+            <h1 
+              className="text-5xl sm:text-6xl lg:text-7xl font-oswald font-bold mb-8 px-4"
+              style={{ fontFamily: "'Oswald', sans-serif" }}
+            >
+              {page.title}
             </h1>
+            {page.description && (
+              <p className="text-lg sm:text-xl lg:text-2xl text-white/90 leading-relaxed px-6 sm:px-8">
+                {page.description}
+              </p>
+            )}
           </div>
+        </div>
+
+        {/* Bottom Wave Effect */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+            <path d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0V120Z" fill="#0a0a0a"/>
+          </svg>
         </div>
       </section>
 
-      {/* Content Section */}
-      <section className="py-16">
+      {/* Key Points Section */}
+      <section className="py-12" style={{ backgroundColor: '#0a0a0a' }}>
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div 
-              className="rounded-2xl border p-8 md:p-12 space-y-8"
-              style={{ 
-                backgroundColor: '#1a1a1a',
-                borderColor: '#2a2a2a'
-              }}
-            >
-              {/* Introduction */}
-              <div>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  Welcome to Garrit & Wulf, a business entity operating under the laws of the United Arab Emirates. These 
-                  Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you and Garrit & Wulf governing 
-                  your access to and use of our website, products, and services.
-                </p>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  These Terms are governed by and construed in accordance with the laws of the United Arab Emirates, including 
-                  the Federal Law No. 5 of 1985 (Civil Transactions Law), Federal Law No. 18 of 1993 (Commercial Transactions 
-                  Law), and other applicable UAE laws and regulations.
-                </p>
-                <p className="text-gray-300 leading-relaxed">
-                  By accessing or using our services, you acknowledge that you have read, understood, and agree to be bound 
-                  by these Terms. If you do not agree with any part of these Terms, you must immediately cease using our services.
-                </p>
-              </div>
-
-              {/* Definitions */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  1. Definitions
-                </h2>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  For the purposes of these Terms:
-                </p>
-                <ul className="list-disc list-inside text-gray-300 space-y-2 ml-4">
-                  <li><strong className="text-white">&quot;Company,&quot; &quot;We,&quot; &quot;Us,&quot; &quot;Our&quot;</strong> refers to Garrit & Wulf, 
-                  a business entity registered and operating in United Arab Emirates</li>
-                  <li><strong className="text-white">&quot;Customer,&quot; &quot;You,&quot; &quot;Your&quot;</strong> refers to any individual or 
-                  legal entity accessing or using our services</li>
-                  <li><strong className="text-white">&quot;Services&quot;</strong> refers to our website, products, auto parts 
-                  supply services, and related offerings</li>
-                  <li><strong className="text-white">&quot;Products&quot;</strong> refers to auto parts and related items offered 
-                  for sale through our platform</li>
-                  <li><strong className="text-white">&quot;UAE&quot;</strong> refers to the United Arab Emirates</li>
-                </ul>
-              </div>
-
-              {/* Use of Services */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  2. Use of Services
-                </h2>
-                
-                <h3 className="text-xl font-semibold text-white mb-3 mt-6">
-                  Permitted Use
-                </h3>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  You may use our services only for lawful purposes and in accordance with these Terms. You agree not to:
-                </p>
-                <ul className="list-disc list-inside text-gray-300 space-y-2 ml-4">
-                  <li>Use our services in any way that violates applicable laws or regulations</li>
-                  <li>Engage in unauthorized access to our systems or networks</li>
-                  <li>Transmit any malicious code, viruses, or harmful materials</li>
-                  <li>Impersonate or misrepresent your affiliation with any person or entity</li>
-                  <li>Interfere with or disrupt our services or servers</li>
-                  <li>Collect or harvest information about other users without consent</li>
-                  <li>Use our services for any fraudulent or illegal purpose</li>
-                </ul>
-
-                <h3 className="text-xl font-semibold text-white mb-3 mt-6">
-                  Account Registration
-                </h3>
-                <p className="text-gray-300 leading-relaxed">
-                  If you create an account with us, you are responsible for maintaining the confidentiality of your account 
-                  credentials and for all activities that occur under your account. You agree to notify us immediately of 
-                  any unauthorized use of your account.
-                </p>
-              </div>
-
-              {/* Products and Services */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  3. Products, Pricing, and Orders
-                </h2>
-                
-                <h3 className="text-xl font-semibold text-white mb-3">
-                  Product Information
-                </h3>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  We make reasonable efforts to provide accurate product descriptions, specifications, images, and pricing. 
-                  However, we do not guarantee that all information is accurate, complete, current, or error-free. In case 
-                  of discrepancies, we reserve the right to correct any errors and update information without prior notice.
-                </p>
-
-                <h3 className="text-xl font-semibold text-white mb-3 mt-6">
-                  Pricing and Taxes
-                </h3>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  All prices are quoted in UAE Dirhams (AED) unless otherwise stated. Prices are subject to change without 
-                  notice. Applicable taxes, including UAE Value Added Tax (VAT), will be added to the purchase price as 
-                  required by law. Product availability may vary and is not guaranteed.
-                </p>
-
-                <h3 className="text-xl font-semibold text-white mb-3 mt-6">
-                  Order Acceptance and Contract Formation
-                </h3>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  When you place an order, you make an offer to purchase products at the stated price. We reserve the right 
-                  to accept or reject any order at our sole discretion. A binding contract is formed only upon our acceptance 
-                  and confirmation of your order.
-                </p>
-                <p className="text-gray-300 leading-relaxed">
-                  We may refuse or cancel orders for reasons including but not limited to: product unavailability, pricing 
-                  errors, suspected fraud, or failure to meet credit requirements. Payment must be received in full before 
-                  order fulfillment unless credit terms have been explicitly agreed upon in writing.
-                </p>
-              </div>
-
-              {/* Shipping and Delivery */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  4. Shipping and Delivery
-                </h2>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  Shipping costs, delivery times, and methods vary based on location and product type. We will provide 
-                  estimated delivery times, but these are not guaranteed. Risk of loss and title for products pass to 
-                  you upon delivery to the carrier.
-                </p>
-                <p className="text-gray-300 leading-relaxed">
-                  You are responsible for providing accurate shipping information. We are not liable for delays or 
-                  non-delivery due to incorrect addresses or circumstances beyond our control.
-                </p>
-              </div>
-
-              {/* Returns and Consumer Rights */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  5. Returns, Refunds, and Consumer Rights
-                </h2>
-                
-                <h3 className="text-xl font-semibold text-white mb-3">
-                  Consumer Rights Under UAE Law
-                </h3>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  In accordance with UAE Federal Law No. 15 of 2020 on Consumer Protection, consumers have specific rights 
-                  regarding defective products and services. If a product is defective or does not conform to the agreed 
-                  specifications, you may be entitled to repair, replacement, or refund as per UAE law.
-                </p>
-
-                <h3 className="text-xl font-semibold text-white mb-3 mt-6">
-                  Return Policy
-                </h3>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  Subject to the conditions below, eligible products may be returned within 14 days from the date of delivery. 
-                  Products must be:
-                </p>
-                <ul className="list-disc list-inside text-gray-300 space-y-2 ml-4">
-                  <li>In original, unused condition with all original packaging, tags, and documentation</li>
-                  <li>Not custom-ordered, specially manufactured, or made-to-specification items</li>
-                  <li>Not installed, modified, or altered in any way</li>
-                  <li>Electrical and electronic components must be unopened and in sealed packaging</li>
-                </ul>
-                
-                <h3 className="text-xl font-semibold text-white mb-3 mt-6">
-                  Refund Process
-                </h3>
-                <p className="text-gray-300 leading-relaxed">
-                  Return shipping costs are borne by the customer unless the product is defective or incorrect. Upon receipt 
-                  and inspection of returned items, refunds will be processed within 14 business days to the original payment 
-                  method. Refunds will exclude original shipping charges unless the return is due to our error.
-                </p>
-              </div>
-
-              {/* Warranty */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  6. Warranty and Product Liability
-                </h2>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  Products sold by us are covered by manufacturer warranties where applicable. We provide warranty services 
-                  in accordance with manufacturer terms and UAE consumer protection laws. Warranty claims must be submitted 
-                  with proof of purchase and within the specified warranty period.
-                </p>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  In accordance with UAE law, we are responsible for any defects in products that exist at the time of 
-                  delivery. Our liability for defective products is limited to repair, replacement, or refund as required 
-                  by UAE Federal Law No. 15 of 2020 on Consumer Protection.
-                </p>
-                <p className="text-gray-300 leading-relaxed">
-                  To the extent permitted by UAE law, we disclaim all other warranties, express or implied. However, nothing 
-                  in these Terms shall exclude or limit our liability for fraud, gross negligence, or any liability that 
-                  cannot be excluded under UAE law.
-                </p>
-              </div>
-
-              {/* Limitation of Liability */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  7. Limitation of Liability
-                </h2>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  Subject to mandatory provisions of UAE law, our liability to you for any claim arising out of or relating 
-                  to these Terms, our products, or services shall be limited as follows:
-                </p>
-                <ul className="list-disc list-inside text-gray-300 space-y-2 ml-4">
-                  <li>We shall not be liable for indirect, incidental, special, or consequential damages, including loss of 
-                  profits, revenue, data, or business opportunities</li>
-                  <li>Our total aggregate liability shall not exceed the amount paid by you for the specific product or 
-                  service giving rise to the claim</li>
-                  <li>We shall not be liable for delays or failures caused by circumstances beyond our reasonable control 
-                  (force majeure)</li>
-                </ul>
-                <p className="text-gray-300 leading-relaxed mt-4">
-                  Nothing in these Terms shall exclude or limit our liability for: (a) death or personal injury caused by 
-                  our negligence; (b) fraud or fraudulent misrepresentation; (c) any liability that cannot be excluded or 
-                  limited under UAE law; or (d) consumer rights protected under UAE Federal Law No. 15 of 2020.
-                </p>
-              </div>
-
-              {/* Intellectual Property */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  8. Intellectual Property Rights
-                </h2>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  All content on our website, including text, graphics, logos, images, and software, is the property of 
-                  Garrit & Wulf or its licensors and is protected by copyright, trademark, and other intellectual property laws.
-                </p>
-                <p className="text-gray-300 leading-relaxed">
-                  You may not reproduce, distribute, modify, create derivative works, publicly display, or otherwise use 
-                  any content from our website without our prior written permission.
-                </p>
-              </div>
-
-              {/* User Content */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  9. User-Generated Content
-                </h2>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  If you submit any content to our website (reviews, comments, feedback), you grant us a non-exclusive, 
-                  worldwide, royalty-free, perpetual license to use, reproduce, modify, and display such content.
-                </p>
-                <p className="text-gray-300 leading-relaxed">
-                  You represent that you own or have the necessary rights to any content you submit and that such content 
-                  does not violate any third-party rights or applicable laws.
-                </p>
-              </div>
-
-              {/* Indemnification */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  10. Indemnification
-                </h2>
-                <p className="text-gray-300 leading-relaxed">
-                  You agree to indemnify, defend, and hold harmless Garrit & Wulf and its officers, directors, employees, 
-                  and agents from any claims, liabilities, damages, losses, and expenses arising out of your use of our 
-                  services, violation of these Terms, or infringement of any third-party rights.
-                </p>
-              </div>
-
-              {/* Governing Law and Dispute Resolution */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  11. Governing Law and Dispute Resolution
-                </h2>
-                
-                <h3 className="text-xl font-semibold text-white mb-3">
-                  Applicable Law
-                </h3>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  These Terms and any disputes arising from or related to them shall be governed by and construed in 
-                  accordance with the laws of the United Arab Emirates, including but not limited to:
-                </p>
-                <ul className="list-disc list-inside text-gray-300 space-y-2 ml-4">
-                  <li>Federal Law No. 5 of 1985 (Civil Transactions Law)</li>
-                  <li>Federal Law No. 18 of 1993 (Commercial Transactions Law)</li>
-                  <li>Federal Law No. 15 of 2020 (Consumer Protection Law)</li>
-                  <li>Federal Decree Law No. 45 of 2021 (Personal Data Protection Law)</li>
-                </ul>
-
-                <h3 className="text-xl font-semibold text-white mb-3 mt-6">
-                  Jurisdiction and Venue
-                </h3>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  Any disputes, claims, or controversies arising out of or relating to these Terms or our services shall be 
-                  subject to the exclusive jurisdiction of the competent courts of United Arab Emirates. You irrevocably 
-                  submit to the jurisdiction of such courts.
-                </p>
-
-                <h3 className="text-xl font-semibold text-white mb-3 mt-6">
-                  Amicable Resolution
-                </h3>
-                <p className="text-gray-300 leading-relaxed">
-                  In accordance with UAE commercial practices, we encourage parties to first attempt to resolve disputes 
-                  amicably through good faith negotiations. If a resolution cannot be reached within 30 days, either party 
-                  may pursue formal legal proceedings in accordance with UAE law.
-                </p>
-              </div>
-
-              {/* Termination */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  12. Termination
-                </h2>
-                <p className="text-gray-300 leading-relaxed">
-                  We may terminate or suspend your access to our services immediately, without prior notice or liability, 
-                  for any reason, including breach of these Terms. Upon termination, your right to use our services will 
-                  immediately cease.
-                </p>
-              </div>
-
-              {/* Severability */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  13. Severability
-                </h2>
-                <p className="text-gray-300 leading-relaxed">
-                  If any provision of these Terms is held to be invalid or unenforceable, such provision shall be struck 
-                  and the remaining provisions shall remain in full force and effect.
-                </p>
-              </div>
-
-              {/* Changes to Terms */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  14. Changes to Terms
-                </h2>
-                <p className="text-gray-300 leading-relaxed">
-                  We reserve the right to modify these Terms at any time. Changes will be effective immediately upon posting 
-                  to our website. Your continued use of our services after changes constitutes acceptance of the modified Terms. 
-                  We encourage you to review these Terms periodically.
-                </p>
-              </div>
-
-              {/* Entire Agreement */}
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  15. Entire Agreement
-                </h2>
-                <p className="text-gray-300 leading-relaxed">
-                  These Terms, together with our Privacy Policy, constitute the entire agreement between you and Garrit & Wulf 
-                  regarding our services and supersede all prior agreements and understandings.
-                </p>
-              </div>
-
-              {/* Contact Information */}
-              <div className="pt-6 border-t" style={{ borderColor: '#2a2a2a' }}>
-                <h2 className="text-3xl font-bold text-white mb-4">
-                  Contact Us
-                </h2>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  If you have any questions about these Terms of Service, please contact us:
-                </p>
-                <div className="space-y-2 text-gray-300">
-                  <p><strong className="text-white">Garrit & Wulf</strong></p>
-                  <p>26 6A Street - Al Quoz Industrial Area 3</p>
-                  <p>Dubai, United Arab Emirates</p>
-                  <p>Phone: <a href="tel:+97142243851" className="hover:text-white transition-colors" style={{ color: '#6e0000' }}>+971 4 224 38 51</a></p>
-                  <p>Email: <a href="mailto:sales@garritwulf.com" className="hover:text-white transition-colors" style={{ color: '#6e0000' }}>sales@garritwulf.com</a></p>
+          <div className="max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-6 mb-16">
+              {/* Key Point 1 */}
+              <div 
+                className="p-6 rounded-2xl border group hover:border-[#6e0000] transition-all duration-300"
+                style={{ backgroundColor: '#1a1a1a', borderColor: '#2a2a2a' }}
+              >
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
+                  style={{ backgroundColor: '#6e0000' }}
+                >
+                  <FileCheck className="w-6 h-6 text-white" />
                 </div>
+                <h3 className="text-lg font-bold mb-2 text-white">Agreement Terms</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  By using our services, you agree to these terms and conditions in their entirety.
+                </p>
+              </div>
+
+              {/* Key Point 2 */}
+              <div 
+                className="p-6 rounded-2xl border group hover:border-[#6e0000] transition-all duration-300"
+                style={{ backgroundColor: '#1a1a1a', borderColor: '#2a2a2a' }}
+              >
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
+                  style={{ backgroundColor: '#6e0000' }}
+                >
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-lg font-bold mb-2 text-white">User Responsibilities</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  You are responsible for maintaining the confidentiality of your account information.
+                </p>
+              </div>
+
+              {/* Key Point 3 */}
+              <div 
+                className="p-6 rounded-2xl border group hover:border-[#6e0000] transition-all duration-300"
+                style={{ backgroundColor: '#1a1a1a', borderColor: '#2a2a2a' }}
+              >
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
+                  style={{ backgroundColor: '#6e0000' }}
+                >
+                  <AlertCircle className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-lg font-bold mb-2 text-white">Service Usage</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Our services must be used lawfully and in accordance with all applicable regulations.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
-    </main>
+
+      {/* Content Section */}
+      <section className="py-16 pb-24" style={{ backgroundColor: '#0a0a0a' }}>
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div 
+              className="rounded-2xl border p-8 md:p-12"
+              style={{ backgroundColor: '#1a1a1a', borderColor: '#2a2a2a' }}
+            >
+              <div 
+                className={styles.legalContent}
+                dangerouslySetInnerHTML={{ __html: page.content || '' }}
+              />
+            </div>
+
+            {/* Last Updated Notice */}
+            <div className="mt-8 text-center">
+              <p className="text-gray-500 text-sm">
+                Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+              <p className="text-gray-500 text-sm mt-2">
+                These terms are effective immediately and apply to all users of our services.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
