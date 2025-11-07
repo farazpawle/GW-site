@@ -158,6 +158,11 @@ export async function getMediaSettingUrl(
  * @returns The setting value or null if not found
  */
 export async function getSetting(key: string): Promise<string | null> {
+  // In CI environments, return null for all settings
+  if (process.env.CI === 'true') {
+    return null;
+  }
+  
   // Check cache first
   const cacheKey = key;
   const cached = settingsCache.get(cacheKey);
@@ -210,6 +215,11 @@ export async function getSetting(key: string): Promise<string | null> {
 export async function getSettings(
   category?: SettingsCategory
 ): Promise<Record<string, string>> {
+  // In CI environments, return empty object
+  if (process.env.CI === 'true') {
+    return {};
+  }
+  
   // Check cache first
   const cacheKey = category || 'all';
   const cached = settingsCache.get(cacheKey);

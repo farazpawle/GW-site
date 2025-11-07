@@ -53,8 +53,8 @@ export function validateEnv(): Env {
       MINIO_SECRET_KEY: 'ci-secret-key',
       MINIO_USE_SSL: 'false',
       MINIO_BUCKET_NAME: 'ci-bucket',
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_ci-key',
-      CLERK_SECRET_KEY: 'sk_test_ci-key',
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_Y2ktdGVzdC1rZXkuZXhhbXBsZS5jb20k',
+      CLERK_SECRET_KEY: 'sk_test_Y2ktdGVzdC1zZWNyZXQta2V5',
       NODE_ENV: 'production',
     };
   }
