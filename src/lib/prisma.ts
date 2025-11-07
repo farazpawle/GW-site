@@ -7,9 +7,21 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+// For build-time without DATABASE_URL, create a mock client
+const createPrismaClient = () => {
+  // During build without DATABASE_URL, return a mock client
+  if (!process.env.DATABASE_URL && process.env.NEXT_PHASE === 'phase-production-build') {
+    console.warn('⚠️ DATABASE_URL not set during build. Using mock Prisma client.');
+    return new PrismaClient({
+      datasources: {
+        db: {
+          url: 'postgresql://mock:mock@localhost:5432/mock'
+        }
+      }
+    });
+  }
+
+  return new PrismaClient({
     // Reduced logging: only errors and warnings, no queries to reduce console noise
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
     // Connection pooling configuration for better performance
@@ -19,6 +31,10 @@ export const prisma =
       }
     }
   });
+};
+
+export const prisma =
+  globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
