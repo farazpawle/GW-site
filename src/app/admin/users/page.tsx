@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import AdminHeader from '@/components/admin/AdminHeader';
-import UserTable from '@/components/admin/users/UserTable';
-import ChangeRoleDialog from '@/components/admin/users/ChangeRoleDialog';
-import { User, UserRole } from '@prisma/client';
-import { Search } from 'lucide-react';
+import { useState, useEffect } from "react";
+import AdminHeader from "@/components/admin/AdminHeader";
+import UserTable from "@/components/admin/users/UserTable";
+import ChangeRoleDialog from "@/components/admin/users/ChangeRoleDialog";
+import { User, UserRole } from "@prisma/client";
+import { Search } from "lucide-react";
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -21,14 +21,14 @@ export default function UsersPage() {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await fetch('/api/admin/current-user');
+        const response = await fetch("/api/admin/current-user");
         const data = await response.json();
-        
+
         if (data.success) {
           setCurrentUser(data.data.user);
         }
       } catch (error) {
-        console.error('Error fetching current user:', error);
+        console.error("Error fetching current user:", error);
       }
     };
 
@@ -46,14 +46,14 @@ export default function UsersPage() {
       filtered = filtered.filter(
         (user) =>
           user.name?.toLowerCase().includes(query) ||
-          user.email.toLowerCase().includes(query)
+          user.email.toLowerCase().includes(query),
       );
     }
 
     // Apply role filter
-    if (roleFilter !== 'all') {
-      if (roleFilter === 'super_admin') {
-        filtered = filtered.filter((user) => user.role === 'SUPER_ADMIN');
+    if (roleFilter !== "all") {
+      if (roleFilter === "super_admin") {
+        filtered = filtered.filter((user) => user.role === "SUPER_ADMIN");
       } else {
         filtered = filtered.filter((user) => user.role === roleFilter);
       }
@@ -65,7 +65,7 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/admin/users');
+      const response = await fetch("/api/admin/users");
       const data = await response.json();
 
       if (data.success) {
@@ -73,38 +73,30 @@ export default function UsersPage() {
         setFilteredUsers(data.data.users);
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRoleChange = (userId: string) => {
-    const user = users.find((u) => u.id === userId);
-    if (user) {
-      setSelectedUser(user);
-      setIsDialogOpen(true);
-    }
-  };
-
   const handleConfirmRoleChange = async (userId: string, newRole: UserRole) => {
     const response = await fetch(`/api/admin/users/${userId}/role`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ newRole })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ newRole }),
     });
 
     const data = await response.json();
 
     if (!data.success) {
-      throw new Error(data.error || 'Failed to update role');
+      throw new Error(data.error || "Failed to update role");
     }
 
     // Refresh users list
     await fetchUsers();
-    
+
     // Show success message (you can add a toast notification here)
-    alert('Role updated successfully!');
+    alert("Role updated successfully!");
   };
 
   if (isLoading) {
@@ -132,8 +124,8 @@ export default function UsersPage() {
       <div
         className="rounded-xl border p-6"
         style={{
-          backgroundColor: '#1a1a1a',
-          borderColor: '#2a2a2a'
+          backgroundColor: "#1a1a1a",
+          borderColor: "#2a2a2a",
         }}
       >
         <div className="flex flex-col md:flex-row gap-4">
@@ -177,15 +169,12 @@ export default function UsersPage() {
       <div
         className="rounded-xl border overflow-hidden"
         style={{
-          backgroundColor: '#1a1a1a',
-          borderColor: '#2a2a2a'
+          backgroundColor: "#1a1a1a",
+          borderColor: "#2a2a2a",
         }}
       >
         {currentUser && (
-          <UserTable 
-            users={filteredUsers}
-            currentUser={currentUser} 
-          />
+          <UserTable users={filteredUsers} currentUser={currentUser} />
         )}
         {!currentUser && (
           <div className="p-6 text-center text-gray-400">

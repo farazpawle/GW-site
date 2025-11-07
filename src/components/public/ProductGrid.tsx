@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import ProductCard from './ProductCard';
+import ProductCard from "./ProductCard";
 
 interface Product {
   id: string;
@@ -18,16 +18,12 @@ interface Product {
 
 interface ProductGridProps {
   products: Product[];
-  ecommerceMode?: boolean;
-  showPricing?: boolean;
   emptyMessage?: string;
 }
 
-export default function ProductGrid({ 
-  products, 
-  ecommerceMode = false, 
-  showPricing = false,
-  emptyMessage = 'No products found'
+export default function ProductGrid({
+  products,
+  emptyMessage = "No products found",
 }: ProductGridProps) {
   if (products.length === 0) {
     return (
@@ -40,10 +36,7 @@ export default function ProductGrid({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {products.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={product}
-        />
+        <ProductCard key={product.id} product={product} />
       ))}
     </div>
   );

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import ProductGrid from '@/components/public/ProductGrid';
-import { Loader2 } from 'lucide-react';
+import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import ProductGrid from "@/components/public/ProductGrid";
+import { Loader2 } from "lucide-react";
 
 interface CollectionData {
   collection: {
@@ -39,13 +39,15 @@ export default function PublicCollectionPage() {
       setError(null);
 
       try {
-        const response = await fetch(`/api/public/collections/${slug}?page=${currentPage}`);
-        
+        const response = await fetch(
+          `/api/public/collections/${slug}?page=${currentPage}`,
+        );
+
         if (!response.ok) {
           if (response.status === 404) {
-            setError('Collection not found');
+            setError("Collection not found");
           } else {
-            setError('Failed to load collection');
+            setError("Failed to load collection");
           }
           return;
         }
@@ -53,7 +55,7 @@ export default function PublicCollectionPage() {
         const result = await response.json();
         setData(result);
       } catch {
-        setError('An error occurred while loading the collection');
+        setError("An error occurred while loading the collection");
       } finally {
         setIsLoading(false);
       }
@@ -110,8 +112,6 @@ export default function PublicCollectionPage() {
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
         <ProductGrid
           products={products}
-          ecommerceMode={true}
-          showPricing={true}
           emptyMessage="No products in this collection yet"
         />
 
@@ -119,22 +119,25 @@ export default function PublicCollectionPage() {
         {pagination.totalPages > 1 && (
           <div className="mt-12 flex justify-center gap-2">
             <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
               Previous
             </button>
-            
+
             <div className="flex items-center gap-2">
-              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
+              {Array.from(
+                { length: pagination.totalPages },
+                (_, i) => i + 1,
+              ).map((page) => (
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
                   className={`px-4 py-2 border rounded-lg ${
                     currentPage === page
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'hover:bg-gray-50'
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "hover:bg-gray-50"
                   }`}
                 >
                   {page}
@@ -143,7 +146,9 @@ export default function PublicCollectionPage() {
             </div>
 
             <button
-              onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
+              onClick={() =>
+                setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
+              }
               disabled={currentPage === pagination.totalPages}
               className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
