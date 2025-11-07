@@ -20,7 +20,6 @@ export const revalidate = 0;
  * - tags: string[] (comma-separated)
  * - brand: string
  * - origin: string
- * - difficulty: string (Easy, Moderate, Professional, Advanced)
  * - application: string[] (comma-separated)
  * - featured: boolean
  * - sort: string (name-asc, name-desc, price-asc, price-desc, newest, oldest, popular)
@@ -44,7 +43,6 @@ export async function GET(request: NextRequest) {
     const tags = tagsParam ? tagsParam.split(',').map(t => t.trim()).filter(Boolean) : undefined;
     const brand = searchParams.get('brand') || undefined;
     const origin = searchParams.get('origin') || undefined;
-    const difficulty = searchParams.get('difficulty') || undefined;
     const applicationParam = searchParams.get('application');
     const application = applicationParam ? applicationParam.split(',').map(a => a.trim()).filter(Boolean) : undefined;
     const featuredParam = searchParams.get('featured');
@@ -88,11 +86,6 @@ export async function GET(request: NextRequest) {
     // Origin filter
     if (origin) {
       where.origin = { contains: origin, mode: 'insensitive' };
-    }
-
-    // Difficulty filter
-    if (difficulty) {
-      where.difficulty = difficulty;
     }
 
     // Application filter (at least one application matches)
