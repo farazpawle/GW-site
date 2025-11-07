@@ -7,6 +7,9 @@ import ProductTable from '@/components/admin/parts/ProductTable';
 import CSVActions from '@/components/admin/products/CSVActions';
 import { hasPermission } from '@/lib/rbac/check-permission';
 
+// Force dynamic rendering since we need database access
+export const dynamic = 'force-dynamic';
+
 interface SearchParams {
   search?: string;
   category?: string;

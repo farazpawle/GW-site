@@ -6,6 +6,9 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import MenuItemsClient from '@/components/admin/menu-items/MenuItemsClient';
 import { Loader2 } from 'lucide-react';
 
+// Force dynamic rendering since we need database access
+export const dynamic = 'force-dynamic';
+
 interface SearchParams {
   includeHidden?: string;
 }

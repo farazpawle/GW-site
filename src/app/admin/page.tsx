@@ -11,6 +11,9 @@ import MessageDashboard from '@/components/admin/dashboard/MessageDashboard';
 import { Package } from 'lucide-react';
 import Link from 'next/link';
 
+// Force dynamic rendering since we need database access
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboard() {
   // Get current user info
   const user = await getCurrentUser();

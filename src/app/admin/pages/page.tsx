@@ -6,6 +6,9 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import PagesListClient from '@/components/admin/pages/PagesListClient';
 import { Loader2 } from 'lucide-react';
 
+// Force dynamic rendering since we need database access
+export const dynamic = 'force-dynamic';
+
 interface Page {
   id: string;
   title: string;
