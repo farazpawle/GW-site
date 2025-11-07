@@ -371,7 +371,3 @@ This project is proprietary and confidential. All rights reserved.
 - [Tailwind CSS](https://tailwindcss.com/) - CSS framework
 - [Radix UI](https://www.radix-ui.com/) - Headless UI components
 - [MinIO](https://min.io/) - Object storage
-
----
-
-**Built with ❤️ for Garrit & Wulf** | Member of Economic Group Holdings (EGH)
