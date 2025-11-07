@@ -12,17 +12,17 @@ jobs:
     
     env:
       # CI environment flag - enables mock environment variables in build
-      CI: true
+      CI: 'true'
       # Mock values for build-time validation (not used at runtime)
-      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
-      MINIO_ENDPOINT: localhost
-      MINIO_PORT: 9000
-      MINIO_ACCESS_KEY: ci-access-key
-      MINIO_SECRET_KEY: ci-secret-key
-      MINIO_USE_SSL: false
-      MINIO_BUCKET_NAME: ci-bucket
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci-key
-      CLERK_SECRET_KEY: sk_test_ci-key
+      DATABASE_URL: 'postgresql://ci:ci@localhost:5432/ci'
+      MINIO_ENDPOINT: 'localhost'
+      MINIO_PORT: '9000'
+      MINIO_ACCESS_KEY: 'ci-access-key'
+      MINIO_SECRET_KEY: 'ci-secret-key'
+      MINIO_USE_SSL: 'false'
+      MINIO_BUCKET_NAME: 'ci-bucket'
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_ci-key'
+      CLERK_SECRET_KEY: 'sk_test_ci-key'
     
     steps:
       - name: Checkout code
