@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma';
 import { Scale, FileCheck, Users, AlertCircle } from 'lucide-react';
 import styles from '../legal-pages.module.css';
 
+// Force dynamic rendering since we need database access
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata(): Promise<Metadata> {
   const page = await prisma.page.findUnique({
     where: { slug: 'terms' },
