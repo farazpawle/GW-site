@@ -37,8 +37,28 @@ export type Env = z.infer<typeof envSchema>;
 /**
  * Validates environment variables against the schema.
  * Throws an error with detailed messages if validation fails.
+ * 
+ * In CI environments, returns mock values to allow builds to complete.
  */
 export function validateEnv(): Env {
+  // Skip validation in CI environments (GitHub Actions, etc.)
+  // CI builds don't need real database/storage credentials
+  if (process.env.CI === 'true') {
+    console.log('⚠️  CI environment detected - using mock environment variables for build');
+    return {
+      DATABASE_URL: 'postgresql://ci:ci@localhost:5432/ci',
+      MINIO_ENDPOINT: 'localhost',
+      MINIO_PORT: '9000',
+      MINIO_ACCESS_KEY: 'ci-access-key',
+      MINIO_SECRET_KEY: 'ci-secret-key',
+      MINIO_USE_SSL: 'false',
+      MINIO_BUCKET_NAME: 'ci-bucket',
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_ci-key',
+      CLERK_SECRET_KEY: 'sk_test_ci-key',
+      NODE_ENV: 'production',
+    };
+  }
+  
   const result = envSchema.safeParse(process.env);
   
   if (!result.success) {
