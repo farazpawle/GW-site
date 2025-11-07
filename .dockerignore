@@ -11,7 +11,8 @@ docker-compose*
 README.md
 docs/
 memory-bank/
-.github/
+.github/copilot-instructions.md
+.github/prompts/
 
 # Environment files (use docker-compose env instead)
 .env

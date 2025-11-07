@@ -145,12 +145,18 @@ export const updateProductSchema = productSchemaWithShowcase.partial().extend({
 });
 
 // Schema for image upload validation
+const fileLikeSchema = z.object({
+  name: z.string().min(1, 'File name is required'),
+  size: z.number().nonnegative('File size must be zero or positive'),
+  type: z.string().min(1, 'File type is required'),
+}).passthrough();
+
 export const imageUploadSchema = z.object({
-  files: z.array(z.instanceof(File))
+  files: z.array(fileLikeSchema)
     .min(1, 'At least one file is required')
     .max(10, 'Maximum 10 files allowed')
     .refine(
-      (files) => files.every(file => file.size <= 5 * 1024 * 1024), 
+      (files) => files.every(file => file.size <= 5 * 1024 * 1024),
       'Each file must be less than 5MB'
     )
     .refine(

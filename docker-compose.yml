@@ -12,16 +12,21 @@ services:
       - .:/app
       - /app/node_modules
       - /app/.next
+      # Note: docs/ and memory-bank/ are visible in dev mode (bind mount)
+      # They are excluded in production via .dockerignore
+    env_file:
+      - .env.local
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/garritwulf
+      - DATABASE_URL=postgresql://garritwulf_user:garritwulf_secure_pass_2025@postgres:5432/garritwulf_db
       - REDIS_URL=redis://redis:6379
       - MINIO_ENDPOINT=minio
       - MINIO_PORT=9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin123
+      - MINIO_REGION=us-east-1
+      - MINIO_ACCESS_KEY=garritwulf_minio
+      - MINIO_SECRET_KEY=garritwulf_minio_secure_2025
       - MINIO_USE_SSL=false
-      - MINIO_BUCKET_NAME=garritwulf
+      - MINIO_BUCKET_NAME=garritwulf-media
     depends_on:
       - postgres
       - redis
@@ -34,9 +39,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=garritwulf
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=garritwulf_db
+      - POSTGRES_USER=garritwulf_user
+      - POSTGRES_PASSWORD=garritwulf_secure_pass_2025
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -58,8 +63,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin123
+      - MINIO_ROOT_USER=garritwulf_minio
+      - MINIO_ROOT_PASSWORD=garritwulf_minio_secure_2025
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"

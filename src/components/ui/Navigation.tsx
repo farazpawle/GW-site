@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Menu, X, Mail, ChevronDown } from 'lucide-react';
+import { Search, Menu, X, Mail, ChevronDown, ChevronRight } from 'lucide-react';
 import SearchBar from '@/components/search/SearchBar';
 
 interface NavigationItem {
@@ -47,34 +47,43 @@ export default function Navigation() {
     const fetchMenuItems = async () => {
       try {
         const response = await fetch('/api/menu-items?includeHidden=false');
-        if (response.ok) {
-          const data = await response.json();
-          const dbMenuItems = data.menuItems || [];
-          
-          // Convert database menu items to navigation format
-          const convertMenuItem = (item: MenuItem): NavigationItem => {
-            // If linked to a page, use clean slug (without /pages/)
-            // If external URL, use that
-            // Special case: if page slug is "home", route to root "/"
-            let href = '#';
-            if (item.externalUrl) {
-              href = item.externalUrl;
-            } else if (item.page) {
-              href = item.page.slug === 'home' ? '/' : `/${item.page.slug}`;
-            }
-            
-            return {
-              id: item.id,
-              label: item.label,
-              href,
-              openNewTab: item.openNewTab,
-              children: item.children?.map(convertMenuItem) || [],
-            };
-          };
-
-          const navigationItems = dbMenuItems.map(convertMenuItem);
-          setNavigationItems(navigationItems);
+        if (!response.ok) {
+          console.error('Failed to fetch menu items:', response.status, response.statusText);
+          return;
         }
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('Expected JSON response but got:', contentType);
+          return;
+        }
+        
+        const data = await response.json();
+        const dbMenuItems = data.menuItems || [];
+        
+        // Convert database menu items to navigation format
+        const convertMenuItem = (item: MenuItem): NavigationItem => {
+          // If linked to a page, use clean slug (without /pages/)
+          // If external URL, use that
+          // Special case: if page slug is "home", route to root "/"
+          let href = '#';
+          if (item.externalUrl) {
+            href = item.externalUrl;
+          } else if (item.page) {
+            href = item.page.slug === 'home' ? '/' : `/${item.page.slug}`;
+          }
+          
+          return {
+            id: item.id,
+            label: item.label,
+            href,
+            openNewTab: item.openNewTab,
+            children: item.children?.map(convertMenuItem) || [],
+          };
+        };
+
+        const navigationItems = dbMenuItems.map(convertMenuItem);
+        setNavigationItems(navigationItems);
       } catch (error) {
         console.error('Failed to load menu items:', error);
         // Keep empty array if fetch fails
@@ -183,10 +192,11 @@ export default function Navigation() {
 
       {/* Mobile Navigation Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 bg-white shadow-lg border-t z-50 max-h-[80vh] overflow-y-auto">
-          <div className="p-4 space-y-2">
+        <div className="lg:hidden absolute top-full left-0 right-0 bg-white shadow-xl border-t z-50 max-h-[80vh] overflow-y-auto">
+          <div className="p-4 space-y-1">
             {navigationItems.map((item) => {
               const hasChildren = item.children && item.children.length > 0;
+              const isActive = pathname === item.href;
               return (
                 <div key={item.id}>
                   <Link
@@ -194,24 +204,35 @@ export default function Navigation() {
                     target={item.openNewTab ? '_blank' : undefined}
                     rel={item.openNewTab ? 'noopener noreferrer' : undefined}
                     onClick={() => !hasChildren && setIsMenuOpen(false)}
-                    className="block px-4 py-2 text-gray-700 hover:text-[#6e0000] hover:bg-gray-50 rounded-lg font-semibold"
+                    className={`block px-4 py-3 rounded-lg font-semibold transition-all ${
+                      isActive
+                        ? 'bg-[#6e0000] text-white'
+                        : 'text-gray-700 hover:text-[#6e0000] hover:bg-gray-50'
+                    }`}
                   >
                     {item.label}
                   </Link>
                   {hasChildren && (
                     <div className="ml-4 mt-1 space-y-1">
-                      {item.children!.map((child) => (
-                        <Link
-                          key={child.id}
-                          href={child.href}
-                          target={child.openNewTab ? '_blank' : undefined}
-                          rel={child.openNewTab ? 'noopener noreferrer' : undefined}
-                          onClick={() => setIsMenuOpen(false)}
-                          className="block px-4 py-2 text-sm text-gray-600 hover:text-[#6e0000] hover:bg-gray-50 rounded-lg"
-                        >
-                          └─ {child.label}
-                        </Link>
-                      ))}
+                      {item.children!.map((child) => {
+                        const isChildActive = pathname === child.href;
+                        return (
+                          <Link
+                            key={child.id}
+                            href={child.href}
+                            target={child.openNewTab ? '_blank' : undefined}
+                            rel={child.openNewTab ? 'noopener noreferrer' : undefined}
+                            onClick={() => setIsMenuOpen(false)}
+                            className={`block px-4 py-2 text-sm rounded-lg transition-all ${
+                              isChildActive
+                                ? 'bg-[#6e0000]/10 text-[#6e0000] font-semibold'
+                                : 'text-gray-600 hover:text-[#6e0000] hover:bg-gray-50'
+                            }`}
+                          >
+                            • {child.label}
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

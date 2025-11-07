@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { checkPermission } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createMenuItemSchema } from "@/lib/validations/menu";
@@ -11,10 +11,10 @@ import { Prisma } from "@prisma/client";
  */
 export async function GET(req: NextRequest) {
   try {
-    // Authentication check
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Check permission
+    const user = await checkPermission('menu.view');
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized - Missing permission: menu.view" }, { status: 403 });
     }
 
     // Get query parameters
@@ -119,10 +119,10 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    // Authentication check
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Check permission
+    const user = await checkPermission('menu.create');
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized - Missing permission: menu.create" }, { status: 403 });
     }
 
     // Parse and validate request body

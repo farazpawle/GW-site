@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Oswald, Aclonica } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { getSetting } from "@/lib/settings/settings-manager";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import GoogleTagManager from "@/components/analytics/GoogleTagManager";
+import WebVitals from "@/components/analytics/WebVitals";
 import "@/lib/env"; // Validate environment variables at startup
 import "./globals.css";
 
@@ -37,8 +40,37 @@ export async function generateMetadata(): Promise<Metadata> {
   const seoDescription = await getSetting('seo_description') || 'Quality European, American Vehicle & Truck Parts - Transform Your Drive with Superior Parts. Precision manufacturing and exceptional customer service.';
   const seoKeywords = await getSetting('seo_keywords') || 'auto parts, European car parts, American vehicle parts, truck parts, premium auto parts, Garrit & Wulf, automotive parts, car accessories';
   const seoOgImage = await getSetting('seo_og_image') || '/images/og-image.jpg';
-  const googleAnalyticsId = await getSetting('google_analytics_id');
   const siteName = await getSetting('site_name') || 'Garrit & Wulf';
+
+  // Fetch favicon settings
+  const faviconIco = await getSetting('favicon_ico');
+  const favicon16 = await getSetting('favicon_16');
+  const favicon32 = await getSetting('favicon_32');
+  const favicon192 = await getSetting('favicon_192');
+  const appleTouchIcon = await getSetting('apple_touch_icon');
+
+  // Build icons array
+  const icons: Metadata['icons'] = [];
+  
+  if (faviconIco) {
+    icons.push({ rel: 'icon', url: faviconIco });
+  }
+  
+  if (favicon16) {
+    icons.push({ rel: 'icon', type: 'image/png', sizes: '16x16', url: favicon16 });
+  }
+  
+  if (favicon32) {
+    icons.push({ rel: 'icon', type: 'image/png', sizes: '32x32', url: favicon32 });
+  }
+  
+  if (favicon192) {
+    icons.push({ rel: 'icon', type: 'image/png', sizes: '192x192', url: favicon192 });
+  }
+  
+  if (appleTouchIcon) {
+    icons.push({ rel: 'apple-touch-icon', sizes: '180x180', url: appleTouchIcon });
+  }
 
   return {
     metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
@@ -51,6 +83,7 @@ export async function generateMetadata(): Promise<Metadata> {
     authors: [{ name: siteName }],
     creator: siteName,
     publisher: siteName,
+    icons: icons.length > 0 ? icons : undefined, // Add favicons
     robots: {
       index: true,
       follow: true,
@@ -88,23 +121,33 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: "https://garritwulf.com",
     },
-    verification: googleAnalyticsId ? {
-      google: googleAnalyticsId,
-    } : undefined,
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Fetch analytics IDs from settings
+  const googleAnalyticsId = await getSetting('google_analytics_id');
+  const googleTagManagerId = await getSetting('google_tag_manager_id');
+
   return (
     <ClerkProvider>
       <html lang="en">
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${oswald.variable} ${aclonica.variable} antialiased`}
         >
+          {/* Google Analytics (GA4) */}
+          {googleAnalyticsId && <GoogleAnalytics gaId={googleAnalyticsId} />}
+          
+          {/* Google Tag Manager */}
+          {googleTagManagerId && <GoogleTagManager gtmId={googleTagManagerId} />}
+
+          {/* Web Vitals Performance Monitoring */}
+          <WebVitals />
+
           {/* <SplashCursor /> */}
           {children}
         </body>

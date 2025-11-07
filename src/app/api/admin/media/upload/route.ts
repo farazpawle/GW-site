@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdmin } from '@/lib/auth';
+import { checkAdmin, checkPermission } from '@/lib/auth';
 import {
   uploadFile,
   generateUniqueFilename,
@@ -53,11 +53,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract files
-    const files: File[] = [];
+    // Extract files (use type that has name property)
+    type FileWithName = Blob & { name: string };
+    const files: FileWithName[] = [];
     for (const [key, value] of formData.entries()) {
-      if (key.startsWith('file') && value instanceof File) {
-        files.push(value);
+      // Check if value is a file (Blob with name property)
+      if (key.startsWith('file') && value instanceof Blob && 'name' in value) {
+        files.push(value as FileWithName);
       }
     }
 
@@ -87,6 +89,8 @@ export async function POST(request: NextRequest) {
       'image/gif',
       'image/webp',
       'image/svg+xml',
+      'image/x-icon',           // .ico files
+      'image/vnd.microsoft.icon', // Alternative .ico MIME type
     ];
 
     // Maximum file size (5MB)
@@ -103,7 +107,7 @@ export async function POST(request: NextRequest) {
 
         // Validate file type
         if (!allowedTypes.includes(file.type)) {
-          const error = `Invalid file type: ${file.type}. Allowed: JPEG, PNG, GIF, WebP, SVG`;
+          const error = `Invalid file type: ${file.type}. Allowed: JPEG, PNG, GIF, WebP, SVG, ICO`;
           console.log(`❌ [Upload API] ${error}`);
           failedFiles.push({
             name: file.name,

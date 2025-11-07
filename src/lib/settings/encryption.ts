@@ -4,9 +4,7 @@ import * as crypto from 'crypto';
  * Sensitive fields that require encryption
  * These fields will be encrypted before storing in database
  */
-const SENSITIVE_FIELDS = [
-  'email_smtp_password',
-] as const;
+const SENSITIVE_FIELDS: readonly string[] = [];
 
 /**
  * Get encryption key from environment variable

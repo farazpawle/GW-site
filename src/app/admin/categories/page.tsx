@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Plus, FolderOpen, Edit, Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import { Search, Plus, FolderOpen, Edit, Trash2, Loader2, AlertTriangle, Lock } from 'lucide-react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import Image from 'next/image';
 
@@ -27,6 +27,42 @@ export default function CategoriesPage() {
     category: null,
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
+
+  // Fetch user permissions
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserPermissions(data.permissions || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch permissions:', error);
+      } finally {
+        setPermissionsLoading(false);
+      }
+    };
+    fetchPermissions();
+  }, []);
+
+  // Helper function to check permissions
+  const hasPermission = (permission: string): boolean => {
+    if (userPermissions.includes('*')) return true;
+    if (userPermissions.includes(permission)) return true;
+    const [resource] = permission.split('.');
+    if (userPermissions.includes(`${resource}.*`)) return true;
+    return false;
+  };
+
+  const canCreate = hasPermission('categories.create');
+  const canEdit = hasPermission('categories.edit');
+  const canDelete = hasPermission('categories.delete');
 
   // Fetch categories on mount
   useEffect(() => {
@@ -100,13 +136,24 @@ export default function CategoriesPage() {
         {/* Header with Add Button */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h2 className="text-xl lg:text-2xl font-semibold text-white">All Categories</h2>
-          <Link
-            href="/admin/categories/new"
-            className="px-4 py-2 bg-[#6e0000] text-white rounded-lg hover:bg-[#8b0000] transition-colors flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Add Category
-          </Link>
+          {canCreate ? (
+            <Link
+              href="/admin/categories/new"
+              className="px-4 py-2 bg-[#6e0000] text-white rounded-lg hover:bg-[#8b0000] transition-colors flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Add Category
+            </Link>
+          ) : (
+            <button
+              onClick={() => alert('⛔ Access Denied\n\nYou do not have permission to create categories.\n\nMissing permission: categories.create')}
+              className="px-4 py-2 bg-gray-900/30 text-gray-500 border border-gray-800 rounded-lg cursor-not-allowed flex items-center gap-2"
+              disabled
+            >
+              <Lock className="w-5 h-5" />
+              Add Category
+            </button>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -139,7 +186,7 @@ export default function CategoriesPage() {
                 ? 'Try a different search term'
                 : 'Get started by creating your first category'}
             </p>
-            {!searchQuery && (
+            {!searchQuery && canCreate && (
               <Link
                 href="/admin/categories/new"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[#6e0000] text-white rounded-lg hover:bg-[#8b0000] transition-colors"
@@ -195,20 +242,43 @@ export default function CategoriesPage() {
 
                   {/* Actions */}
                   <div className="flex gap-2">
-                    <Link
-                      href={`/admin/categories/${category.id}/edit`}
-                      className="flex-1 px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-white rounded-lg hover:bg-[#2a2a2a] transition-colors flex items-center justify-center gap-2 text-sm font-medium"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => setDeleteModal({ isOpen: true, category })}
-                      className="flex-1 px-4 py-2.5 bg-red-900/30 border border-red-800/50 text-red-400 rounded-lg hover:bg-red-900/50 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </button>
+                    {canEdit ? (
+                      <Link
+                        href={`/admin/categories/${category.id}/edit`}
+                        className="flex-1 px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-white rounded-lg hover:bg-[#2a2a2a] transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                      >
+                        <Edit className="w-4 h-4" />
+                        Edit
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => alert('⛔ Access Denied\n\nYou do not have permission to edit categories.\n\nMissing permission: categories.edit')}
+                        className="flex-1 px-4 py-2.5 bg-gray-900/30 text-gray-600 border border-gray-800 rounded-lg cursor-not-allowed flex items-center justify-center gap-2 text-sm font-medium"
+                        disabled
+                      >
+                        <Lock className="w-4 h-4" />
+                        Edit
+                      </button>
+                    )}
+                    
+                    {canDelete ? (
+                      <button
+                        onClick={() => setDeleteModal({ isOpen: true, category })}
+                        className="flex-1 px-4 py-2.5 bg-red-900/30 border border-red-800/50 text-red-400 rounded-lg hover:bg-red-900/50 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => alert('⛔ Access Denied\n\nYou do not have permission to delete categories.\n\nMissing permission: categories.delete')}
+                        className="flex-1 px-4 py-2.5 bg-gray-900/30 text-gray-600 border border-gray-800 rounded-lg cursor-not-allowed flex items-center justify-center gap-2 text-sm font-medium"
+                        disabled
+                      >
+                        <Lock className="w-4 h-4" />
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

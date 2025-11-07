@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { checkPermission } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { pageSchema } from '@/lib/validations/page';
 import { ZodError } from 'zod';
@@ -14,12 +14,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Authenticate admin user
-    const { userId } = await auth();
-    if (!userId) {
+    // Check permission
+    const user = await checkPermission('pages.view');
+    if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'Unauthorized - Missing permission: pages.view' },
+        { status: 403 }
       );
     }
 
@@ -66,12 +66,12 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Authenticate admin user
-    const { userId } = await auth();
-    if (!userId) {
+    // Check permission
+    const user = await checkPermission('pages.edit');
+    if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'Unauthorized - Missing permission: pages.edit' },
+        { status: 403 }
       );
     }
 
@@ -181,12 +181,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Authenticate admin user
-    const { userId } = await auth();
-    if (!userId) {
+    // Check permission
+    const user = await checkPermission('pages.delete');
+    if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'Unauthorized - Missing permission: pages.delete' },
+        { status: 403 }
       );
     }
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Plus, FileText, Edit, Trash2, Loader2, ExternalLink } from 'lucide-react';
+import { Search, Plus, FileText, Edit, Trash2, Loader2, ExternalLink, Lock } from 'lucide-react';
 
 interface Page {
   id: string;
@@ -35,6 +35,42 @@ export default function PagesListClient({ initialPages }: PagesListClientProps) 
     page: null,
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
+
+  // Fetch user permissions
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserPermissions(data.permissions || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch permissions:', error);
+      } finally {
+        setPermissionsLoading(false);
+      }
+    };
+    fetchPermissions();
+  }, []);
+
+  // Helper function to check permissions
+  const hasPermission = (permission: string): boolean => {
+    if (userPermissions.includes('*')) return true;
+    if (userPermissions.includes(permission)) return true;
+    const [resource] = permission.split('.');
+    if (userPermissions.includes(`${resource}.*`)) return true;
+    return false;
+  };
+
+  const canCreate = hasPermission('pages.create');
+  const canEdit = hasPermission('pages.edit');
+  const canDelete = hasPermission('pages.delete');
 
   useEffect(() => {
     let filtered = pages;
@@ -58,6 +94,13 @@ export default function PagesListClient({ initialPages }: PagesListClientProps) 
   }, [searchQuery, publishedFilter, pages]);
 
   const handleDelete = async (page: Page) => {
+    // Check permission first
+    if (!canDelete) {
+      alert('⛔ Access Denied\n\nYou do not have permission to delete pages.\n\nMissing permission: pages.delete');
+      setDeleteModal({ isOpen: false, page: null });
+      return;
+    }
+
     // Check if page is permanent
     if (page.isPermanent) {
       alert(`Cannot delete "${page.title}" because it is a protected system page.`);
@@ -123,13 +166,24 @@ export default function PagesListClient({ initialPages }: PagesListClientProps) 
           </select>
         </div>
 
-        <Link
-          href="/admin/pages/new"
-          className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30 transition-all font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          New Page
-        </Link>
+        {canCreate ? (
+          <Link
+            href="/admin/pages/new"
+            className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30 transition-all font-medium"
+          >
+            <Plus className="w-5 h-5" />
+            New Page
+          </Link>
+        ) : (
+          <button
+            onClick={() => alert('⛔ Access Denied\n\nYou do not have permission to create pages.\n\nMissing permission: pages.create')}
+            className="flex items-center gap-2 px-6 py-2 bg-gray-900/30 text-gray-500 border border-gray-800 rounded-lg cursor-not-allowed font-medium"
+            disabled
+          >
+            <Lock className="w-5 h-5" />
+            New Page
+          </button>
+        )}
       </div>
 
       {/* Pages Table */}
@@ -140,7 +194,7 @@ export default function PagesListClient({ initialPages }: PagesListClientProps) 
           <p className="text-gray-400 mb-6">
             {searchQuery ? 'Try adjusting your search' : 'Get started by creating your first page'}
           </p>
-          {!searchQuery && (
+          {!searchQuery && canCreate && (
             <Link
               href="/admin/pages/new"
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all font-medium"
@@ -221,21 +275,43 @@ export default function PagesListClient({ initialPages }: PagesListClientProps) 
                         View
                       </a>
                     )}
-                    <Link
-                      href={`/admin/pages/${page.id}/edit`}
-                      className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Edit
-                    </Link>
-                    {!page.isPermanent ? (
-                      <button
-                        onClick={() => setDeleteModal({ isOpen: true, page })}
-                        className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 ml-3 transition-colors"
+                    {canEdit ? (
+                      <Link
+                        href={`/admin/pages/${page.id}/edit`}
+                        className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
                       >
-                        <Trash2 className="w-4 h-4" />
-                        Delete
+                        <Edit className="w-4 h-4" />
+                        Edit
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => alert('⛔ Access Denied\n\nYou do not have permission to edit pages.\n\nMissing permission: pages.edit')}
+                        className="inline-flex items-center gap-1 text-gray-600 cursor-not-allowed transition-colors"
+                        disabled
+                      >
+                        <Lock className="w-4 h-4" />
+                        Edit
                       </button>
+                    )}
+                    {!page.isPermanent ? (
+                      canDelete ? (
+                        <button
+                          onClick={() => setDeleteModal({ isOpen: true, page })}
+                          className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 ml-3 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => alert('⛔ Access Denied\n\nYou do not have permission to delete pages.\n\nMissing permission: pages.delete')}
+                          className="inline-flex items-center gap-1 text-gray-600 ml-3 cursor-not-allowed transition-colors"
+                          disabled
+                        >
+                          <Lock className="w-4 h-4" />
+                          Delete
+                        </button>
+                      )
                     ) : (
                       <span
                         className="inline-flex items-center gap-1 text-gray-600 ml-3 cursor-not-allowed"

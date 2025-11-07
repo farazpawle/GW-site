@@ -87,13 +87,6 @@ requiredEnvVars.forEach(key => {
      ALGOLIA_ADMIN_KEY: z.string().optional(),
      ALGOLIA_SEARCH_KEY: z.string().optional(),
      
-     // Email
-     SMTP_HOST: z.string(),
-     SMTP_PORT: z.string(),
-     SMTP_USER: z.string().email(),
-     SMTP_PASS: z.string(),
-     EMAIL_FROM: z.string().email(),
-     
      // Monitoring
      SENTRY_DSN: z.string().url().optional(),
      

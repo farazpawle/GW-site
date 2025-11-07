@@ -1,6 +1,7 @@
 import { SettingsCategory, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { encryptValue, decryptValue, isSensitiveField } from './encryption';
+import { getPresignedUrl, extractKeyFromUrl } from '@/lib/minio';
 
 /**
  * Cache entry structure with timestamp for TTL
@@ -16,6 +17,22 @@ interface CacheEntry {
  */
 const settingsCache = new Map<string, CacheEntry>();
 
+const MEDIA_SETTING_KEYS = new Set(['logo_url', 'logo_mobile_url', 'egh_logo']);
+const MEDIA_CACHE_PREFIX = 'media:';
+const RAW_MINIO_ENDPOINT = process.env.MINIO_ENDPOINT || 'localhost';
+const NORMALIZED_ENDPOINT = RAW_MINIO_ENDPOINT.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+const [MINIO_HOSTNAME, MINIO_PORT_OVERRIDE] = NORMALIZED_ENDPOINT.split(':');
+const EFFECTIVE_MINIO_HOSTNAME = MINIO_HOSTNAME || 'localhost';
+const MINIO_PORT = MINIO_PORT_OVERRIDE || process.env.MINIO_PORT || '9000';
+const PRIMARY_MINIO_HOST = `${EFFECTIVE_MINIO_HOSTNAME}:${MINIO_PORT}`;
+
+const DEFAULT_MINIO_HOSTS = new Set([
+  PRIMARY_MINIO_HOST,
+  'localhost:9000',
+  '127.0.0.1:9000',
+  'minio:9000',
+]);
+
 /**
  * Cache TTL in milliseconds (60 seconds)
  */
@@ -27,6 +44,110 @@ const CACHE_TTL = 60000;
 function isCacheValid(entry: CacheEntry | undefined): boolean {
   if (!entry) return false;
   return Date.now() - entry.timestamp < CACHE_TTL;
+}
+
+export function isMediaSettingKey(key: string): boolean {
+  return MEDIA_SETTING_KEYS.has(key);
+}
+
+function isMinioUrl(urlString: string): boolean {
+  try {
+    const parsed = new URL(urlString);
+
+    if (parsed.pathname.startsWith('/api/admin/media/proxy')) {
+      const target = parsed.searchParams.get('url');
+      if (!target) {
+        return false;
+      }
+      return isMinioUrl(target);
+    }
+
+    return DEFAULT_MINIO_HOSTS.has(parsed.host);
+  } catch {
+    return false;
+  }
+}
+
+export function normalizeMediaSettingValue(value: string): string {
+  const trimmed = value?.trim?.() ?? '';
+  if (!trimmed) {
+    return '';
+  }
+
+  const lower = trimmed.toLowerCase();
+  const isHttp = lower.startsWith('http://') || lower.startsWith('https://');
+
+  if (!isHttp) {
+    return trimmed;
+  }
+
+  if (isMinioUrl(trimmed)) {
+    const keyFromUrl = extractKeyFromUrl(trimmed);
+    if (keyFromUrl) {
+      return keyFromUrl;
+    }
+  }
+
+  return trimmed;
+}
+
+async function resolveMediaSettingValue(value: string | null): Promise<string | null> {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = normalizeMediaSettingValue(value);
+  if (!normalized) {
+    return null;
+  }
+
+  const lower = normalized.toLowerCase();
+  const isHttp = lower.startsWith('http://') || lower.startsWith('https://');
+
+  if (isHttp) {
+    return normalized;
+  }
+
+  try {
+    return await getPresignedUrl(normalized, 3600);
+  } catch (error) {
+    console.error(`Failed to generate presigned URL for key "${normalized}":`, error);
+    return null;
+  }
+}
+
+function cacheMediaUrl(key: string, url: string | null): void {
+  settingsCache.set(`${MEDIA_CACHE_PREFIX}${key}`, {
+    data: url,
+    timestamp: Date.now(),
+  });
+}
+
+function getCachedMediaUrl(key: string): string | null {
+  const cacheEntry = settingsCache.get(`${MEDIA_CACHE_PREFIX}${key}`);
+  if (isCacheValid(cacheEntry) && cacheEntry) {
+    return cacheEntry.data as string | null;
+  }
+  return null;
+}
+
+function clearMediaCacheKey(key: string): void {
+  settingsCache.delete(`${MEDIA_CACHE_PREFIX}${key}`);
+}
+
+export async function getMediaSettingUrl(
+  key: string,
+  rawValue?: string | null
+): Promise<string | null> {
+  const cached = getCachedMediaUrl(key);
+  if (cached !== null) {
+    return cached;
+  }
+
+  const storedValue = typeof rawValue === 'undefined' ? await getSetting(key) : rawValue;
+  const resolved = await resolveMediaSettingValue(storedValue);
+  cacheMediaUrl(key, resolved);
+  return resolved;
 }
 
 /**
@@ -157,6 +278,8 @@ export async function updateSetting(
     let storedValue = value;
     if (isSensitiveField(key)) {
       storedValue = encryptValue(value);
+    } else if (isMediaSettingKey(key)) {
+      storedValue = normalizeMediaSettingValue(value);
     }
     
     // Upsert to database
@@ -176,6 +299,7 @@ export async function updateSetting(
     
     // Clear cache for this key
     settingsCache.delete(key);
+    clearMediaCacheKey(key);
     // Clear category cache
     settingsCache.delete(setting.category);
     // Clear 'all' cache
@@ -216,6 +340,8 @@ export async function updateSettings(
           let storedValue = value;
           if (isSensitiveField(key)) {
             storedValue = encryptValue(value);
+          } else if (isMediaSettingKey(key)) {
+            storedValue = normalizeMediaSettingValue(value);
           }
           
           // Get existing setting to determine category

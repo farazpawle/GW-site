@@ -94,11 +94,6 @@ NEXTAUTH_SECRET="YOUR_NEXTAUTH_SECRET_HERE"  # Generate with: openssl rand -base
 NEXTAUTH_URL="https://yourdomain.com"
 NODE_ENV="production"
 
-# Email (Optional - for notifications)
-SMTP_HOST="smtp.your-provider.com"
-SMTP_PORT="587"
-SMTP_USER="your-email@yourdomain.com"
-SMTP_PASS="your-smtp-password"
 ```
 
 ### 2.2 Secure Environment Variables

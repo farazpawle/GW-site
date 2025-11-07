@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Edit, Trash2, ExternalLink, Eye, EyeOff } from 'lucide-react';
+import { Edit, Trash2, ExternalLink, Eye, EyeOff, Lock } from 'lucide-react';
 import type { Category, Prisma } from '@prisma/client';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import { Badge } from '@/components/ui/badge';
@@ -56,6 +56,44 @@ export default function ProductTable({ products, currentSort }: ProductTableProp
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<{ id: string; name: string } | null>(null);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
+
+  // Fetch user permissions on mount
+  useEffect(() => {
+    async function fetchPermissions() {
+      try {
+        const response = await fetch('/api/auth/me?t=' + Date.now(), {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
+        const data = await response.json();
+        
+        if (data.success && data.data.permissions) {
+          setUserPermissions(data.data.permissions);
+        }
+      } catch (error) {
+        console.error('[ProductTable] Error fetching permissions:', error);
+      } finally {
+        setPermissionsLoading(false);
+      }
+    }
+
+    fetchPermissions();
+  }, []);
+
+  // Check if user has permission
+  const hasPermission = (permission: string) => {
+    if (userPermissions.includes(permission)) return true;
+    // Check wildcard permissions (e.g., "products.*" allows "products.edit")
+    const resource = permission.split('.')[0];
+    return userPermissions.includes(`${resource}.*`);
+  };
+
+  const canEdit = hasPermission('products.edit');
+  const canDelete = hasPermission('products.delete');
 
   const getSortLink = (field: string) => {
     const currentField = currentSort.split('-')[0];
@@ -250,47 +288,63 @@ export default function ProductTable({ products, currentSort }: ProductTableProp
             <span className="font-semibold">{selectedIds.size}</span> product{selectedIds.size !== 1 ? 's' : ''} selected
           </div>
           <div className="flex flex-wrap items-center gap-2">
-
-            <button
-              onClick={() => handleBulkFeatured(true)}
-              disabled={bulkActionLoading}
-              className="px-4 py-2 bg-[#6e0000] text-white rounded-lg hover:bg-[#8a0000] transition-colors disabled:opacity-50"
-            >
-              Set Featured
-            </button>
-            <button
-              onClick={() => handleBulkFeatured(false)}
-              disabled={bulkActionLoading}
-              className="px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] text-white rounded-lg hover:bg-[#2a2a2a] transition-colors disabled:opacity-50"
-            >
-              Remove Featured
-            </button>
-            <div className="w-px h-8 bg-[#2a2a2a]"></div>
-            <button
-              onClick={() => handleBulkPublish(true)}
-              disabled={bulkActionLoading}
-              className="px-4 py-2 bg-blue-900/30 text-blue-400 border border-blue-800 rounded-lg hover:bg-blue-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
-            >
-              <Eye className="w-4 h-4" />
-              Publish
-            </button>
-            <button
-              onClick={() => handleBulkPublish(false)}
-              disabled={bulkActionLoading}
-              className="px-4 py-2 bg-gray-900/30 text-gray-400 border border-gray-800 rounded-lg hover:bg-gray-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
-            >
-              <EyeOff className="w-4 h-4" />
-              Unpublish
-            </button>
-            <div className="w-px h-8 bg-[#2a2a2a]"></div>
-            <button
-              onClick={handleBulkDelete}
-              disabled={bulkActionLoading}
-              className="px-4 py-2 bg-red-900/30 text-red-400 border border-red-800 rounded-lg hover:bg-red-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete Selected
-            </button>
+            {canEdit ? (
+              <>
+                <button
+                  onClick={() => handleBulkFeatured(true)}
+                  disabled={bulkActionLoading}
+                  className="px-4 py-2 bg-[#6e0000] text-white rounded-lg hover:bg-[#8a0000] transition-colors disabled:opacity-50"
+                >
+                  Set Featured
+                </button>
+                <button
+                  onClick={() => handleBulkFeatured(false)}
+                  disabled={bulkActionLoading}
+                  className="px-4 py-2 bg-[#0a0a0a] border border-[#2a2a2a] text-white rounded-lg hover:bg-[#2a2a2a] transition-colors disabled:opacity-50"
+                >
+                  Remove Featured
+                </button>
+                <div className="w-px h-8 bg-[#2a2a2a]"></div>
+                <button
+                  onClick={() => handleBulkPublish(true)}
+                  disabled={bulkActionLoading}
+                  className="px-4 py-2 bg-blue-900/30 text-blue-400 border border-blue-800 rounded-lg hover:bg-blue-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  Publish
+                </button>
+                <button
+                  onClick={() => handleBulkPublish(false)}
+                  disabled={bulkActionLoading}
+                  className="px-4 py-2 bg-gray-900/30 text-gray-400 border border-gray-800 rounded-lg hover:bg-gray-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  <EyeOff className="w-4 h-4" />
+                  Unpublish
+                </button>
+                <div className="w-px h-8 bg-[#2a2a2a]"></div>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-900/30 text-gray-500 border border-gray-800 rounded-lg">
+                <Lock className="w-4 h-4" />
+                <span className="text-sm">Bulk edit disabled (missing products.edit permission)</span>
+              </div>
+            )}
+            
+            {canDelete ? (
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkActionLoading}
+                className="px-4 py-2 bg-red-900/30 text-red-400 border border-red-800 rounded-lg hover:bg-red-900/50 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Selected
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-900/30 text-gray-500 border border-gray-800 rounded-lg">
+                <Lock className="w-4 h-4" />
+                <span className="text-sm">Delete disabled (missing products.delete permission)</span>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -449,20 +503,44 @@ export default function ProductTable({ products, currentSort }: ProductTableProp
                       >
                         <ExternalLink className="w-4 h-4" />
                       </Link>
-                      <Link
-                        href={`/admin/parts/${product.id}/edit`}
-                        className="p-1 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
-                        title="Edit"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Link>
-                      <button
-                        onClick={() => handleDeleteClick({ id: product.id, name: product.name })}
-                        className="p-1 text-gray-400 hover:text-red-400 hover:bg-[#2a2a2a] rounded-lg transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      
+                      {canEdit ? (
+                        <Link
+                          href={`/admin/parts/${product.id}/edit`}
+                          className="p-1 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={() => alert('⛔ Access Denied\n\nYou do not have permission to edit products.\n\nMissing permission: products.edit')}
+                          className="p-1 text-gray-600 cursor-not-allowed opacity-50"
+                          title="No permission to edit"
+                          disabled
+                        >
+                          <Lock className="w-4 h-4" />
+                        </button>
+                      )}
+                      
+                      {canDelete ? (
+                        <button
+                          onClick={() => handleDeleteClick({ id: product.id, name: product.name })}
+                          className="p-1 text-gray-400 hover:text-red-400 hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => alert('⛔ Access Denied\n\nYou do not have permission to delete products.\n\nMissing permission: products.delete')}
+                          className="p-1 text-gray-600 cursor-not-allowed opacity-50"
+                          title="No permission to delete"
+                          disabled
+                        >
+                          <Lock className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

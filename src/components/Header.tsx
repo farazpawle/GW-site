@@ -9,10 +9,11 @@ import AnnouncementBar from './ui/AnnouncementBar';
 
 interface HeaderProps {
   logoUrl: string;
+  mobileLogoUrl?: string;
   siteName: string;
 }
 
-export default function Header({ logoUrl, siteName }: HeaderProps) {
+export default function Header({ logoUrl, mobileLogoUrl, siteName }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function Header({ logoUrl, siteName }: HeaderProps) {
                 <Logo 
                   size={isScrolled ? 'sm' : 'md'} 
                   logoUrl={logoUrl}
+                  mobileLogoUrl={mobileLogoUrl}
                   siteName={siteName}
                 />
               </div>

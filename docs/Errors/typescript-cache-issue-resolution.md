@@ -112,8 +112,6 @@ export const SettingsCategory: {
   GENERAL: 'GENERAL',
   CONTACT: 'CONTACT',
   SEO: 'SEO',
-  EMAIL: 'EMAIL',
-  PAYMENT: 'PAYMENT',
   SHIPPING: 'SHIPPING'
 };
 
@@ -130,7 +128,7 @@ prisma.settings.upsert()
 1. **Restart VSCode** to clear TypeScript cache
 2. **Test admin page** at `/admin/settings-v2`
 3. **Test settings save** functionality
-4. **Verify all 6 tabs** load correctly
+4. **Verify all tabs** load correctly (Email tab retired)
 
 If errors persist after restart, they're cosmetic only - the application works correctly!
 

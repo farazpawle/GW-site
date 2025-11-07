@@ -26,14 +26,6 @@ const envSchema = z.object({
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1, 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required'),
   CLERK_SECRET_KEY: z.string().min(1, 'CLERK_SECRET_KEY is required'),
   
-  // SMTP (Email)
-  SMTP_HOST: z.string().min(1, 'SMTP_HOST is required'),
-  SMTP_PORT: z.string().regex(/^\d+$/, 'SMTP_PORT must be a number'),
-  SMTP_SECURE: z.string().regex(/^(true|false)$/, 'SMTP_SECURE must be "true" or "false"'),
-  SMTP_USER: z.string().min(1, 'SMTP_USER is required'),
-  SMTP_PASS: z.string().min(1, 'SMTP_PASS is required'),
-  SMTP_FROM_EMAIL: z.string().email('SMTP_FROM_EMAIL must be a valid email'),
-  SMTP_FROM_NAME: z.string().min(1, 'SMTP_FROM_NAME is required'),
   
   // Node Environment
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),

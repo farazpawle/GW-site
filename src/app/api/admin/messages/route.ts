@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin, checkPermission } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { MessageStatus, Prisma } from '@prisma/client';
 
@@ -19,7 +19,13 @@ import { MessageStatus, Prisma } from '@prisma/client';
 export async function GET(req: NextRequest) {
   try {
     // Ensure user is an admin
-    await requireAdmin();
+    const user = await checkPermission('messages.view');
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     // Extract query parameters
     const searchParams = req.nextUrl.searchParams;

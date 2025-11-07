@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import MessageDetailModal from '@/components/admin/MessageDetailModal';
-import { Search, Mail, MailOpen, MailCheck, Trash2, Eye, Loader2 } from 'lucide-react';
+import { Search, Mail, MailOpen, MailCheck, Trash2, Eye, Loader2, Lock } from 'lucide-react';
 
 interface ContactMessage {
   id: string;
@@ -34,6 +34,41 @@ export default function MessagesPage() {
   const [stats, setStats] = useState<Stats>({ total: 0, unread: 0, read: 0, replied: 0 });
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
+
+  // Fetch user permissions
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserPermissions(data.permissions || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch permissions:', error);
+      } finally {
+        setPermissionsLoading(false);
+      }
+    };
+    fetchPermissions();
+  }, []);
+
+  // Helper function to check permissions
+  const hasPermission = (permission: string): boolean => {
+    if (userPermissions.includes('*')) return true;
+    if (userPermissions.includes(permission)) return true;
+    const [resource] = permission.split('.');
+    if (userPermissions.includes(`${resource}.*`)) return true;
+    return false;
+  };
+
+  const canView = hasPermission('messages.view');
+  const canDelete = hasPermission('messages.delete');
 
   // Fetch messages from API
   const fetchMessages = async () => {
@@ -89,6 +124,11 @@ export default function MessagesPage() {
 
   // Delete message
   const handleDelete = async (id: string) => {
+    if (!canDelete) {
+      alert('⛔ Access Denied\n\nYou do not have permission to delete messages.\n\nMissing permission: messages.delete');
+      return;
+    }
+
     if (!confirm('Are you sure you want to delete this message?')) return;
 
     try {
@@ -98,6 +138,11 @@ export default function MessagesPage() {
 
       if (response.ok) {
         fetchMessages();
+        // Close modal if deleting the currently viewed message
+        if (selectedMessage?.id === id) {
+          setIsModalOpen(false);
+          setSelectedMessage(null);
+        }
       }
     } catch (error) {
       console.error('Error deleting message:', error);
@@ -155,6 +200,39 @@ export default function MessagesPage() {
       minute: '2-digit'
     });
   };
+
+  // Check if user has view permission
+  if (permissionsLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] p-8">
+        <AdminHeader pageTitle="Contact Messages" description="Manage customer inquiries and messages" />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-brand-coral mx-auto mb-4" />
+            <p className="text-gray-400">Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!canView) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] p-8">
+        <AdminHeader pageTitle="Contact Messages" description="Manage customer inquiries and messages" />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-900/30 border border-red-800 mb-6">
+              <Lock className="w-10 h-10 text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-3">Access Denied</h2>
+            <p className="text-gray-400 mb-2">You do not have permission to view messages.</p>
+            <p className="text-sm text-gray-500">Missing permission: <code className="px-2 py-1 bg-[#1a1a1a] rounded">messages.view</code></p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] p-8">
@@ -299,13 +377,24 @@ export default function MessagesPage() {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => handleDelete(message.id)}
-                          className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {canDelete ? (
+                          <button
+                            onClick={() => handleDelete(message.id)}
+                            className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleDelete(message.id)}
+                            className="p-2 text-gray-600 rounded-lg cursor-not-allowed"
+                            title="No permission to delete"
+                            disabled
+                          >
+                            <Lock className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -348,6 +437,7 @@ export default function MessagesPage() {
         onClose={() => setIsModalOpen(false)}
         onStatusUpdate={handleStatusUpdate}
         onDelete={handleDelete}
+        canDelete={canDelete}
       />
     </div>
   );

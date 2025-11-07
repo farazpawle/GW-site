@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import ProductPerformanceCard from './ProductPerformanceCard';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 
 interface Product {
@@ -27,6 +27,7 @@ interface Product {
 export default function NeedsAttentionWidget() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
     const fetchNeedsAttention = async () => {
@@ -35,7 +36,7 @@ export default function NeedsAttentionWidget() {
         const result = await response.json();
 
         if (result.success) {
-          setProducts(result.data.slice(0, 5)); // Show top 5
+          setProducts(result.data); // Show all products with issues
         } else {
           console.error('Failed to fetch products needing attention:', result.error);
         }
@@ -63,12 +64,24 @@ export default function NeedsAttentionWidget() {
     <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-[#2a2a2a] rounded-xl p-6 lg:p-8 shadow-xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="text-yellow-400" size={24} />
-            <h2 className="text-xl lg:text-2xl font-bold text-white">Needs Attention</h2>
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="text-yellow-400" size={24} />
+          <h2 className="text-xl lg:text-2xl font-bold text-white">Needs Attention</h2>
+          <div className="relative">
+            <button
+              onClick={() => setShowTooltip(!showTooltip)}
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+              className="text-gray-400 hover:text-gray-300 transition-colors"
+            >
+              <HelpCircle size={18} />
+            </button>
+            {showTooltip && (
+              <div className="absolute left-0 top-8 z-10 w-64 p-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg shadow-xl">
+                <p className="text-xs text-gray-300">Products that need updates or improvements</p>
+              </div>
+            )}
           </div>
-          <p className="text-sm text-gray-400">Products that need updates or improvements</p>
         </div>
 
         {products.length > 0 && (
@@ -81,22 +94,10 @@ export default function NeedsAttentionWidget() {
 
       {/* Products List */}
       {products.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-brand-maroon/20 scrollbar-track-transparent hover:scrollbar-thumb-brand-maroon/40">
           {products.map((product) => (
             <ProductPerformanceCard key={product.id} product={product} variant="needsAttention" />
           ))}
-
-          {products.length >= 5 && (
-            <div className="pt-4 text-center">
-              <Link
-                href="/admin/parts?filter=needs-attention"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-brand-maroon/10 hover:bg-brand-maroon text-brand-maroon hover:text-white rounded-lg text-sm font-medium transition-all duration-300 border border-brand-maroon/20 hover:border-brand-maroon"
-              >
-                View All Issues
-                <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
-              </Link>
-            </div>
-          )}
         </div>
       ) : (
         <div className="text-center py-12 bg-[#0a0a0a] rounded-xl border border-dashed border-[#2a2a2a]">

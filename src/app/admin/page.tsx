@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { hasPermission } from '@/lib/rbac/check-permission';
+import { PERMISSIONS } from '@/lib/rbac/permissions';
 import EnhancedStatCard from '@/components/admin/stats/EnhancedStatCard';
 import SearchAnalytics from '@/components/admin/analytics/SearchAnalytics';
 import EngagementChartWrapper from '@/components/admin/charts/EngagementChartWrapper';
@@ -52,6 +54,14 @@ export default async function AdminDashboard() {
     comparePrice: part.comparePrice ? Number(part.comparePrice) : null,
   }));
 
+  // Check permissions for each dashboard element
+  const canViewStatistics = hasPermission(user, PERMISSIONS.DASHBOARD_STATISTICS);
+  const canViewMessageCenter = hasPermission(user, PERMISSIONS.DASHBOARD_MESSAGE_CENTER);
+  const canViewEngagement = hasPermission(user, PERMISSIONS.DASHBOARD_ENGAGEMENT_OVERVIEW);
+  const canViewProductInsights = hasPermission(user, PERMISSIONS.DASHBOARD_PRODUCT_INSIGHTS);
+  const canViewSearchAnalytics = hasPermission(user, PERMISSIONS.DASHBOARD_SEARCH_ANALYTICS);
+  const canViewRecentActivity = hasPermission(user, PERMISSIONS.DASHBOARD_RECENT_ACTIVITY);
+
   return (
     <div className="w-full px-8 py-6 space-y-6 animate-in fade-in duration-500">
       {/* Welcome Section with gradient background */}
@@ -67,62 +77,68 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-        <EnhancedStatCard
-          title="Total Users"
-          value={usersCount}
-          iconName="users"
-          trend={trends.users}
-          chart={{
-            type: 'line',
-            data: charts.users,
-            color: '#3b82f6',
-          }}
-          status="success"
-        />
-        <EnhancedStatCard
-          title="Total Products"
-          value={partsCount}
-          iconName="package"
-          trend={trends.products}
-          chart={{
-            type: 'bar',
-            data: charts.products,
-            color: '#6e0000',
-          }}
-          status="success"
-        />
-        <EnhancedStatCard
-          title="Categories"
-          value={categoriesCount}
-          iconName="folder"
-          trend={trends.categories}
-          chart={{
-            type: 'line',
-            data: charts.categories,
-            color: '#f59e0b',
-          }}
-          status="warning"
-        />
-      </div>
+      {/* Statistics Cards - Only show if user has permission */}
+      {canViewStatistics && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+          <EnhancedStatCard
+            title="Total Users"
+            value={usersCount}
+            iconName="users"
+            trend={trends.users}
+            chart={{
+              type: 'line',
+              data: charts.users,
+              color: '#3b82f6',
+            }}
+            status="success"
+          />
+          <EnhancedStatCard
+            title="Total Products"
+            value={partsCount}
+            iconName="package"
+            trend={trends.products}
+            chart={{
+              type: 'bar',
+              data: charts.products,
+              color: '#6e0000',
+            }}
+            status="success"
+          />
+          <EnhancedStatCard
+            title="Categories"
+            value={categoriesCount}
+            iconName="folder"
+            trend={trends.categories}
+            chart={{
+              type: 'line',
+              data: charts.categories,
+              color: '#f59e0b',
+            }}
+            status="warning"
+          />
+        </div>
+      )}
 
-      {/* Engagement Chart */}
-      <EngagementChartWrapper />
+      {/* Message Dashboard - Only show if user has permission */}
+      {canViewMessageCenter && <MessageDashboard />}
 
-      {/* Product Performance Widgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TopViewedWidget />
-        <NeedsAttentionWidget />
-      </div>
+      {/* Engagement Chart - Only show if user has permission */}
+      {canViewEngagement && <EngagementChartWrapper />}
 
-      {/* Message Dashboard - Full Width */}
-      <MessageDashboard />
+      {/* Product Performance Widgets - Only show if user has permission */}
+      {canViewProductInsights && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TopViewedWidget />
+          <NeedsAttentionWidget />
+        </div>
+      )}
 
       {/* Recent Products and Search Analytics Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Products Section */}
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-[#2a2a2a] rounded-xl p-6 lg:p-8 shadow-xl">
+      {(canViewRecentActivity || canViewSearchAnalytics) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Products Section - Only show if user has permission */}
+          {canViewRecentActivity && (
+            <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-[#2a2a2a] rounded-xl p-6 lg:p-8 shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-xl lg:text-2xl font-bold text-white mb-1">Recent Products</h2>
@@ -185,10 +201,12 @@ export default async function AdminDashboard() {
           </div>
         )}
         </div>
+          )}
 
-        {/* Search Analytics */}
-        <SearchAnalytics />
-      </div>
+          {/* Search Analytics - Only show if user has permission */}
+          {canViewSearchAnalytics && <SearchAnalytics />}
+        </div>
+      )}
     </div>
   );
 }

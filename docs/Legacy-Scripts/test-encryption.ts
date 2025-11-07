@@ -1,5 +1,5 @@
 // Test script for encryption module
-import { encryptValue, decryptValue, isSensitiveField } from '../src/lib/settings/encryption';
+import { encryptValue, decryptValue, isSensitiveField } from '../../src/lib/settings/encryption';
 
 async function test() {
   console.log('Testing encryption module...\n');
@@ -35,10 +35,9 @@ async function test() {
   
   // Test 3: Sensitive field detection
   console.log('Test 3: Sensitive Field Detection');
-  console.log('email_smtp_password:', isSensitiveField('email_smtp_password') ? 'SENSITIVE' : 'NOT SENSITIVE');
-  console.log('payment_stripe_secret_key:', isSensitiveField('payment_stripe_secret_key') ? 'SENSITIVE' : 'NOT SENSITIVE');
-  console.log('site_name:', isSensitiveField('site_name') ? 'SENSITIVE' : 'NOT SENSITIVE');
   console.log('contact_email:', isSensitiveField('contact_email') ? 'SENSITIVE' : 'NOT SENSITIVE');
+  console.log('site_name:', isSensitiveField('site_name') ? 'SENSITIVE' : 'NOT SENSITIVE');
+  console.log('product_card_layout:', isSensitiveField('product_card_layout') ? 'SENSITIVE' : 'NOT SENSITIVE');
   console.log('✅ Test 3 passed: Sensitive field detection working');
   console.log('');
   

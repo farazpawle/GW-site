@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, Phone, Mail } from 'lucide-react';
-import { getSettings } from '@/lib/settings/settings-manager';
+import { getSettings, getMediaSettingUrl } from '@/lib/settings/settings-manager';
 
 export default async function Footer() {
   // Fetch contact settings with fallbacks
@@ -16,9 +16,12 @@ export default async function Footer() {
   const socialTwitter = contactSettings.social_twitter || 'https://twitter.com/garritwulf';
   const socialInstagram = contactSettings.social_instagram || 'https://instagram.com/garritwulf';
   const socialLinkedin = contactSettings.social_linkedin || 'https://youtube.com/@garritwulf';
-  
+
   const siteName = contactSettings.site_name || 'Garrit & Wulf';
-  const eghLogo = contactSettings.egh_logo || '/images/egh_member_200x.avif';
+  const eghLogo =
+    (await getMediaSettingUrl('egh_logo', contactSettings.egh_logo)) ||
+    contactSettings.egh_logo ||
+    '/images/egh_member_200x.avif';
 
   // Fetch general settings for privacy policy and terms pages
   const generalSettings = await getSettings('GENERAL');

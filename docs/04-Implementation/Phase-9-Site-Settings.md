@@ -10,16 +10,18 @@
 
 ## 🎯 Goal
 
-Build a centralized site settings system that allows admins to configure global site properties, contact information, business details, SEO settings, email configuration, payment gateways, and shipping rules without code changes.
+Build a centralized site settings system that allows admins to configure global site properties, contact information, business details, SEO settings, and shipping rules without code changes.
 
 **What Success Looks Like:**
 - ✅ Single settings management interface
 - ✅ Store configuration in database (not hardcoded)
 - ✅ Easy-to-use form interface
-- ✅ Settings categories (General, Contact, SEO, Email, etc.)
+- ✅ Settings categories (General, Contact, SEO, Shipping, Product Display)
 - ✅ Validation and error handling
 - ✅ Auto-save or manual save
 - ✅ Settings audit trail (who changed what, when)
+
+> **2025-11-04 Update:** The legacy Email and Payment configuration workstreams were decommissioned. Sections below referencing those features are preserved for historical context only and should not be implemented.
 
 ---
 
@@ -49,8 +51,6 @@ enum SettingsCategory {
   GENERAL
   CONTACT
   SEO
-  EMAIL
-  PAYMENT
   SHIPPING
 }
 ```
@@ -69,33 +69,25 @@ const defaultSettings = [
   { key: 'site_logo_url', value: '/images/GW_LOGO-removebg.png', category: 'GENERAL' },
   { key: 'site_timezone', value: 'America/New_York', category: 'GENERAL' },
   { key: 'site_currency', value: 'USD', category: 'GENERAL' },
-  
+
   // CONTACT
   { key: 'contact_email', value: 'info@garritwulf.com', category: 'CONTACT' },
   { key: 'contact_phone', value: '+1 (555) 123-4567', category: 'CONTACT' },
   { key: 'contact_address', value: '123 Main St, City, State 12345', category: 'CONTACT' },
   { key: 'business_hours', value: 'Mon-Fri: 9am-6pm, Sat: 10am-4pm', category: 'CONTACT' },
-  
+  { key: 'social_facebook', value: 'https://facebook.com/garritwulf', category: 'CONTACT' },
+  { key: 'social_instagram', value: 'https://instagram.com/garritwulf', category: 'CONTACT' },
+  { key: 'social_twitter', value: 'https://twitter.com/garritwulf', category: 'CONTACT' },
+  { key: 'social_linkedin', value: 'https://linkedin.com/company/garritwulf', category: 'CONTACT' },
+
   // SEO
   { key: 'seo_title', value: 'Garrit Wulf - Quality Auto Parts', category: 'SEO' },
   { key: 'seo_description', value: 'Professional auto parts and repair services...', category: 'SEO' },
   { key: 'seo_keywords', value: 'auto parts, car repair, brakes, engines', category: 'SEO' },
   { key: 'seo_og_image', value: '/images/og-image.jpg', category: 'SEO' },
-  
-  // EMAIL (SMTP)
-  { key: 'email_smtp_host', value: 'smtp.gmail.com', category: 'EMAIL' },
-  { key: 'email_smtp_port', value: '587', category: 'EMAIL' },
-  { key: 'email_smtp_user', value: '', category: 'EMAIL' },
-  { key: 'email_smtp_password', value: '', category: 'EMAIL' }, // Encrypted
-  { key: 'email_from_address', value: 'noreply@garritwulf.com', category: 'EMAIL' },
-  { key: 'email_from_name', value: 'Garrit Wulf Auto Parts', category: 'EMAIL' },
-  
-  // PAYMENT
-  { key: 'payment_enabled', value: 'false', category: 'PAYMENT' },
-  { key: 'payment_gateway', value: 'stripe', category: 'PAYMENT' }, // stripe, paypal, square
-  { key: 'payment_stripe_public_key', value: '', category: 'PAYMENT' },
-  { key: 'payment_stripe_secret_key', value: '', category: 'PAYMENT' }, // Encrypted
-  
+  { key: 'google_analytics_id', value: '', category: 'SEO' },
+  { key: 'google_tag_manager_id', value: '', category: 'SEO' },
+
   // SHIPPING
   { key: 'shipping_enabled', value: 'true', category: 'SHIPPING' },
   { key: 'shipping_flat_rate', value: '10.00', category: 'SHIPPING' },
@@ -188,7 +180,7 @@ export async function PUT(req: Request) {
 - `src/components/admin/settings/GeneralSettings.tsx` - General tab
 - `src/components/admin/settings/ContactSettings.tsx` - Contact tab
 - `src/components/admin/settings/SEOSettings.tsx` - SEO tab
-- `src/components/admin/settings/EmailSettings.tsx` - Email tab
+- ~~`src/components/admin/settings/EmailSettings.tsx` - Email tab~~ (removed Nov 4, 2025)
 - `src/components/admin/settings/PaymentSettings.tsx` - Payment tab
 - `src/components/admin/settings/ShippingSettings.tsx` - Shipping tab
 
@@ -241,7 +233,7 @@ export async function PUT(req: Request) {
 
 ---
 
-### Task 7: Build Email Settings Tab
+### ~~Task 7: Build Email Settings Tab~~ (deprecated Nov 4, 2025)
 **Time:** 15 minutes
 
 **Fields:**

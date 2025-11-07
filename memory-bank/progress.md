@@ -1,8 +1,160 @@
 # Progress: Garrit & Wulf Website
 
-**Last Updated:** November 2, 2025
+**Last Updated:** November 7, 2025
 
 ## What Works (Completed & Tested)
+
+### ✅ Product Image Removal Fix - Complete (Nov 7, 2025)
+
+**Issue**: Unable to manually remove product images in admin panel
+- User tried to remove images from products in edit form
+- Images would reappear after saving
+- Affected 5 products with placeholder images
+
+**Root Cause**:
+- API endpoint `PUT /api/admin/parts/[id]` had auto-placeholder logic
+- When form sent empty images array `[]`, API would automatically replace it with `[DEFAULT_IMAGES.PRODUCT]`
+- This prevented users from ever having products with no images
+
+**Solution Implemented**:
+1. Modified update endpoint to respect user's choice
+   - Changed logic to allow empty images array on UPDATE operations
+   - If user sends empty array, it's stored as-is (no auto-placeholder)
+   - If images field is not provided at all, existing images remain unchanged
+2. CREATE endpoint unchanged
+   - New products still get placeholder if no images provided
+   - Ensures better UX for product creation
+
+**Code Changes**:
+```typescript
+// Before (forced placeholder):
+const images = updateData.images !== undefined
+  ? (updateData.images && updateData.images.length > 0
+      ? updateData.images
+      : [DEFAULT_IMAGES.PRODUCT])  // Auto-added placeholder
+  : undefined;
+
+// After (respects user choice):
+const images = updateData.images !== undefined
+  ? updateData.images  // Use whatever user sent (even empty array)
+  : undefined;  // Don't update if not provided
+```
+
+**Files Modified**:
+- `src/app/api/admin/parts/[id]/route.ts` (lines 150-157)
+
+**Testing**:
+- Users can now successfully remove images from products
+- Empty images array is saved to database
+- Frontend needs to handle empty image arrays gracefully
+- CREATE operation still adds placeholder for new products
+
+### ✅ Docker Prisma Client Issue - Fixed (Nov 7, 2025)
+
+**Issue**: Homepage failed to load in Docker with error: `Cannot read properties of undefined (reading 'findMany')`
+- Error occurred at: `prisma.pageSection.findMany()`
+- Same code worked perfectly when running with `npm run dev`
+- Root cause: Prisma Client was not regenerated after schema changes in Docker
+
+**Solution Implemented**:
+1. **Immediate Fix**: Ran `docker-compose exec nextjs-app npx prisma generate` to regenerate Prisma Client
+2. **Permanent Fix**: Updated Dockerfile development stage CMD to auto-generate Prisma Client on container start
+   - Changed from: `CMD ["npm", "run", "dev"]`
+   - Changed to: `CMD ["sh", "-c", "npx prisma generate && npm run dev"]`
+   - This ensures Prisma Client is always fresh when container starts
+
+**Why It Happened**:
+- Docker volumes mount the source code, but `node_modules` is isolated
+- When schema changes outside Docker (e.g., migrations), the Prisma Client inside the container becomes stale
+- The Dockerfile only generated Prisma Client during build, not on startup
+
+**Files Modified**:
+- `Dockerfile` (added auto-generation to development stage CMD)
+
+**Testing**:
+- ✅ Homepage loads successfully in Docker
+- ✅ No more `prisma.pageSection is undefined` errors
+- ✅ Page sections render correctly
+- ✅ Future schema changes will auto-regenerate client on container restart
+
+### ✅ RBAC & Authentication System - Complete (Nov 6, 2025)
+
+**Implementation Summary**:
+- Fixed admin access control to allow all roles except VIEWER
+- Unhid ADMIN role from role selector UI
+- Added complete role badge display for all 5 roles
+- Extended permissions system with Homepage CMS and Dashboard resources
+- Created utility scripts for role management
+
+**What Was Implemented**:
+
+1. **Admin Access Control Fix**
+   - Changed `requireAdmin()` and `checkAdmin()` to block only VIEWER role
+   - All other roles (SUPER_ADMIN, ADMIN, STAFF, CONTENT_EDITOR) can access admin panel
+   - Files: `src/lib/auth.ts`
+
+2. **Role Selector UI Fix**
+   - Removed filter that was hiding ADMIN role
+   - All 5 roles now visible and assignable by Super Admin
+   - Files: `src/components/admin/users/RoleSelector.tsx`
+
+3. **Complete Role Badge Component**
+   - Added styling for all 5 roles with color-coded badges
+   - SUPER_ADMIN: Gold gradient
+   - ADMIN: Blue
+   - STAFF: Green
+   - CONTENT_EDITOR: Cyan
+   - VIEWER: Gray
+   - Files: `src/components/admin/users/RoleBadge.tsx`
+
+4. **New Permission Resources**
+   - **Homepage CMS**:
+     - `homepage.view` - View homepage content
+     - `homepage.edit` - Edit homepage layout
+     - `homepage.*` - All homepage permissions
+   - **Dashboard**:
+     - `dashboard.view` - Access dashboard
+     - `dashboard.*` - All dashboard permissions
+   - Files: 
+     - `src/lib/rbac/permissions.ts`
+     - `src/components/admin/users/PermissionEditor.tsx`
+
+5. **Role Management Scripts**
+   - `scripts/promote-to-admin.ts` - Promote users to ADMIN role
+   - `scripts/check-user-roles.ts` - Check current user roles in database
+
+**Role Hierarchy (Level System)**:
+```
+SUPER_ADMIN     Level 100  - Full system access, manage all users/roles
+ADMIN           Level 50   - Manage content and users (cannot change roles)
+STAFF           Level 20   - Edit content, view analytics, limited user management
+CONTENT_EDITOR  Level 15   - Create/edit products, pages, media
+VIEWER          Level 10   - Read-only access (blocked from admin panel)
+```
+
+**Permission Distribution**:
+- SUPER_ADMIN: All permissions (*.*)
+- ADMIN: All permissions except users.manage_roles
+- STAFF: View + edit content, view analytics, reply to messages, homepage/dashboard access
+- CONTENT_EDITOR: Create/edit products/pages, media upload, homepage/dashboard access
+- VIEWER: View only (homepage, dashboard, all content) - no admin panel access
+
+**Testing Status**:
+- ✅ Admin panel access works for all non-VIEWER roles
+- ✅ Role selector displays all 5 roles correctly
+- ✅ Role badges display with proper colors
+- ✅ Permission editor shows new homepage and dashboard sections
+- ✅ User role changes persist in database
+- ✅ Authentication middleware properly blocks VIEWER from admin routes
+
+**Files Created/Modified**:
+- `src/lib/auth.ts` (admin access control)
+- `src/components/admin/users/RoleSelector.tsx` (unhid ADMIN role)
+- `src/components/admin/users/RoleBadge.tsx` (added all roles)
+- `src/lib/rbac/permissions.ts` (new resources and permissions)
+- `src/components/admin/users/PermissionEditor.tsx` (new permission groups)
+- `scripts/promote-to-admin.ts` (NEW)
+- `scripts/check-user-roles.ts` (NEW)
 
 ### ✅ Phase 17.1 Security Fixes - Complete (Nov 2, 2025)
 

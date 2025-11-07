@@ -2,7 +2,7 @@
 
 import { User } from '@prisma/client';
 import RoleBadge from './RoleBadge';
-import { Eye, UserCog } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import Link from 'next/link';
 import { isSuperAdmin } from '@/lib/admin/role-utils';
 
@@ -56,6 +56,7 @@ export default function UserTable({ users, currentUser, onRoleChange }: UserTabl
             <th className="text-left py-4 px-4 text-sm font-medium text-gray-400">User</th>
             <th className="text-left py-4 px-4 text-sm font-medium text-gray-400">Email</th>
             <th className="text-left py-4 px-4 text-sm font-medium text-gray-400">Role</th>
+            <th className="text-left py-4 px-4 text-sm font-medium text-gray-400">Permissions</th>
             <th className="text-left py-4 px-4 text-sm font-medium text-gray-400">Joined</th>
             <th className="text-right py-4 px-4 text-sm font-medium text-gray-400">Actions</th>
           </tr>
@@ -93,6 +94,20 @@ export default function UserTable({ users, currentUser, onRoleChange }: UserTabl
                 <RoleBadge role={user.role} />
               </td>
 
+              {/* Permissions Count (RBAC) */}
+              <td className="py-4 px-4">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/30 text-green-400 border border-green-800">
+                    {(user as any).permissions?.length || 0} perms
+                  </span>
+                  {(user as any).permissions?.some((p: string) => p.endsWith('.*')) && (
+                    <span className="text-yellow-400 text-xs" title="Has wildcard permissions">
+                      ⭐
+                    </span>
+                  )}
+                </div>
+              </td>
+
               {/* Joined Date */}
               <td className="py-4 px-4">
                 <p className="text-gray-400 text-sm">{formatDate(user.createdAt)}</p>
@@ -101,36 +116,22 @@ export default function UserTable({ users, currentUser, onRoleChange }: UserTabl
               {/* Actions */}
               <td className="py-4 px-4">
                 <div className="flex items-center justify-end gap-2">
-                  <Link
-                    href={`/admin/users/${user.id}`}
-                    className="p-2 rounded-lg border border-[#2a2a2a] hover:bg-[#2a2a2a] transition-colors"
-                    title="View Details"
-                  >
-                    <Eye size={16} className="text-gray-400" />
-                  </Link>
-                  
-                  {/* Hide role change button for super admins if current user is not super admin */}
-                  {(user.role !== 'SUPER_ADMIN' || currentUserIsSuperAdmin) && (
-                    <button
-                      onClick={() => onRoleChange?.(user.id)}
+                  {/* Single Manage button that goes to user detail page */}
+                  {(user.role !== 'SUPER_ADMIN' || currentUserIsSuperAdmin) ? (
+                    <Link
+                      href={`/admin/users/${user.id}`}
                       className="p-2 rounded-lg border border-[#2a2a2a] hover:bg-[#2a2a2a] transition-colors"
-                      title={
-                        user.role === 'SUPER_ADMIN' 
-                          ? "Manage Super Admin Role" 
-                          : "Change Role"
-                      }
+                      title="Manage User"
                     >
-                      <UserCog size={16} className="text-gray-400" />
-                    </button>
-                  )}
-                  
-                  {/* Show lock indicator for super admins (when current user is not super admin) */}
-                  {user.role === 'SUPER_ADMIN' && !currentUserIsSuperAdmin && (
+                      <Settings size={16} className="text-gray-400" />
+                    </Link>
+                  ) : (
+                    /* Show disabled button for super admins (when current user is not super admin) */
                     <div 
                       className="p-2 rounded-lg border border-[#2a2a2a] opacity-50 cursor-not-allowed"
                       title="Only super admins can manage super admin users"
                     >
-                      <UserCog size={16} className="text-gray-600" />
+                      <Settings size={16} className="text-gray-600" />
                     </div>
                   )}
                 </div>

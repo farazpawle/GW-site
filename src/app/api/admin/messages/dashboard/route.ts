@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 /**
@@ -14,7 +14,13 @@ import { prisma } from '@/lib/prisma';
 export async function GET(req: NextRequest) {
   try {
     // Ensure user is an admin
-    await requireAdmin();
+    const user = await checkAdmin();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     // Calculate date ranges
     const now = new Date();

@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Copy, Trash2, FileImage, Calendar, HardDrive } from 'lucide-react';
+import { Copy, Trash2, FileImage, Calendar, HardDrive, Lock } from 'lucide-react';
 import type { MediaFile } from '@/types/media';
 
 interface FileListProps {
@@ -9,6 +9,7 @@ interface FileListProps {
   onDelete: (file: MediaFile) => void;
   onCopyUrl: (url: string) => void;
   loading?: boolean;
+  canDelete?: boolean;
 }
 
 // Extract just the filename from the full key
@@ -29,7 +30,7 @@ function formatDate(dateString: string): string {
   });
 }
 
-export default function FileList({ files, onDelete, onCopyUrl, loading = false }: FileListProps) {
+export default function FileList({ files, onDelete, onCopyUrl, loading = false, canDelete = true }: FileListProps) {
   if (loading) {
     return (
       <div className="space-y-2">
@@ -109,14 +110,26 @@ export default function FileList({ files, onDelete, onCopyUrl, loading = false }
             >
               <Copy className="w-4 h-4 text-white" />
             </button>
-            <button
-              onClick={() => onDelete(file)}
-              className="p-2 rounded-lg bg-red-600/80 hover:bg-red-600 transition-colors"
-              title="Delete file"
-              aria-label="Delete file"
-            >
-              <Trash2 className="w-4 h-4 text-white" />
-            </button>
+            {canDelete ? (
+              <button
+                onClick={() => onDelete(file)}
+                className="p-2 rounded-lg bg-red-600/80 hover:bg-red-600 transition-colors"
+                title="Delete file"
+                aria-label="Delete file"
+              >
+                <Trash2 className="w-4 h-4 text-white" />
+              </button>
+            ) : (
+              <button
+                onClick={() => onDelete(file)}
+                className="p-2 rounded-lg bg-gray-800/80 cursor-not-allowed"
+                title="No permission to delete"
+                aria-label="No permission to delete"
+                disabled
+              >
+                <Lock className="w-4 h-4 text-gray-500" />
+              </button>
+            )}
           </div>
         </div>
       ))}

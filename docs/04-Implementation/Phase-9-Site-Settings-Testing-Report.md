@@ -15,12 +15,14 @@ Phase 9 Site Settings implementation is **COMPLETE** and **PRODUCTION-READY**. A
 - ✅ Comprehensive Testing (1 task)
 
 **Key Metrics:**
-- 35 settings across 6 categories successfully seeded
+- 35 settings across 6 categories successfully seeded (legacy)
 - AES-256-CBC encryption working for 9 sensitive fields
 - 60-second cache providing sub-100ms response times
-- All 6 admin tabs functional with proper validation
+- All 6 admin tabs functional with proper validation (Email tab retired November 2025)
 - SEO metadata, footer, and logo dynamically integrated
 - Super admin authorization enforced across all endpoints
+
+> **2025-11-04 Update:** Email settings and SMTP validation were removed from the product. Retain the historical test notes below for archival purposes only; they no longer require execution.
 
 ---
 

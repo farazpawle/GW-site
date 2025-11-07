@@ -13,10 +13,14 @@ model User {
   email        String        @unique
   name         String?
   role         UserRole      @default(VIEWER)
+  permissions  String[]      @default([])
+  roleLevel    Int           @default(10)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   activityLogs ActivityLog[]
 
+  @@index([role])
+  @@index([roleLevel])
   @@map("users")
 }
 
@@ -35,6 +39,25 @@ model ActivityLog {
   @@index([type, createdAt])
   @@index([createdAt])
   @@map("activity_logs")
+}
+
+model RBACLog {
+  id          String   @id @default(cuid())
+  actorId     String   // User who made the change
+  actorEmail  String
+  targetId    String   // User who was affected
+  targetEmail String
+  action      String   // PERMISSION_CHANGE, ROLE_CHANGE
+  oldValue    Json?    // Previous permissions/role
+  newValue    Json?    // New permissions/role
+  metadata    Json?    // Additional context
+  createdAt   DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([targetId, createdAt])
+  @@index([action, createdAt])
+  @@index([createdAt])
+  @@map("rbac_logs")
 }
 
 model Category {
@@ -225,30 +248,48 @@ model Settings {
 }
 
 model Page {
-  id           String     @id @default(cuid())
+  id           String        @id @default(cuid())
   title        String
-  slug         String     @unique
+  slug         String        @unique
   description  String?
   groupType    String?
   groupValues  Json?
-  layout       String     @default("grid")
-  sortBy       String     @default("name")
-  itemsPerPage Int        @default(12)
+  layout       String        @default("grid")
+  sortBy       String        @default("name")
+  itemsPerPage Int           @default(12)
   metaTitle    String?
   metaDesc     String?
-  published    Boolean    @default(false)
+  published    Boolean       @default(false)
   publishedAt  DateTime?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   content      String?
-  pageType     String     @default("dynamic")
-  isPermanent  Boolean    @default(false) // Permanent pages cannot be deleted
+  pageType     String        @default("dynamic")
+  isPermanent  Boolean       @default(false) // Permanent pages cannot be deleted
   menuItems    MenuItem[]
+  sections     PageSection[]
 
   @@index([slug])
   @@index([published])
   @@index([pageType])
   @@map("pages")
+}
+
+model PageSection {
+  id          String   @id @default(cuid())
+  pageId      String
+  sectionType String // "hero" | "brandStory" | "carousel" | "categories" | "precisionMfg"
+  name        String? // Optional custom name for the section
+  position    Int // Order: 0, 1, 2, 3, 4...
+  visible     Boolean  @default(true)
+  config      Json // Section-specific configuration
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  page        Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId, position])
+  @@index([visible])
+  @@map("page_sections")
 }
 
 model MenuItem {
@@ -387,9 +428,11 @@ model VehicleCompatibility {
 }
 
 enum UserRole {
-  ADMIN
-  VIEWER
   SUPER_ADMIN
+  ADMIN
+  STAFF
+  CONTENT_EDITOR
+  VIEWER
 }
 
 enum QuoteRequestStatus {
@@ -403,7 +446,6 @@ enum SettingsCategory {
   GENERAL
   CONTACT
   SEO
-  EMAIL
   SHIPPING
 }
 

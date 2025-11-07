@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin, checkPermission } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -17,7 +17,13 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
+    const user = await checkPermission('messages.view');
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const message = await prisma.contactMessage.findUnique({
       where: { id: params.id },
@@ -63,7 +69,13 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
+    const user = await checkPermission('messages.edit');
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const body = await req.json();
     
@@ -138,7 +150,13 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
+    const user = await checkPermission('messages.delete');
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     await prisma.contactMessage.delete({
       where: { id: params.id }

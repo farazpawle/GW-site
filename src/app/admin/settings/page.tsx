@@ -5,7 +5,7 @@
  * - General: Site name, tagline, logo, footer logo, timezone, currency
  * - Contact: Email, phone, address, business hours, social media
  * - SEO: Title, description, keywords, OG image, analytics
- * - Email: SMTP configuration
+ * - Product Display: Card visibility controls
  * 
  * Features:
  * - Tab-based UI for organized settings management
@@ -19,15 +19,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Save, Loader2, CheckCircle, AlertCircle, Lock } from 'lucide-react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import GeneralSettings from '@/components/admin/settings/GeneralSettings';
 import ContactSettings from '@/components/admin/settings/ContactSettings';
 import SEOSettings from '@/components/admin/settings/SEOSettings';
-import EmailSettings from '@/components/admin/settings/EmailSettings';
 import ProductCardSettings from '@/components/admin/settings/ProductCardSettings';
+import FaviconSettings from '@/components/admin/settings/FaviconSettings';
 
-type SettingsCategory = 'GENERAL' | 'CONTACT' | 'SEO' | 'EMAIL' | 'PRODUCT_CARD';
+type SettingsCategory = 'GENERAL' | 'CONTACT' | 'SEO' | 'PRODUCT_CARD' | 'FAVICON';
 
 interface Tab {
   id: SettingsCategory;
@@ -39,17 +39,58 @@ const tabs: Tab[] = [
   { id: 'GENERAL', label: 'General', icon: '⚙️' },
   { id: 'CONTACT', label: 'Contact & Social', icon: '📧' },
   { id: 'SEO', label: 'SEO & Analytics', icon: '🔍' },
-  { id: 'EMAIL', label: 'Email Config', icon: '📬' },
+  { id: 'FAVICON', label: 'Favicon & Icons', icon: '🎨' },
   { id: 'PRODUCT_CARD', label: 'Product Display', icon: '🎴' },
 ];
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsCategory>('GENERAL');
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [mediaPreviews, setMediaPreviews] = useState<Record<string, string | null>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const [userRole, setUserRole] = useState<string>('');
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
+
+  // Fetch user permissions
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (response.ok) {
+          const result = await response.json();
+          const data = result.data || result; // Handle both response formats
+          setUserPermissions(data.permissions || []);
+          setUserRole(data.role || '');
+        }
+      } catch (error) {
+        console.error('Failed to fetch permissions:', error);
+      } finally {
+        setPermissionsLoading(false);
+      }
+    };
+    fetchPermissions();
+  }, []);
+
+  // Helper function to check permissions
+  const hasPermission = (permission: string): boolean => {
+    // SUPER_ADMIN bypasses all permission checks
+    if (userRole === 'SUPER_ADMIN') return true;
+    if (userPermissions.includes('*')) return true;
+    if (userPermissions.includes(permission)) return true;
+    const [resource] = permission.split('.');
+    if (userPermissions.includes(`${resource}.*`)) return true;
+    return false;
+  };
+
+  const canView = hasPermission('settings.view');
+  const canEdit = hasPermission('settings.edit');
 
   // Fetch all settings on mount
   useEffect(() => {
@@ -76,6 +117,7 @@ export default function SettingsPage() {
 
       if (data.success) {
         setFormData(data.data);
+        setMediaPreviews(data.mediaPreviews || {});
       } else {
         throw new Error(data.error || 'Failed to load settings');
       }
@@ -88,6 +130,11 @@ export default function SettingsPage() {
   };
 
   const handleChange = (key: string, value: string) => {
+    if (!canEdit) {
+      setError('⛔ Access Denied - You do not have permission to edit settings. Missing permission: settings.edit');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       [key]: value,
@@ -95,6 +142,11 @@ export default function SettingsPage() {
   };
 
   const handleSave = async () => {
+    if (!canEdit) {
+      setError('⛔ Access Denied - You do not have permission to edit settings. Missing permission: settings.edit');
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
@@ -158,7 +210,7 @@ export default function SettingsPage() {
           GENERAL: ['site_', 'logo_', 'timezone', 'currency'],
           CONTACT: ['contact_', 'social_', 'business_', 'egh_logo'],
           SEO: ['seo_', 'google_'],
-          EMAIL: ['email_'],
+          FAVICON: ['favicon_', 'apple_touch_icon'],
           PRODUCT_CARD: ['product_card_'],
         };
 
@@ -167,7 +219,7 @@ export default function SettingsPage() {
     );
   };
 
-  if (loading) {
+  if (loading || permissionsLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
         <AdminHeader 
@@ -178,6 +230,28 @@ export default function SettingsPage() {
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-brand-maroon mx-auto mb-4" />
             <p className="text-gray-400">Loading settings...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user has view permission
+  if (!canView) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a]">
+        <AdminHeader 
+          pageTitle="Settings" 
+          description="Manage site configuration and preferences"
+        />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-900/30 border border-red-800 mb-6">
+              <Lock className="w-10 h-10 text-red-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-3">Access Denied</h2>
+            <p className="text-gray-400 mb-2">You do not have permission to view settings.</p>
+            <p className="text-sm text-gray-500">Missing permission: <code className="px-2 py-1 bg-[#1a1a1a] rounded">settings.view</code></p>
           </div>
         </div>
       </div>
@@ -195,23 +269,34 @@ export default function SettingsPage() {
               Manage site configuration and preferences
             </p>
           </div>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 px-6 py-2.5 bg-brand-maroon hover:bg-brand-red disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Save Changes
-              </>
-            )}
-          </button>
+          {canEdit ? (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 px-6 py-2.5 bg-brand-maroon hover:bg-brand-red disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save Changes
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={() => setError('⛔ Access Denied - You do not have permission to edit settings. Missing permission: settings.edit')}
+              className="flex items-center gap-2 px-6 py-2.5 bg-gray-900/30 text-gray-500 border border-gray-800 rounded-lg cursor-not-allowed font-medium"
+              disabled
+            >
+              <Lock className="w-4 h-4" />
+              Save Changes
+            </button>
+          )}
         </div>
       </div>
 
@@ -260,7 +345,7 @@ export default function SettingsPage() {
                     {tab.id === 'GENERAL' && 'Site basics & branding'}
                     {tab.id === 'CONTACT' && 'Contact info & links'}
                     {tab.id === 'SEO' && 'Search & metadata'}
-                    {tab.id === 'EMAIL' && 'SMTP & email setup'}
+                    {tab.id === 'FAVICON' && 'Favicon & app icons'}
                     {tab.id === 'PRODUCT_CARD' && 'Product card settings'}
                   </div>
                 </div>
@@ -271,8 +356,21 @@ export default function SettingsPage() {
 
         {/* Tab Content */}
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-8">
+          {!canEdit && (
+            <div className="mb-6 p-4 bg-yellow-900/30 border border-yellow-800 rounded-lg flex items-start gap-3">
+              <Lock className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-yellow-400 font-medium">Read-Only Mode</p>
+                <p className="text-yellow-300/80 text-sm">You can view settings but cannot make changes. Any edits you attempt will be blocked. Missing permission: settings.edit</p>
+              </div>
+            </div>
+          )}
           {activeTab === 'GENERAL' && (
-            <GeneralSettings formData={formData} onChange={handleChange} />
+            <GeneralSettings
+              formData={formData}
+              mediaPreviews={mediaPreviews}
+              onChange={handleChange}
+            />
           )}
           {activeTab === 'CONTACT' && (
             <ContactSettings formData={formData} onChange={handleChange} />
@@ -280,8 +378,8 @@ export default function SettingsPage() {
           {activeTab === 'SEO' && (
             <SEOSettings formData={formData} onChange={handleChange} />
           )}
-          {activeTab === 'EMAIL' && (
-            <EmailSettings formData={formData} onChange={handleChange} />
+          {activeTab === 'FAVICON' && (
+            <FaviconSettings formData={formData} onChange={handleChange} />
           )}
           {activeTab === 'PRODUCT_CARD' && (
             <ProductCardSettings formData={formData} onChange={handleChange} />

@@ -49,6 +49,10 @@ next-env.d.ts
 # Clerk configuration (runtime secrets)
 /.clerk/
 
+# GitHub Copilot instructions and prompts (keep other .github files)
+/.github/copilot-instructions.md
+/.github/prompts/
+
 # Editor/IDE temporary files
 .cursor/
 .superdesign/

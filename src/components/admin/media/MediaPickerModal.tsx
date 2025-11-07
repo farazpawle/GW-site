@@ -7,7 +7,7 @@ import type { MediaFile, ListFilesResponse } from '@/types/media';
 interface MediaPickerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (fileUrl: string) => void;
+  onSelect: (file: MediaFile) => void;
   currentImage?: string;
   folder?: string; // Default folder to open
   title?: string;
@@ -24,7 +24,7 @@ export default function MediaPickerModal({
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedUrl, setSelectedUrl] = useState<string | null>(currentImage || null);
+  const [selectedFile, setSelectedFile] = useState<MediaFile | null>(null);
 
   // Fetch files
   const fetchFiles = useCallback(async () => {
@@ -62,6 +62,34 @@ export default function MediaPickerModal({
     }
   }, [isOpen, fetchFiles]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedFile(null);
+    }
+  }, [isOpen]);
+
+  // Sync selected file when opening modal or when current value changes
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    if (!currentImage) {
+      setSelectedFile(null);
+      return;
+    }
+
+    const matchedFile = files.find((file) =>
+      file.key === currentImage || file.url === currentImage
+    );
+
+    if (matchedFile) {
+      setSelectedFile(matchedFile);
+    } else {
+      setSelectedFile(null);
+    }
+  }, [currentImage, files, isOpen]);
+
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -74,8 +102,8 @@ export default function MediaPickerModal({
   }, [searchTerm, isOpen, fetchFiles]);
 
   const handleSelect = () => {
-    if (selectedUrl) {
-      onSelect(selectedUrl);
+    if (selectedFile) {
+      onSelect(selectedFile);
       onClose();
     }
   };
@@ -132,31 +160,31 @@ export default function MediaPickerModal({
               {files.map((file) => (
                 <div
                   key={file.key}
-                  onClick={() => setSelectedUrl(file.url)}
+                  onClick={() => setSelectedFile(file)}
                   className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
-                    selectedUrl === file.url
+                    selectedFile?.key === file.key
                       ? 'border-maroon-500 ring-2 ring-maroon-500/50'
                       : 'border-gray-800 hover:border-gray-700'
                   }`}
                 >
-                  <div className="aspect-square bg-gray-800 flex items-center justify-center">
+                  <div className="aspect-square bg-gray-800 flex items-center justify-center p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={file.url}
+                      src={`/api/admin/media/proxy?url=${encodeURIComponent(file.url)}`}
                       alt={file.key.split('/').pop() || 'Image'}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
+                      className="max-w-full max-h-full object-contain"
                     />
                   </div>
 
                   {/* Selection Indicator */}
-                  {selectedUrl === file.url && (
-                    <div className="absolute top-2 right-2 w-6 h-6 bg-maroon-500 rounded-full flex items-center justify-center">
+                  {selectedFile?.key === file.key && (
+                    <div className="absolute top-2 right-2 w-6 h-6 bg-maroon-500 rounded-full flex items-center justify-center z-10">
                       <Check className="w-4 h-4 text-white" />
                     </div>
                   )}
 
                   {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2">
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 z-[5]">
                     <p className="text-white text-xs text-center line-clamp-2">
                       {file.key.split('/').pop()}
                     </p>
@@ -170,7 +198,7 @@ export default function MediaPickerModal({
         {/* Footer */}
         <div className="p-6 border-t border-gray-800 flex items-center justify-between">
           <p className="text-sm text-gray-400">
-            {selectedUrl ? 'Click "Select Image" to confirm' : 'Click an image to select it'}
+            {selectedFile ? 'Click "Select Image" to confirm' : 'Click an image to select it'}
           </p>
           <div className="flex gap-3">
             <button
@@ -181,7 +209,7 @@ export default function MediaPickerModal({
             </button>
             <button
               onClick={handleSelect}
-              disabled={!selectedUrl}
+              disabled={!selectedFile}
               className="px-4 py-2 bg-maroon-500 hover:bg-maroon-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Select Image

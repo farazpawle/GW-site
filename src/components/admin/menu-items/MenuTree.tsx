@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Edit2, Trash2, GripVertical, ExternalLink, FileText } from 'lucide-react';
+import { Edit2, Trash2, GripVertical, ExternalLink, FileText, Lock } from 'lucide-react';
 
 interface MenuItem {
   id: string;
@@ -26,9 +26,11 @@ interface MenuTreeProps {
   onEdit: (item: MenuItem) => void;
   onDelete: (id: string) => void;
   onReorder: (items: { id: string; position: number }[]) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
-export default function MenuTree({ items, onEdit, onDelete, onReorder }: MenuTreeProps) {
+export default function MenuTree({ items, onEdit, onDelete, onReorder, canEdit = true, canDelete = true }: MenuTreeProps) {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
 
@@ -179,21 +181,43 @@ export default function MenuTree({ items, onEdit, onDelete, onReorder }: MenuTre
 
           {/* Action Buttons */}
           <div className="flex gap-1">
-            <button
-              onClick={() => onEdit(item)}
-              className="p-2 text-blue-400 hover:bg-blue-900/40 rounded-lg transition-colors"
-              title="Edit menu item"
-            >
-              <Edit2 className="w-5 h-5" />
-            </button>
-            {!item.isPermanent ? (
+            {canEdit ? (
               <button
-                onClick={() => onDelete(item.id)}
-                className="p-2 text-red-400 hover:bg-red-900/40 rounded-lg transition-colors"
-                title="Delete menu item"
+                onClick={() => onEdit(item)}
+                className="p-2 text-blue-400 hover:bg-blue-900/40 rounded-lg transition-colors"
+                title="Edit menu item"
               >
-                <Trash2 className="w-5 h-5" />
+                <Edit2 className="w-5 h-5" />
               </button>
+            ) : (
+              <button
+                onClick={() => onEdit(item)}
+                className="p-2 text-gray-600 cursor-not-allowed rounded-lg"
+                title="No permission to edit"
+                disabled
+              >
+                <Lock className="w-5 h-5" />
+              </button>
+            )}
+            {!item.isPermanent ? (
+              canDelete ? (
+                <button
+                  onClick={() => onDelete(item.id)}
+                  className="p-2 text-red-400 hover:bg-red-900/40 rounded-lg transition-colors"
+                  title="Delete menu item"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => onDelete(item.id)}
+                  className="p-2 text-gray-600 cursor-not-allowed rounded-lg"
+                  title="No permission to delete"
+                  disabled
+                >
+                  <Lock className="w-5 h-5" />
+                </button>
+              )
             ) : (
               <span
                 className="p-2 text-gray-600 cursor-not-allowed"

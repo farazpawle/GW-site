@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { parse } from 'csv-parse/sync';
 import { 
@@ -32,7 +32,13 @@ import {
  */
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
+    const user = await checkAdmin();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     // Parse form data
     const formData = await request.formData();

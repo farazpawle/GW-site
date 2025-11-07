@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 import { listObjects, formatBytes, FOLDERS } from '@/lib/minio';
 import type { ListBucketsResponse, BucketInfo } from '@/types/media';
 
@@ -10,7 +10,13 @@ import type { ListBucketsResponse, BucketInfo } from '@/types/media';
 export async function GET() {
   try {
     // Verify admin authentication
-    await requireAdmin();
+    const user = await checkAdmin();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const folderPrefixes = Object.values(FOLDERS);
     const buckets: BucketInfo[] = [];

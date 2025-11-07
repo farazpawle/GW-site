@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
 import { Home, Bell } from 'lucide-react';
 import ClientOnly from '@/components/ui/ClientOnly';
+import RoleIndicator from '@/components/admin/RoleIndicator';
 
 export default function AdminTopBar() {
   return (
@@ -38,6 +39,11 @@ export default function AdminTopBar() {
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             */}
           </button>
+
+          {/* Role Indicator */}
+          <ClientOnly fallback={<div className="w-32 h-8 rounded-lg bg-[#2a2a2a] animate-pulse"></div>}>
+            <RoleIndicator />
+          </ClientOnly>
 
           {/* Divider */}
           <div className="h-8 w-px bg-[#2a2a2a]"></div>

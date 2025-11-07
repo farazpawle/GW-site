@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin, checkPermission } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { createCategorySchema, generateCategorySlug } from '@/lib/validations/category';
 
@@ -10,7 +10,13 @@ import { createCategorySchema, generateCategorySlug } from '@/lib/validations/ca
 export async function GET() {
   try {
     // Verify admin authentication
-    await requireAdmin();
+    const user = await checkPermission('categories.view');
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     // Fetch all categories with product count
     const categories = await prisma.category.findMany({
@@ -53,7 +59,13 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     // Verify admin authentication
-    await requireAdmin();
+    const user = await checkPermission('categories.create');
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     // Parse request body
     const body = await request.json();

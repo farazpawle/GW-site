@@ -8,10 +8,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireSuperAdmin } from '@/lib/admin/auth';
-import { getSettings } from '@/lib/settings/settings-manager';
+import { requirePermission } from '@/lib/rbac/guards';
+import { getSettings, getMediaSettingUrl, isMediaSettingKey } from '@/lib/settings/settings-manager';
 import { SettingsCategory } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { PERMISSIONS } from '@/lib/rbac/permissions';
 
 /**
  * GET /api/admin/settings
@@ -27,8 +28,9 @@ import { prisma } from '@/lib/prisma';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Require SUPER_ADMIN role (API route mode)
-    await requireSuperAdmin(true);
+    // Require settings.view permission
+    const userOrError = await requirePermission(PERMISSIONS.SETTINGS_VIEW);
+    if (userOrError instanceof NextResponse) return userOrError;
 
     // Get category from query params (optional)
     const searchParams = request.nextUrl.searchParams;
@@ -41,7 +43,7 @@ export async function GET(request: NextRequest) {
         'GENERAL',
         'CONTACT',
         'SEO',
-        'EMAIL',
+        'SHIPPING',
       ];
 
       if (!validCategories.includes(categoryParam)) {
@@ -60,11 +62,20 @@ export async function GET(request: NextRequest) {
     // Fetch settings (uses cache if available)
     const settings = await getSettings(category);
 
+    const mediaEntries = await Promise.all(
+      Object.entries(settings)
+        .filter(([key]) => isMediaSettingKey(key))
+        .map(async ([key, value]) => [key, await getMediaSettingUrl(key, value)] as const)
+    );
+
+    const mediaPreviews = Object.fromEntries(mediaEntries);
+
     // Return settings as key-value object
     return NextResponse.json(
       {
         success: true,
         data: settings,
+        mediaPreviews,
         category: category || 'all',
         count: Object.keys(settings).length
       },
@@ -125,8 +136,10 @@ const bulkUpdateSchema = z.record(z.string(), z.string());
 
 export async function PUT(request: NextRequest) {
   try {
-    // Require SUPER_ADMIN role (API route mode)
-    const user = await requireSuperAdmin(true);
+    // Require settings.edit permission
+    const userOrError = await requirePermission(PERMISSIONS.SETTINGS_EDIT);
+    if (userOrError instanceof NextResponse) return userOrError;
+    const user = userOrError;
 
     // Parse request body
     const body = await request.json();

@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { UserRole, Prisma } from '@prisma/client';
+import { requirePermission, filterManageableUsers } from '@/lib/rbac';
 
 /**
  * GET /api/admin/users
  * 
  * List all users with search, filter, and pagination
+ * RBAC: Requires 'users.view' permission
+ * Only shows users that current user can manage (based on role hierarchy)
  * 
  * Query Parameters:
  * - search: Search by name or email (case-insensitive)
- * - role: Filter by role (ADMIN or VIEWER)
+ * - role: Filter by role
  * - page: Page number (default: 1)
  * - limit: Items per page (default: 20)
  * 
@@ -18,8 +20,11 @@ import { UserRole, Prisma } from '@prisma/client';
  */
 export async function GET(req: NextRequest) {
   try {
-    // Ensure user is an admin
-    await requireAdmin();
+    // RBAC: Require users.view permission
+    const userOrError = await requirePermission('users.view');
+    if (userOrError instanceof NextResponse) return userOrError;
+    
+    const currentUser = userOrError;
 
     // Extract query parameters
     const searchParams = req.nextUrl.searchParams;
@@ -45,7 +50,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Execute parallel queries for users and count
-    const [users, total] = await Promise.all([
+    const [allUsers, total] = await Promise.all([
       prisma.user.findMany({
         where,
         orderBy: { createdAt: 'desc' },
@@ -63,6 +68,11 @@ export async function GET(req: NextRequest) {
       prisma.user.count({ where })
     ]);
 
+    // RBAC: Filter users based on role hierarchy
+    // Lower roles cannot see higher roles
+    // @ts-ignore - roleLevel exists at runtime after migration
+    const users = filterManageableUsers(currentUser, allUsers);
+
     // Calculate pagination metadata
     const pages = Math.ceil(total / limit);
 
@@ -71,7 +81,7 @@ export async function GET(req: NextRequest) {
       data: {
         users,
         pagination: {
-          total,
+          total: users.length, // Show filtered count
           page,
           limit,
           pages

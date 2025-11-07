@@ -77,11 +77,11 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 /**
- * Require admin role to access a route (for Server Components and Pages)
+ * Require admin panel access (for Server Components and Pages)
  * Redirects to sign-in page if user is not authenticated
- * Redirects to homepage if user is authenticated but not an admin
- * Accepts both ADMIN and SUPER_ADMIN roles
- * @returns User object with ADMIN or SUPER_ADMIN role
+ * Redirects to homepage if user is VIEWER role (read-only)
+ * Allows SUPER_ADMIN, ADMIN, STAFF, and CONTENT_EDITOR roles
+ * @returns User object with access to admin panel
  */
 export async function requireAdmin(): Promise<User> {
   const user = await getCurrentUser();
@@ -93,8 +93,9 @@ export async function requireAdmin(): Promise<User> {
     redirect('/sign-in?redirect_url=/admin');
   }
 
-  if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
-    console.log('❌ [requireAdmin] User role not authorized:', user.role, '- redirecting to homepage');
+  // Block VIEWER role from admin panel access
+  if (user.role === 'VIEWER') {
+    console.log('❌ [requireAdmin] VIEWER role blocked - redirecting to homepage');
     redirect('/');
   }
 
@@ -103,15 +104,132 @@ export async function requireAdmin(): Promise<User> {
 }
 
 /**
- * Check if current user is admin (for API routes)
- * Returns null if not authenticated or not an admin
+ * Check if current user has admin panel access (for API routes)
+ * Returns null if not authenticated or is VIEWER role
  * Use this in API routes where redirect() doesn't work
- * @returns User object if admin, null otherwise
+ * Allows SUPER_ADMIN, ADMIN, STAFF, and CONTENT_EDITOR roles
+ * @returns User object if has admin access, null otherwise
  */
 export async function checkAdmin(): Promise<User | null> {
   const user = await getCurrentUser();
 
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+  // Block if not authenticated or is VIEWER role
+  if (!user || user.role === 'VIEWER') {
+    return null;
+  }
+
+  return user;
+}
+
+// ============================================================================
+// RBAC PERMISSION HELPERS (For Server Components)
+// ============================================================================
+
+/**
+ * Require specific permission to access a page (for Server Components)
+ * Redirects to sign-in if not authenticated
+ * Redirects to homepage if missing permission
+ * 
+ * @param requiredPermission - Permission string (e.g., "products.view")
+ * @returns User object with RBAC fields
+ * 
+ * @example
+ * export default async function ProductsPage() {
+ *   const user = await requirePermission('products.view');
+ *   // User is authorized
+ * }
+ */
+export async function requirePermission(requiredPermission: string) {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect('/sign-in?redirect_url=/admin');
+  }
+
+  // Import permission check dynamically to avoid circular dependencies
+  const { hasPermission } = await import('./rbac/check-permission');
+  
+  const rbacUser = {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    roleLevel: (user as any).roleLevel || 10,
+    permissions: (user as any).permissions || [],
+  };
+
+  if (!hasPermission(rbacUser, requiredPermission)) {
+    console.log('❌ [requirePermission] Missing permission:', requiredPermission);
+    redirect('/?error=forbidden');
+  }
+
+  return user;
+}
+
+/**
+ * Require ANY of the specified permissions (OR logic)
+ * 
+ * @param requiredPermissions - Array of permission strings
+ * @returns User object
+ * 
+ * @example
+ * const user = await requireAnyPermission(['products.view', 'products.edit']);
+ */
+export async function requireAnyPermission(requiredPermissions: string[]) {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect('/sign-in?redirect_url=/admin');
+  }
+
+  const { hasAnyPermission } = await import('./rbac/check-permission');
+  
+  const rbacUser = {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    roleLevel: (user as any).roleLevel || 10,
+    permissions: (user as any).permissions || [],
+  };
+
+  if (!hasAnyPermission(rbacUser, requiredPermissions)) {
+    console.log('❌ [requireAnyPermission] Missing permissions:', requiredPermissions);
+    redirect('/?error=forbidden');
+  }
+
+  return user;
+}
+
+/**
+ * Check if current user has a specific permission
+ * Returns user if authorized, null otherwise (no redirect)
+ * 
+ * @param requiredPermission - Permission string
+ * @returns User object if authorized, null otherwise
+ * 
+ * @example
+ * const user = await checkPermission('products.edit');
+ * if (!user) {
+ *   return <div>Access Denied</div>;
+ * }
+ */
+export async function checkPermission(requiredPermission: string): Promise<User | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+
+  const { hasPermission } = await import('./rbac/check-permission');
+  
+  const rbacUser = {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    roleLevel: (user as any).roleLevel || 10,
+    permissions: (user as any).permissions || [],
+  };
+
+  if (!hasPermission(rbacUser, requiredPermission)) {
     return null;
   }
 

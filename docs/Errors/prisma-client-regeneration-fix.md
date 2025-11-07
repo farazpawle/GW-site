@@ -48,7 +48,7 @@ import { PrismaClient, SettingsCategory } from '@prisma/client';
 
 // After (local type definition)
 import { PrismaClient } from '@prisma/client';
-type SettingsCategory = 'GENERAL' | 'CONTACT' | 'SEO' | 'EMAIL' | 'PAYMENT' | 'SHIPPING';
+type SettingsCategory = 'GENERAL' | 'CONTACT' | 'SEO' | 'SHIPPING';
 ```
 
 ### Permanent Fix (Required)

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin, checkPermission } from '@/lib/auth';
 import { listObjects, formatBytes, isImageFile, getPresignedUrl, FOLDERS } from '@/lib/minio';
 import type { ListFilesResponse, MediaFile } from '@/types/media';
 
@@ -10,7 +10,13 @@ import type { ListFilesResponse, MediaFile } from '@/types/media';
 export async function GET(request: NextRequest) {
   try {
     // Verify admin authentication
-    await requireAdmin();
+    const user = await checkPermission('media.view');
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const { searchParams } = request.nextUrl;
     const folder = searchParams.get('folder') || searchParams.get('bucket'); // Support legacy 'bucket' param

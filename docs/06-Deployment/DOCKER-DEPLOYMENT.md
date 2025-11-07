@@ -1,103 +1,299 @@
-# Docker Deployment Guide
+# 🐳 Docker VPS Deployment Guide (Production)
 
-## ✅ Configuration Status
-
-Your Docker setup is now properly configured with:
-- ✅ Next.js application (standalone build)
-- ✅ PostgreSQL database
-- ✅ Redis cache
-- ✅ MinIO object storage (S3-compatible)
-- ✅ Proper `.dockerignore` (excludes docs, memory-bank, etc.)
+**Complete guide for deploying your Next.js application on a VPS using Docker**
 
 ---
 
-## 🚀 Quick Start
+## 📋 What You'll Need
 
-### Development Mode
+1. **VPS Server** (DigitalOcean, AWS EC2, Linode, Vultr, etc.)
+   - Minimum: 2GB RAM, 2 CPU cores, 40GB storage
+   - Recommended: 4GB RAM, 2 CPU cores, 80GB storage
+
+2. **Domain Name** (optional but recommended)
+   - Example: `garritwulf.com`
+
+3. **SSH Access** to your VPS
+
+4. **Clerk Production Keys**
+   - Get from: https://dashboard.clerk.com
+
+---
+
+## 🚀 Part 1: Server Setup (One Time Only)
+
+### Step 1: Connect to Your VPS
 
 ```bash
-# Start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
+ssh root@your-server-ip
+# or
+ssh your-username@your-server-ip
 ```
 
-**Access:**
-- App: http://localhost:3000
-- MinIO Console: http://localhost:9001 (minioadmin/minioadmin123)
-- PostgreSQL: localhost:5432
-- Redis: localhost:6379
+### Step 2: Update System
+
+```bash
+# Update packages
+apt update && apt upgrade -y
+
+# Install essential tools
+apt install -y curl git ufw
+```
+
+### Step 3: Install Docker
+
+```bash
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+
+# Install Docker Compose
+apt install -y docker-compose
+
+# Start Docker
+systemctl start docker
+systemctl enable docker
+
+# Verify installation
+docker --version
+docker-compose --version
+```
+
+### Step 4: Setup Firewall
+
+```bash
+# Allow SSH, HTTP, HTTPS
+ufw allow 22/tcp    # SSH
+ufw allow 80/tcp    # HTTP
+ufw allow 443/tcp   # HTTPS
+
+# Enable firewall
+ufw --force enable
+
+# Check status
+ufw status
+```
+
+### Step 5: Create Application User (Security Best Practice)
+
+```bash
+# Create user
+adduser appuser
+
+# Add to docker group
+usermod -aG docker appuser
+
+# Switch to app user
+su - appuser
+```
 
 ---
 
-### Production Mode
+## 📦 Part 2: Deploy Your Application
+
+### Step 1: Clone Your Repository
 
 ```bash
-# 1. Create production environment file
-cp .env.docker.example .env.docker
-# Edit .env.docker with your production values
+# Go to home directory
+cd ~
 
-# 2. Build and start production
+# Clone your repo
+git clone https://github.com/your-username/garritwulf-production.git
+cd garritwulf-production
+```
+
+### Step 2: Create Production Environment File
+
+Create `.env.production` file:
+
+```bash
+nano .env.production
+```
+
+Add these variables (copy and modify):
+
+```bash
+# ==================================
+# PRODUCTION ENVIRONMENT
+# ==================================
+
+# App Settings
+NODE_ENV=production
+NEXT_PUBLIC_APP_URL=https://your-domain.com
+
+# Clerk - GET PRODUCTION KEYS FROM: https://dashboard.clerk.com
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_YOUR_PRODUCTION_KEY
+CLERK_SECRET_KEY=sk_live_YOUR_PRODUCTION_SECRET
+CLERK_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET
+
+# Clerk URLs
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
+
+# Database (will be created by Docker)
+DATABASE_URL=postgresql://garritwulf_user:CHANGE_THIS_PASSWORD_123@postgres:5432/garritwulf_db
+
+# Redis (will be created by Docker)
+REDIS_URL=redis://redis:6379
+
+# MinIO Storage (will be created by Docker)
+MINIO_ENDPOINT=minio
+MINIO_PORT=9000
+MINIO_REGION=us-east-1
+MINIO_ACCESS_KEY=garritwulf_minio_prod
+MINIO_SECRET_KEY=CHANGE_THIS_SECRET_KEY_456
+MINIO_USE_SSL=false
+MINIO_BUCKET_NAME=garritwulf
+
+# MinIO Root Credentials (for admin access)
+MINIO_ROOT_USER=admin_user_prod
+MINIO_ROOT_PASSWORD=CHANGE_THIS_ADMIN_PASSWORD_789
+
+# Security Keys - Generate from: https://generate-random.org/encryption-key-generator
+SETTINGS_ENCRYPTION_KEY=GENERATE_64_CHAR_RANDOM_STRING_HERE
+NEXTAUTH_SECRET=GENERATE_RANDOM_SECRET_HERE
+
+# PostgreSQL Credentials (for Docker)
+POSTGRES_USER=garritwulf_user
+POSTGRES_PASSWORD=CHANGE_THIS_PASSWORD_123
+POSTGRES_DB=garritwulf_db
+```
+
+**Save file:** Press `CTRL+X`, then `Y`, then `Enter`
+
+**⚠️ IMPORTANT:** Replace all `CHANGE_THIS_*` values with strong passwords!
+
+### Step 3: Update Docker Compose for Production
+
+Your `docker-compose.prod.yml` needs to use the `.env.production` file:
+
+```bash
+nano docker-compose.prod.yml
+```
+
+Make sure it looks like this:
+
+```yaml
+services:
+  nextjs-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.production
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - garrit-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    env_file:
+      - .env.production
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - garrit-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    networks:
+      - garrit-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  minio:
+    image: minio/minio:latest
+    env_file:
+      - .env.production
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - garrit-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  garrit-network:
+    driver: bridge
+```
+
+### Step 4: Build and Start Services
+
+```bash
+# Build and start all services
 docker-compose -f docker-compose.prod.yml up -d --build
 
-# 3. Run database migrations
+# This will take 5-10 minutes for first build
+# Watch the build process
+docker-compose -f docker-compose.prod.yml logs -f
+```
+
+### Step 5: Run Database Migrations
+
+After containers are running:
+
+```bash
+# Wait 30 seconds for database to be ready
+sleep 30
+
+# Run migrations
+docker-compose -f docker-compose.prod.yml exec nextjs-app npx prisma generate
 docker-compose -f docker-compose.prod.yml exec nextjs-app npx prisma migrate deploy
 
-# 4. Seed database (optional)
-docker-compose -f docker-compose.prod.yml exec nextjs-app npm run seed
+# Setup MinIO bucket
+docker-compose -f docker-compose.prod.yml exec nextjs-app npm run setup:minio
+
+# Create super admin (optional)
+docker-compose -f docker-compose.prod.yml exec nextjs-app npm run setup:super-admin
+```
+
+### Step 6: Verify Everything is Running
+
+```bash
+# Check all containers are up
+docker-compose -f docker-compose.prod.yml ps
+
+# Should see:
+# nextjs-app - Up
+# postgres   - Up (healthy)
+# redis      - Up
+# minio      - Up (healthy)
+
+# Test the app
+curl http://localhost:3000
+# Should return HTML
 ```
 
 ---
 
-## 📋 Pre-Deployment Checklist
-
-### 1. Environment Variables
-- [ ] Copy `.env.docker.example` to `.env.docker`
-- [ ] Update all `YOUR_*` placeholders with real values
-- [ ] Set strong passwords for PostgreSQL and MinIO
-- [ ] Configure Clerk keys (production keys)
-- [ ] Set `NEXT_PUBLIC_APP_URL` to your domain
-
-### 2. Security
-- [ ] Change default database password
-- [ ] Change MinIO root credentials
-- [ ] Enable SSL for MinIO in production (MINIO_USE_SSL=true)
-- [ ] Configure firewall rules (only expose ports 80, 443)
-- [ ] Use secrets management (Docker Secrets or env files with restricted permissions)
-
-### 3. Database
-- [ ] Backup existing data if migrating
-- [ ] Run migrations: `docker-compose exec nextjs-app npx prisma migrate deploy`
-- [ ] Verify database connection
-
-### 4. Storage
-- [ ] Configure MinIO bucket policies
-- [ ] Set up backup strategy for MinIO data
-- [ ] Test file upload/download
-
----
-
-## 🔧 Common Commands
-
-```bash
-# View logs
-docker-compose logs -f nextjs-app
-
-# Restart app only
-docker-compose restart nextjs-app
-
-# Run Prisma commands
-docker-compose exec nextjs-app npx prisma studio
-docker-compose exec nextjs-app npx prisma migrate deploy
-
-# Access container shell
-docker-compose exec nextjs-app sh
-
-# Clean rebuild
+## 🌐 Part 3: Setup Nginx Reverse Proxy (HTTPS)
 docker-compose down -v
 docker-compose build --no-cache
 docker-compose up -d

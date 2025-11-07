@@ -1,14 +1,22 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { TextStyle } from '@/types/typography';
+import { applyTextStyles } from '@/lib/utils/typography';
 
 interface StatItem {
   value: number;
   suffix: string;
   label: string;
+  valueStyle?: TextStyle;
+  labelStyle?: TextStyle;
 }
 
-const stats: StatItem[] = [
+interface StatisticsProps {
+  stats?: StatItem[];
+}
+
+const defaultStats: StatItem[] = [
   { value: 5000, suffix: '+', label: 'LINE ITEMS' },
   { value: 15, suffix: '+', label: 'YEARS EXPERIENCE' },
   { value: 100, suffix: '%', label: 'TRUSTWORTHY PARTS' }
@@ -18,9 +26,10 @@ interface CounterProps {
   end: number;
   suffix: string;
   duration?: number;
+  valueStyle?: TextStyle;
 }
 
-function Counter({ end, suffix, duration = 2000 }: CounterProps) {
+function Counter({ end, suffix, duration = 2000, valueStyle }: CounterProps) {
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const counterRef = useRef<HTMLDivElement>(null);
@@ -81,7 +90,8 @@ function Counter({ end, suffix, duration = 2000 }: CounterProps) {
         background: 'linear-gradient(135deg, #ffffff, #ff9999)',
         WebkitBackgroundClip: 'text',
         backgroundClip: 'text',
-        WebkitTextFillColor: 'transparent'
+        WebkitTextFillColor: 'transparent',
+        ...applyTextStyles(valueStyle)
       }}
     >
       {count}{suffix}
@@ -89,7 +99,7 @@ function Counter({ end, suffix, duration = 2000 }: CounterProps) {
   );
 }
 
-export default function Statistics() {
+export default function Statistics({ stats = defaultStats }: StatisticsProps) {
   return (
     <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
       {stats.map((stat, index) => (
@@ -102,8 +112,11 @@ export default function Statistics() {
             borderColor: 'rgba(255, 255, 255, 0.1)'
           }}
         >
-          <Counter end={stat.value} suffix={stat.suffix} />
-          <div className="text-sm md:text-base uppercase tracking-widest text-gray-400 mt-2 font-medium group-hover:text-gray-300 transition-colors">
+          <Counter end={stat.value} suffix={stat.suffix} valueStyle={stat.valueStyle} />
+          <div 
+            className="text-sm md:text-base uppercase tracking-widest text-gray-400 mt-2 font-medium group-hover:text-gray-300 transition-colors"
+            style={applyTextStyles(stat.labelStyle)}
+          >
             {stat.label}
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { stringify } from 'csv-stringify/sync';
 import { VEHICLE_COMPATIBILITY_CSV_HEADERS, exportVehicleCompatibilityToCSV } from '@/lib/csv-utils';
@@ -13,7 +13,13 @@ import { VEHICLE_COMPATIBILITY_CSV_HEADERS, exportVehicleCompatibilityToCSV } fr
  */
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
+    const user = await checkAdmin();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const { searchParams } = new URL(request.url);
     const productSKU = searchParams.get('productSKU') || '';

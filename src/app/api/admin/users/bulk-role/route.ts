@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 import { validateRoleChange, updateUserRole } from '@/lib/admin/role-management';
 import { isSuperAdmin } from '@/lib/admin/auth';
 import { prisma } from '@/lib/prisma';
@@ -19,7 +19,13 @@ import { UserRole } from '@prisma/client';
 export async function POST(req: NextRequest) {
   try {
     // Ensure user is an admin
-    const currentUser = await requireAdmin();
+    const currentUser = await checkAdmin();
+    if (!currentUser) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     // Parse request body
     const body = await req.json();

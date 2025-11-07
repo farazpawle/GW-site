@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import MenuTree from '@/components/admin/menu-items/MenuTree';
 import MenuItemModal from '@/components/admin/menu-items/MenuItemModal';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, Lock } from 'lucide-react';
 
 interface MenuItem {
   id: string;
@@ -42,6 +42,42 @@ export default function MenuItemsClient({ initialMenuItems, initialIncludeHidden
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingReorder, setPendingReorder] = useState<{ id: string; position: number }[]>([]);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
+
+  // Fetch user permissions
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserPermissions(data.permissions || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch permissions:', error);
+      } finally {
+        setPermissionsLoading(false);
+      }
+    };
+    fetchPermissions();
+  }, []);
+
+  // Helper function to check permissions
+  const hasPermission = (permission: string): boolean => {
+    if (userPermissions.includes('*')) return true;
+    if (userPermissions.includes(permission)) return true;
+    const [resource] = permission.split('.');
+    if (userPermissions.includes(`${resource}.*`)) return true;
+    return false;
+  };
+
+  const canCreate = hasPermission('menu.create');
+  const canEdit = hasPermission('menu.edit');
+  const canDelete = hasPermission('menu.delete');
 
   const handleIncludeHiddenChange = (checked: boolean) => {
     setIncludeHidden(checked);
@@ -50,16 +86,29 @@ export default function MenuItemsClient({ initialMenuItems, initialIncludeHidden
   };
 
   const handleCreate = () => {
+    if (!canCreate) {
+      alert('⛔ Access Denied\n\nYou do not have permission to create menu items.\n\nMissing permission: menu.create');
+      return;
+    }
     setEditingItem(null);
     setIsModalOpen(true);
   };
 
   const handleEdit = (item: MenuItem) => {
+    if (!canEdit) {
+      alert('⛔ Access Denied\n\nYou do not have permission to edit menu items.\n\nMissing permission: menu.edit');
+      return;
+    }
     setEditingItem(item);
     setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string) => {
+    if (!canDelete) {
+      alert('⛔ Access Denied\n\nYou do not have permission to delete menu items.\n\nMissing permission: menu.delete');
+      return;
+    }
+
     // Find the item to check if it's permanent
     const findItem = (items: MenuItem[], targetId: string): MenuItem | null => {
       for (const item of items) {
@@ -101,6 +150,10 @@ export default function MenuItemsClient({ initialMenuItems, initialIncludeHidden
   };
 
   const handleReorder = (items: { id: string; position: number }[]) => {
+    if (!canEdit) {
+      alert('⛔ Access Denied\n\nYou do not have permission to reorder menu items.\n\nMissing permission: menu.edit');
+      return;
+    }
     // Store pending changes instead of saving immediately
     setPendingReorder(items);
     setHasUnsavedChanges(true);
@@ -108,6 +161,11 @@ export default function MenuItemsClient({ initialMenuItems, initialIncludeHidden
 
   const handleApplyChanges = async () => {
     if (pendingReorder.length === 0) return;
+    
+    if (!canEdit) {
+      alert('⛔ Access Denied\n\nYou do not have permission to reorder menu items.\n\nMissing permission: menu.edit');
+      return;
+    }
 
     try {
       setIsSaving(true);
@@ -231,13 +289,24 @@ export default function MenuItemsClient({ initialMenuItems, initialIncludeHidden
             )}
           </div>
 
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30 transition-all font-medium"
-          >
-            <Plus className="w-5 h-5" />
-            Add Menu Item
-          </button>
+          {canCreate ? (
+            <button
+              onClick={handleCreate}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30 transition-all font-medium"
+            >
+              <Plus className="w-5 h-5" />
+              Add Menu Item
+            </button>
+          ) : (
+            <button
+              onClick={() => alert('⛔ Access Denied\n\nYou do not have permission to create menu items.\n\nMissing permission: menu.create')}
+              className="flex items-center gap-2 px-6 py-3 bg-gray-900/30 text-gray-500 border border-gray-800 rounded-lg cursor-not-allowed font-medium"
+              disabled
+            >
+              <Lock className="w-5 h-5" />
+              Add Menu Item
+            </button>
+          )}
         </div>
 
         {/* Menu Tree */}
@@ -249,13 +318,15 @@ export default function MenuItemsClient({ initialMenuItems, initialIncludeHidden
               <p className="text-gray-400 mb-6 max-w-md mx-auto">
                 Start building your navigation menu by creating your first menu item. You can link to pages or external websites.
               </p>
-              <button
-                onClick={handleCreate}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-lg shadow-blue-500/30 transition-all"
-              >
-                <Plus className="w-5 h-5" />
-                Create First Menu Item
-              </button>
+              {canCreate && (
+                <button
+                  onClick={handleCreate}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-lg shadow-blue-500/30 transition-all"
+                >
+                  <Plus className="w-5 h-5" />
+                  Create First Menu Item
+                </button>
+              )}
             </div>
           ) : (
             <div>
@@ -283,6 +354,8 @@ export default function MenuItemsClient({ initialMenuItems, initialIncludeHidden
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onReorder={handleReorder}
+                canEdit={canEdit}
+                canDelete={canDelete}
               />
             </div>
           )}

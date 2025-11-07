@@ -7,8 +7,6 @@ import { User } from '@prisma/client';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import UserProfile from '@/components/admin/users/UserProfile';
-import ChangeRoleDialog from '@/components/admin/users/ChangeRoleDialog';
-import { UserRole } from '@prisma/client';
 
 export default function UserDetailsPage({
   params
@@ -22,7 +20,6 @@ export default function UserDetailsPage({
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchUser();
@@ -32,9 +29,13 @@ export default function UserDetailsPage({
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await fetch('/api/auth/session');
+      // Use the new RBAC endpoint
+      const response = await fetch('/api/admin/users/me');
+      if (!response.ok) {
+        throw new Error('Failed to fetch current user');
+      }
       const data = await response.json();
-      if (data.user) {
+      if (data.success && data.user) {
         setCurrentUser(data.user);
       }
     } catch (error) {
@@ -46,6 +47,12 @@ export default function UserDetailsPage({
     try {
       setIsLoading(true);
       const response = await fetch(`/api/admin/users/${resolvedParams.userId}`);
+      
+      if (!response.ok) {
+        setNotFound(true);
+        return;
+      }
+      
       const data = await response.json();
 
       if (data.success) {
@@ -60,26 +67,6 @@ export default function UserDetailsPage({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleConfirmRoleChange = async (userId: string, newRole: UserRole) => {
-    const response = await fetch(`/api/admin/users/${userId}/role`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ newRole })
-    });
-
-    const data = await response.json();
-
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to update role');
-    }
-
-    // Refresh user data
-    await fetchUser();
-    
-    // Show success message
-    alert('Role updated successfully!');
   };
 
   if (isLoading) {
@@ -142,22 +129,15 @@ export default function UserDetailsPage({
         </Link>
       </div>
 
-      {/* User Profile */}
+      {/* User Profile with integrated RBAC controls */}
       {currentUser && (
         <UserProfile 
           user={user} 
           currentUser={currentUser}
-          onChangeRole={() => setIsDialogOpen(true)} 
+          onChangeRole={() => {}} // Not used anymore - modals are inside UserProfile
+          onUpdate={fetchUser} 
         />
       )}
-
-      {/* Role Change Dialog */}
-      <ChangeRoleDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        user={user}
-        onConfirm={handleConfirmRoleChange}
-      />
     </div>
   );
 }

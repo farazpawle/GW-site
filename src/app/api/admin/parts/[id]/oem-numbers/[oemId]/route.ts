@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { oemPartNumberSchema } from '@/lib/validations/cross-reference';
 import { ZodError } from 'zod';
@@ -14,7 +14,13 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; oemId: string }> }
 ) {
   try {
-    await requireAdmin();
+    const user = await checkAdmin();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const { id: partId, oemId } = await params;
     const body = await request.json();
@@ -88,7 +94,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; oemId: string }> }
 ) {
   try {
-    await requireAdmin();
+    const user = await checkAdmin();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const { id: partId, oemId } = await params;
 

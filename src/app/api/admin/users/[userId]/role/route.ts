@@ -1,111 +1,129 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
-import { validateRoleChange, updateUserRole } from '@/lib/admin/role-management';
-import { isSuperAdmin } from '@/lib/admin/auth';
+import { requireSuperAdmin } from '@/lib/rbac/guards';
+import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
+import { ROLE_LEVELS, getDefaultPermissions } from '@/lib/rbac/permissions';
+import { logRBACChange } from '@/lib/rbac/audit';
 
 /**
- * POST /api/admin/users/[userId]/role
+ * PATCH /api/admin/users/[userId]/role
  * 
- * Update a user's role with security validation
+ * Update a user's role with RBAC validation (Super Admin only)
  * 
  * Body:
- * - newRole: ADMIN or VIEWER
- * - note (optional): Reason for the change
+ * - role: SUPER_ADMIN | MANAGER | STAFF | CONTENT_EDITOR | VIEWER
  * 
- * @returns Success message or validation error
+ * @returns Updated user with new role, roleLevel, and permissions
  */
-export async function POST(
+export async function PATCH(
   req: NextRequest,
   context: { params: Promise<{ userId: string }> }
 ) {
   try {
-    // Ensure user is an admin
-    const currentUser = await requireAdmin();
+    // Only super admins can change roles
+    const currentUserOrError = await requireSuperAdmin();
+    if (currentUserOrError instanceof NextResponse) {
+      return currentUserOrError;
+    }
 
     // Get userId from params (Next.js 15 async params pattern)
     const { userId: targetUserId } = await context.params;
 
     if (!targetUserId) {
       return NextResponse.json(
-        { success: false, error: 'User ID is required' },
+        { error: 'User ID is required' },
         { status: 400 }
       );
     }
 
     // Parse request body
     const body = await req.json();
-    const { newRole, note } = body;
+    const { role } = body;
 
-    // Validate newRole
-    if (!newRole || (newRole !== 'ADMIN' && newRole !== 'VIEWER' && newRole !== 'SUPER_ADMIN')) {
+    // Validate role
+    if (!role || typeof role !== 'string') {
       return NextResponse.json(
-        { success: false, error: 'Invalid role. Must be SUPER_ADMIN, ADMIN, or VIEWER.' },
+        { error: 'Role is required' },
         { status: 400 }
       );
     }
 
-    // Super Admin Authorization Check
-    // Only super admins can promote users to ADMIN or SUPER_ADMIN roles
-    if ((newRole === 'ADMIN' || newRole === 'SUPER_ADMIN') && !isSuperAdmin(currentUser)) {
+    const validRoles: UserRole[] = ['SUPER_ADMIN', 'ADMIN', 'STAFF', 'CONTENT_EDITOR', 'VIEWER'];
+    if (!validRoles.includes(role as UserRole)) {
       return NextResponse.json(
-        { success: false, error: 'Only super admins can create or modify admin users' },
+        { error: 'Invalid role' },
+        { status: 400 }
+      );
+    }
+
+    // Get target user
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId },
+    });
+
+    if (!targetUser) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Prevent changing own role
+    if (targetUser.id === currentUserOrError.id) {
+      return NextResponse.json(
+        { error: 'Cannot change your own role' },
         { status: 403 }
       );
     }
 
-    // Validate the role change (security checks)
-    const validation = await validateRoleChange(
-      currentUser,
-      targetUserId,
-      newRole as UserRole
-    );
+    // Get new role level and default permissions
+    const newRoleLevel = ROLE_LEVELS[role as keyof typeof ROLE_LEVELS] || 10;
+    const defaultPermissions = getDefaultPermissions(role as UserRole);
+    
+    // Store old values for audit log
+    const oldRole = targetUser.role;
+    const oldPermissions = (targetUser as any).permissions || [];
 
-    if (!validation.allowed) {
-      return NextResponse.json(
-        { success: false, error: validation.error },
-        { status: 403 }
-      );
-    }
-
-    // Update the user's role
-    const updatedUser = await updateUserRole(targetUserId, newRole as UserRole);
-
-    // Audit log for role changes (especially important for super admin actions)
-    const logLevel = (newRole === 'SUPER_ADMIN' || newRole === 'ADMIN') ? 'CRITICAL' : 'INFO';
-    console.log(`[${logLevel}] Role changed for user ${targetUserId}:`, {
+    // Update user role, roleLevel, and reset permissions to defaults
+    const updatedUser = await prisma.user.update({
+      where: { id: targetUserId },
+      data: {
+        role: role as UserRole,
+        roleLevel: newRoleLevel,
+        permissions: defaultPermissions,
+      } as any, // Type assertion due to Prisma types not refreshed
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+    
+    // Log role change
+    await logRBACChange({
+      actorId: currentUserOrError.id,
+      actorEmail: currentUserOrError.email,
+      targetId: targetUserId,
+      targetEmail: targetUser.email,
       action: 'ROLE_CHANGE',
-      changedBy: currentUser.id,
-      changedByEmail: currentUser.email,
-      changedByRole: currentUser.role,
-      targetUserId,
-      targetUserEmail: updatedUser.email,
-      oldRole: 'N/A', // Could be fetched before update if needed
-      newRole,
-      isSuperAdminAction: isSuperAdmin(currentUser),
-      note: note || 'No note provided',
-      timestamp: new Date().toISOString()
+      oldValue: { role: oldRole, roleLevel: ROLE_LEVELS[oldRole] || 10, permissions: oldPermissions },
+      newValue: { role, roleLevel: newRoleLevel, permissions: defaultPermissions },
     });
 
     return NextResponse.json({
-      success: true,
-      message: 'User role updated successfully',
-      data: {
-        userId: updatedUser.id,
-        email: updatedUser.email,
-        name: updatedUser.name,
-        newRole: updatedUser.role
-      }
-    });
-
-  } catch (error) {
-    console.error('Error updating user role:', error);
-    
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to update user role' 
+      message: 'Role updated successfully',
+      user: {
+        ...updatedUser,
+        roleLevel: newRoleLevel,
+        permissions: defaultPermissions,
       },
+    });
+  } catch (error) {
+    console.error('Error updating role:', error);
+    return NextResponse.json(
+      { error: 'Failed to update role' },
       { status: 500 }
     );
   }

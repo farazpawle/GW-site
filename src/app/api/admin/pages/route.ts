@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { checkPermission } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { pageSchema } from '@/lib/validations/page';
 import { ZodError } from 'zod';
@@ -11,12 +11,12 @@ import { Prisma } from '@prisma/client';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate admin user
-    const { userId } = await auth();
-    if (!userId) {
+    // Check permission
+    const user = await checkPermission('pages.view');
+    if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'Unauthorized - Missing permission: pages.view' },
+        { status: 403 }
       );
     }
 
@@ -81,12 +81,12 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate admin user
-    const { userId } = await auth();
-    if (!userId) {
+    // Check permission
+    const user = await checkPermission('pages.create');
+    if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'Unauthorized - Missing permission: pages.create' },
+        { status: 403 }
       );
     }
 

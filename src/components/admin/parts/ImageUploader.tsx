@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, X, Loader2 } from 'lucide-react';
+import { Upload, X, Loader2, FolderOpen } from 'lucide-react';
 import Image from 'next/image';
+import MediaPickerModal from '../media/MediaPickerModal';
+import type { MediaFile } from '@/types/media';
 
 interface ImageUploaderProps {
   value: string[]; // Array of image URLs
@@ -20,6 +22,7 @@ export default function ImageUploader({
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string>('');
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_SIZE_BYTES = maxSizeMB * 1024 * 1024;
@@ -138,23 +141,81 @@ export default function ImageUploader({
     fileInputRef.current?.click();
   };
 
+  // Handle media library selection
+  const handleMediaSelect = (file: MediaFile) => {
+    if (value.length >= maxImages) {
+      setError(`Maximum ${maxImages} images allowed`);
+      return;
+    }
+    
+    const newUrls = [...value, file.url];
+    onChange(newUrls);
+    setIsMediaPickerOpen(false);
+  };
+
   return (
     <div className="space-y-4">
-      {/* Upload Zone */}
+      {/* Action Buttons Row */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Upload from Device Button */}
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={isUploading || value.length >= maxImages}
+          className={`
+            flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl
+            border-2 border-dashed font-medium transition-all
+            ${isUploading || value.length >= maxImages
+              ? 'border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed'
+              : 'border-[#2a2a2a] bg-[#1a1a1a] text-white hover:border-brand-maroon hover:bg-brand-maroon/5'
+            }
+          `}
+        >
+          {isUploading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Uploading...</span>
+            </>
+          ) : (
+            <>
+              <Upload className="w-5 h-5" />
+              <span>Upload from Device</span>
+            </>
+          )}
+        </button>
+
+        {/* Select from Media Library Button */}
+        <button
+          type="button"
+          onClick={() => setIsMediaPickerOpen(true)}
+          disabled={isUploading || value.length >= maxImages}
+          className={`
+            flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl
+            border-2 font-medium transition-all
+            ${isUploading || value.length >= maxImages
+              ? 'border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed'
+              : 'border-brand-maroon/50 bg-brand-maroon/10 text-brand-maroon hover:bg-brand-maroon/20 hover:border-brand-maroon'
+            }
+          `}
+        >
+          <FolderOpen className="w-5 h-5" />
+          <span>Select from Media Library</span>
+        </button>
+      </div>
+
+      {/* Drag and Drop Zone */}
       <div
-        onClick={handleClick}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-          relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer
-          transition-all duration-300
+          relative border-2 border-dashed rounded-xl p-6 text-center
+          transition-all
           ${isDragging 
             ? 'border-brand-maroon bg-brand-maroon/10' 
-            : 'border-[#2a2a2a] hover:border-brand-maroon/50 bg-[#1a1a1a]'
+            : 'border-[#2a2a2a] bg-[#0a0a0a]'
           }
-          ${isUploading ? 'pointer-events-none opacity-50' : ''}
-          ${value.length >= maxImages ? 'pointer-events-none opacity-40' : ''}
+          ${isUploading || value.length >= maxImages ? 'pointer-events-none opacity-40' : ''}
         `}
       >
         <input
@@ -167,30 +228,24 @@ export default function ImageUploader({
           disabled={isUploading || value.length >= maxImages}
         />
 
-        <div className="flex flex-col items-center gap-4">
-          {isUploading ? (
-            <Loader2 className="w-12 h-12 text-brand-maroon animate-spin" />
-          ) : (
-            <Upload className="w-12 h-12 text-gray-400" />
-          )}
+        <div className="flex flex-col items-center gap-3">
+          <Upload className="w-8 h-8 text-gray-500" />
 
           <div>
-            <p className="text-white font-medium mb-1">
-              {isUploading 
-                ? 'Uploading images...' 
-                : value.length >= maxImages
+            <p className="text-gray-400 text-sm mb-1">
+              {value.length >= maxImages
                 ? `Maximum ${maxImages} images reached`
-                : 'Click to upload or drag and drop'
+                : 'Or drag and drop files here'
               }
             </p>
-            <p className="text-sm text-gray-400">
-              JPG, PNG, or WebP (max {maxSizeMB}MB each, up to {maxImages} images)
+            <p className="text-xs text-gray-500">
+              JPG, PNG, or WebP (max {maxSizeMB}MB each)
             </p>
           </div>
 
           {value.length > 0 && (
-            <p className="text-sm text-gray-500">
-              {value.length} / {maxImages} images uploaded
+            <p className="text-xs text-gray-500">
+              {value.length} / {maxImages} images
             </p>
           )}
         </div>
@@ -239,6 +294,15 @@ export default function ImageUploader({
           ))}
         </div>
       )}
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={isMediaPickerOpen}
+        onClose={() => setIsMediaPickerOpen(false)}
+        onSelect={handleMediaSelect}
+        title="Select Product Image from Media Library"
+        folder="products"
+      />
     </div>
   );
 }

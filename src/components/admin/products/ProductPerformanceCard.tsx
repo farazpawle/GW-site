@@ -79,6 +79,9 @@ export default function ProductPerformanceCard({ product, variant }: ProductPerf
                   no_images: { label: 'No Images', color: 'text-red-400 bg-red-500/10 border-red-500/20' },
                   no_description: { label: 'No Description', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
                   no_short_desc: { label: 'No Short Desc', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
+                  missing_price: { label: 'Price Not Set', color: 'text-red-400 bg-red-500/10 border-red-500/20' },
+                  missing_brand: { label: 'Brand Missing', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+                  missing_origin: { label: 'Origin Missing', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
                 };
 
                 const config = issueConfig[issue] || { label: issue, color: 'text-gray-400 bg-gray-500/10 border-gray-500/20' };

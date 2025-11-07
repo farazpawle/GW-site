@@ -2,7 +2,87 @@
 
 ## Current Work Focus
 
-### 📋 Phase 17 Documentation Cleanup - Complete (November 2, 2025)
+### � RBAC & Authentication System Fixes - Complete (November 6, 2025)
+
+**Status**: ✅ Complete - All roles working, permissions system extended
+
+**Context**:
+- User reported: "Failed to fetch message dashboard data" error
+- Root cause: Admin authentication system was too restrictive
+- Multiple issues discovered during troubleshooting
+
+**Problems Fixed**:
+
+1. **Admin Access Control Issue**
+   - **Problem**: `checkAdmin()` and `requireAdmin()` only allowed `ADMIN` and `SUPER_ADMIN` roles
+   - **Impact**: `STAFF` and `CONTENT_EDITOR` roles couldn't access admin panel
+   - **Fix**: Changed logic to block only `VIEWER` role, allow all others
+   - **Files**: `src/lib/auth.ts` (lines 77-122)
+   - **Result**: All roles except VIEWER can now access admin panel
+
+2. **Missing ADMIN Role in Role Selector**
+   - **Problem**: Role selector UI filtered out ADMIN role (`.filter(role => role !== 'ADMIN')`)
+   - **Impact**: Super Admin couldn't assign users to ADMIN role
+   - **Fix**: Removed the filter that was hiding ADMIN role
+   - **Files**: `src/components/admin/users/RoleSelector.tsx` (line 113)
+   - **Result**: All 5 roles now visible in role selector
+
+3. **Incomplete Role Badge Component**
+   - **Problem**: `RoleBadge` component only handled 3 roles (SUPER_ADMIN, ADMIN, VIEWER)
+   - **Impact**: STAFF and CONTENT_EDITOR roles showed as empty/dash in user table
+   - **Fix**: Added all 5 roles with proper colors matching role selector
+   - **Files**: `src/components/admin/users/RoleBadge.tsx`
+   - **Colors**: 
+     - SUPER_ADMIN: Gold gradient (unchanged)
+     - ADMIN: Blue (`bg-blue-500/20`)
+     - STAFF: Green (`bg-green-500/20`)
+     - CONTENT_EDITOR: Cyan (`bg-cyan-500/20`)
+     - VIEWER: Gray (unchanged)
+
+4. **Missing Homepage & Dashboard Permissions**
+   - **Problem**: No permissions for Homepage CMS and Dashboard access
+   - **Fix**: Added 2 new resource types with permissions
+   - **Files**: 
+     - `src/lib/rbac/permissions.ts` (added HOMEPAGE and DASHBOARD resources)
+     - `src/components/admin/users/PermissionEditor.tsx` (added UI groups)
+   - **New Permissions**:
+     - `homepage.view` - View homepage content and sections
+     - `homepage.edit` - Edit homepage content and layout
+     - `homepage.*` - All homepage permissions
+     - `dashboard.view` - Access admin dashboard and overview
+     - `dashboard.*` - All dashboard permissions
+   - **Role Assignments**:
+     - SUPER_ADMIN: Full access to both
+     - ADMIN: Full access to both
+     - STAFF: View + edit homepage, view dashboard
+     - CONTENT_EDITOR: View + edit homepage, view dashboard
+     - VIEWER: View only (read-only)
+
+**Current User Database State**:
+```
+farazpawle@gmail.com - SUPER_ADMIN (Level 100)
+farazkhld@gmail.com - VIEWER (Level 10)
+```
+
+**Files Modified**:
+- `src/lib/auth.ts` - Updated admin access control logic
+- `src/components/admin/users/RoleSelector.tsx` - Unhid ADMIN role
+- `src/components/admin/users/RoleBadge.tsx` - Added all 5 roles with colors
+- `src/lib/rbac/permissions.ts` - Added HOMEPAGE and DASHBOARD resources
+- `src/components/admin/users/PermissionEditor.tsx` - Added new permission groups
+- `scripts/promote-to-admin.ts` - Created utility for role promotion
+- `scripts/check-user-roles.ts` - Created utility to check current roles
+
+**Testing Status**:
+- ✅ All roles display correctly in user table
+- ✅ Role selector shows all 5 roles
+- ✅ Admin panel accessible to ADMIN, STAFF, CONTENT_EDITOR
+- ✅ VIEWER role blocked from admin panel
+- ✅ New permissions visible in permission editor UI
+
+---
+
+### �📋 Phase 17 Documentation Cleanup - Complete (November 2, 2025)
 
 **Status**: ✅ All Phase 17 sub-phase documents cleaned and simplified
 

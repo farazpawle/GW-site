@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Copy, Trash2, FileImage } from 'lucide-react';
+import { Copy, Trash2, FileImage, Lock } from 'lucide-react';
 import type { MediaFile } from '@/types/media';
 
 export type CardSize = 'normal' | 'compact';
@@ -11,6 +11,7 @@ interface FileCardProps {
   onDelete: () => void;
   onCopyUrl: () => void;
   size?: CardSize;
+  canDelete?: boolean;
 }
 
 // Extract just the filename from the full key
@@ -34,8 +35,13 @@ function formatRelativeTime(dateString: string): string {
   return `${Math.floor(diffDays / 365)} years ago`;
 }
 
-export default function FileCard({ file, onDelete, onCopyUrl, size = 'normal' }: FileCardProps) {
+export default function FileCard({ file, onDelete, onCopyUrl, size = 'normal', canDelete = true }: FileCardProps) {
   const isCompact = size === 'compact';
+  
+  // Use proxy for MinIO URLs
+  const imageUrl = (file.url.includes('localhost:9000') || file.url.includes('minio:9000'))
+    ? `/api/admin/media/proxy?url=${encodeURIComponent(file.url)}`
+    : file.url;
   
   return (
     <div className="group relative aspect-square rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden hover:border-[#6e0000]/50 hover:shadow-lg hover:shadow-[#6e0000]/20 transition-all hover:scale-[1.02]">
@@ -43,7 +49,7 @@ export default function FileCard({ file, onDelete, onCopyUrl, size = 'normal' }:
       {file.isImage ? (
         <div className="relative w-full h-full">
           <Image
-            src={file.url}
+            src={imageUrl}
             alt={getFileName(file.key)}
             fill
             className="object-cover"
@@ -51,6 +57,7 @@ export default function FileCard({ file, onDelete, onCopyUrl, size = 'normal' }:
               ? "(max-width: 640px) 25vw, (max-width: 768px) 12.5vw, (max-width: 1024px) 10vw, (max-width: 1280px) 8vw, 8vw"
               : "(max-width: 640px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 20vw, (max-width: 1280px) 16vw, 12vw"
             }
+            unoptimized
           />
         </div>
       ) : (
@@ -72,17 +79,32 @@ export default function FileCard({ file, onDelete, onCopyUrl, size = 'normal' }:
           <Copy className={isCompact ? "w-3 h-3 text-white" : "w-3.5 h-3.5 text-white"} />
           {!isCompact && <span className="text-white">Copy</span>}
         </button>
-        <button
-          onClick={onDelete}
-          className={`rounded-lg bg-red-600/80 hover:bg-red-600 transition-colors flex items-center text-xs font-medium ${
-            isCompact ? 'p-1.5 gap-1' : 'p-2 gap-1.5'
-          }`}
-          title="Delete file"
-          aria-label="Delete file"
-        >
-          <Trash2 className={isCompact ? "w-3 h-3 text-white" : "w-3.5 h-3.5 text-white"} />
-          {!isCompact && <span className="text-white">Delete</span>}
-        </button>
+        {canDelete ? (
+          <button
+            onClick={onDelete}
+            className={`rounded-lg bg-red-600/80 hover:bg-red-600 transition-colors flex items-center text-xs font-medium ${
+              isCompact ? 'p-1.5 gap-1' : 'p-2 gap-1.5'
+            }`}
+            title="Delete file"
+            aria-label="Delete file"
+          >
+            <Trash2 className={isCompact ? "w-3 h-3 text-white" : "w-3.5 h-3.5 text-white"} />
+            {!isCompact && <span className="text-white">Delete</span>}
+          </button>
+        ) : (
+          <button
+            onClick={onDelete}
+            className={`rounded-lg bg-gray-800/80 cursor-not-allowed flex items-center text-xs font-medium ${
+              isCompact ? 'p-1.5 gap-1' : 'p-2 gap-1.5'
+            }`}
+            title="No permission to delete"
+            aria-label="No permission to delete"
+            disabled
+          >
+            <Lock className={isCompact ? "w-3 h-3 text-gray-500" : "w-3.5 h-3.5 text-gray-500"} />
+            {!isCompact && <span className="text-gray-500">Delete</span>}
+          </button>
+        )}
       </div>
       
       {/* File Info Footer - Visible on Hover (only in normal mode) */}

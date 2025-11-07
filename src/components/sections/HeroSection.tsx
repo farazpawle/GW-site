@@ -4,7 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Statistics from "@/components/ui/Statistics";
 import { Sparkles } from "lucide-react";
-import { Waves } from "@/components/ui/waves-background";
+import { BackgroundPaths } from "@/components/ui/background-paths";
+import ShaderBackground from "@/components/ui/shader-background";
+import { HeroSectionConfig } from '@/types/page-section';
+import { applyTextStyles } from '@/lib/utils/typography';
 
 // Interactive character component
 function InteractiveChar({ 
@@ -61,7 +64,11 @@ function InteractiveChar({
   );
 }
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  config: HeroSectionConfig;
+}
+
+export default function HeroSection({ config }: HeroSectionProps) {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -80,27 +87,13 @@ export default function HeroSection() {
         className="text-white py-20 relative overflow-hidden min-h-screen flex items-center justify-center"
         style={{ backgroundColor: '#0a0a0a' }}
       >
-        {/* Animated Waves Background */}
-        <Waves
-          lineColor="rgba(255, 255, 255, 0.15)"
-          backgroundColor="transparent"
-          waveSpeedX={0.015}
-          waveSpeedY={0.008}
-          waveAmpX={35}
-          waveAmpY={18}
-          xGap={12}
-          yGap={36}
-          friction={0.92}
-          tension={0.008}
-          maxCursorMove={120}
-        />
+        {/* Animated Background - Conditional Rendering */}
+        {(config.backgroundType || 'paths') === 'shader' ? (
+          <ShaderBackground />
+        ) : (
+          <BackgroundPaths />
+        )}
         
-        {/* Decorative Background Pattern */}
-        <div className="absolute inset-0 opacity-5 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#6e0000] rounded-full blur-3xl"></div>
-        </div>
-
         <div className="container mx-auto px-4 text-center relative z-10 max-w-6xl">
           {/* Premium Badge */}
           <div className="inline-block animate-fade-in mb-6">
@@ -112,12 +105,15 @@ export default function HeroSection() {
                 border: '1px solid rgba(110, 0, 0, 0.3)'
               }}
             >
-              <Sparkles className="w-4 h-4" style={{ color: '#6e0000' }} />
+              <Sparkles className="w-4 h-4" style={{ color: config.badge.icon || '#6e0000' }} />
               <span 
                 className="uppercase tracking-wider font-semibold text-sm"
-                style={{ color: '#ff9999' }}
+                style={{ 
+                  color: '#ff9999',
+                  ...applyTextStyles(config.badge.textStyle)
+                }}
               >
-                Premium Auto Parts
+                {config.badge.text}
               </span>
             </div>
           </div>
@@ -132,14 +128,14 @@ export default function HeroSection() {
             }}
           >
             <div className="relative z-10">
-              <div>
-                {'Transform Your Drive with'.split('').map((char, index) => (
+              <div style={applyTextStyles(config.title.line1Style)}>
+                {config.title.line1.split('').map((char, index) => (
                   <InteractiveChar
                     key={index}
                     char={char}
                     mouseX={mousePosition.x}
                     mouseY={mousePosition.y}
-                    baseColor="white"
+                    baseColor={config.title.line1Style?.color || "white"}
                     hoverColorStart={[255, 255, 255]}
                     hoverColorEnd={[147, 32, 32]}
                     radius={200}
@@ -147,14 +143,14 @@ export default function HeroSection() {
                 ))}
               </div>
               <br />
-              <div>
-                {'Superior Parts'.split('').map((char, index) => (
+              <div style={applyTextStyles(config.title.line2Style)}>
+                {config.title.line2.split('').map((char, index) => (
                   <InteractiveChar
                     key={index}
                     char={char}
                     mouseX={mousePosition.x}
                     mouseY={mousePosition.y}
-                    baseColor="#6e0000"
+                    baseColor={config.title.line2Style?.color || "#6e0000"}
                     hoverColorStart={[110, 0, 0]}
                     hoverColorEnd={[255, 180, 180]}
                     radius={200}
@@ -167,26 +163,66 @@ export default function HeroSection() {
           {/* Subheading with Mouse Proximity Effect */}
           <h2 
             className="text-xl md:text-2xl mb-12 animate-fade-in max-w-3xl mx-auto cursor-default"
-            style={{ animationDelay: '0.2s' }}
+            style={{ 
+              animationDelay: '0.2s',
+              ...applyTextStyles(config.descriptionStyle)
+            }}
           >
-            {'Quality European, American Vehicle & Truck Parts'.split('').map((char, index) => (
+            {config.description.split('').map((char, index) => (
               <InteractiveChar
                 key={index}
                 char={char}
                 mouseX={mousePosition.x}
                 mouseY={mousePosition.y}
-                baseColor="rgb(209, 213, 219)"
+                baseColor={config.descriptionStyle?.color || "rgb(209, 213, 219)"}
                 hoverColorStart={[209, 213, 219]}
                 hoverColorEnd={[147, 32, 32]}
                 radius={150}
               />
             ))}
           </h2>
+
+          {/* CTA Buttons */}
+          {(config.primaryCTA.show || config.secondaryCTA.show) && (
+            <div className="flex flex-wrap items-center justify-center gap-4 mb-12 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              {config.primaryCTA.show && (
+                <Link
+                  href={config.primaryCTA.link}
+                  className="inline-flex items-center gap-2 text-white font-semibold px-8 py-4 rounded-lg uppercase transition-all duration-300 hover:scale-105 hover:shadow-xl group text-sm md:text-base"
+                  style={{ backgroundColor: '#6e0000' }}
+                >
+                  <span>{config.primaryCTA.text}</span>
+                  <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
+              )}
+              
+              {config.secondaryCTA.show && (
+                <Link
+                  href={config.secondaryCTA.link}
+                  className="inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-lg uppercase transition-all duration-300 hover:scale-105 group text-sm md:text-base border-2"
+                  style={{ 
+                    borderColor: '#6e0000',
+                    color: '#fff',
+                    backgroundColor: 'rgba(110, 0, 0, 0.1)'
+                  }}
+                >
+                  <span>{config.secondaryCTA.text}</span>
+                  <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
+              )}
+            </div>
+          )}
           
           {/* Statistics Component */}
-          <div className="mb-16 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-            <Statistics />
-          </div>
+          {config.statistics.show && (
+            <div className="mb-16 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <Statistics stats={config.statistics.stats} />
+            </div>
+          )}
         </div>
 
         {/* Bottom Wave Effect */}

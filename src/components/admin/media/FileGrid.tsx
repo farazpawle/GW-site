@@ -9,6 +9,7 @@ interface FileGridProps {
   onCopyUrl: (url: string) => void;
   loading?: boolean;
   size?: GridSize;
+  canDelete?: boolean;
 }
 
 export default function FileGrid({
@@ -17,6 +18,7 @@ export default function FileGrid({
   onCopyUrl,
   loading = false,
   size = 'normal',
+  canDelete = true,
 }: FileGridProps) {
   // Grid classes based on size
   const gridClasses = size === 'compact'
@@ -71,6 +73,7 @@ export default function FileGrid({
           onDelete={() => onDelete(file)}
           onCopyUrl={() => onCopyUrl(file.url)}
           size={size}
+          canDelete={canDelete}
         />
       ))}
     </div>

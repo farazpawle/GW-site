@@ -28,6 +28,7 @@ export const FOLDERS = {
   PRODUCTS: 'products/',
   CATEGORIES: 'categories/',
   GENERAL: 'general/',
+  ICONS: 'icons/', // For favicons and app icons
 } as const;
 
 // Legacy - for backward compatibility (DEPRECATED)
@@ -111,7 +112,7 @@ export async function deleteFileWithBucket(bucket: string, key: string): Promise
 }
 
 /**
- * Get presigned URL for temporary access to a private file
+ * Get a presigned URL for accessing a file (read-only)
  * @param key - File path with folder prefix
  * @param expiresIn - Expiration time in seconds (default: 3600 = 1 hour)
  * @returns Promise<string> - Presigned URL
@@ -125,7 +126,14 @@ export async function getPresignedUrl(
     Key: key,
   });
 
-  return await getSignedUrl(s3Client, command, { expiresIn });
+  let presignedUrl = await getSignedUrl(s3Client, command, { expiresIn });
+  
+  // ALWAYS replace 'minio' hostname with 'localhost' for browser access
+  // Docker internal hostnames don't work in browsers
+  presignedUrl = presignedUrl.replace('http://minio:9000', 'http://localhost:9000');
+  presignedUrl = presignedUrl.replace('https://minio:9000', 'https://localhost:9000');
+  
+  return presignedUrl;
 }
 
 /**

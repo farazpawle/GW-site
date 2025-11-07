@@ -2,6 +2,42 @@
 
 ## Critical Project Understanding
 
+### RBAC System Rules (MUST READ)
+**Updated:** November 6, 2025
+
+1. **Admin Panel Access Logic**:
+   - Block ONLY `VIEWER` role from admin panel access
+   - Allow: SUPER_ADMIN, ADMIN, STAFF, CONTENT_EDITOR
+   - Use `requireAdmin()` for pages, `checkAdmin()` for API routes
+   - Files: `src/lib/auth.ts`
+
+2. **Role Hierarchy (5 Roles)**:
+   ```
+   SUPER_ADMIN     Level 100  - Full access, can manage all roles
+   ADMIN           Level 50   - Manage content/users (cannot change roles)
+   STAFF           Level 20   - Edit content, view analytics
+   CONTENT_EDITOR  Level 15   - Create/edit products, pages, media
+   VIEWER          Level 10   - Read-only (blocked from admin)
+   ```
+
+3. **Permission Resources**:
+   - Products, Categories, Pages, Menu, Media, Users, Settings
+   - Analytics, Messages, Collections
+   - **Homepage** (homepage.view, homepage.edit)
+   - **Dashboard** (dashboard.view)
+
+4. **When Adding New Permissions**:
+   - Add to `RESOURCES` constant in `src/lib/rbac/permissions.ts`
+   - Add permissions to `PERMISSIONS` object
+   - Update `ROLE_PERMISSIONS` for each role
+   - Add descriptions to `PERMISSION_DESCRIPTIONS`
+   - Add UI group in `src/components/admin/users/PermissionEditor.tsx`
+
+5. **UI Components Must Handle All Roles**:
+   - `RoleBadge.tsx` - Must style all 5 roles with colors
+   - `RoleSelector.tsx` - Must show all roles (don't filter any)
+   - Color scheme: Gold (Super Admin), Blue (Admin), Green (Staff), Cyan (Content Editor), Gray (Viewer)
+
 ### Business Model Rules (MUST READ)
 **Updated:** November 2, 2025
 

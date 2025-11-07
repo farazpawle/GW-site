@@ -12,10 +12,12 @@
 import { useState, useEffect } from 'react';
 import { Image as ImageIcon } from 'lucide-react';
 import MediaPickerModal from '@/components/admin/media/MediaPickerModal';
+import type { MediaFile } from '@/types/media';
 
 interface GeneralSettingsProps {
   formData: Record<string, string>;
   onChange: (key: string, value: string) => void;
+  mediaPreviews?: Record<string, string | null>;
 }
 
 // Common timezones organized by region
@@ -47,12 +49,39 @@ const CURRENCIES = [
   { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
 ];
 
-export default function GeneralSettings({ formData, onChange }: GeneralSettingsProps) {
+export default function GeneralSettings({ formData, onChange, mediaPreviews = {} }: GeneralSettingsProps) {
   const [logoPreviewError, setLogoPreviewError] = useState(false);
   const [logoMediaPickerOpen, setLogoMediaPickerOpen] = useState(false);
+  const [mobileLogoPreviewError, setMobileLogoPreviewError] = useState(false);
+  const [mobileLogoMediaPickerOpen, setMobileLogoMediaPickerOpen] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
+  const getInitialPreview = (storedValue?: string, previewValue?: string | null): string | null => {
+    if (previewValue) {
+      return previewValue;
+    }
+
+    if (!storedValue) {
+      return null;
+    }
+
+    const lower = storedValue.toLowerCase();
+    return lower.startsWith('http://') || lower.startsWith('https://') ? storedValue : null;
+  };
+
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(
+    getInitialPreview(formData.logo_url, mediaPreviews.logo_url)
+  );
+  const [mobileLogoPreviewUrl, setMobileLogoPreviewUrl] = useState<string | null>(
+    getInitialPreview(formData.logo_mobile_url, mediaPreviews.logo_mobile_url)
+  );
+  const [footerLogoPreviewUrl, setFooterLogoPreviewUrl] = useState<string | null>(
+    getInitialPreview(formData.egh_logo, mediaPreviews.egh_logo)
+  );
   const [pages, setPages] = useState<Array<{ id: string; title: string; slug: string }>>([]);
   const [loadingPages, setLoadingPages] = useState(true);
+  const logoResolvedPreview = logoPreviewUrl || '';
+  const mobileLogoResolvedPreview = mobileLogoPreviewUrl || '';
+  const footerLogoResolvedPreview = footerLogoPreviewUrl || '';
 
   // Fetch available pages for Privacy Policy and Terms selection
   useEffect(() => {
@@ -75,7 +104,64 @@ export default function GeneralSettings({ formData, onChange }: GeneralSettingsP
   // Reset preview error when logo URL changes
   useEffect(() => {
     setLogoPreviewError(false);
-  }, [formData.logo_url]);
+
+    if (!formData.logo_url) {
+      setLogoPreviewUrl(null);
+      return;
+    }
+
+    if (mediaPreviews.logo_url) {
+      setLogoPreviewUrl(mediaPreviews.logo_url);
+      return;
+    }
+
+    const lower = formData.logo_url.toLowerCase?.() ?? '';
+    if (lower.startsWith('http://') || lower.startsWith('https://')) {
+      setLogoPreviewUrl(formData.logo_url);
+    } else {
+      setLogoPreviewUrl(null);
+    }
+  }, [formData.logo_url, mediaPreviews.logo_url]);
+
+  useEffect(() => {
+    setMobileLogoPreviewError(false);
+
+    if (!formData.logo_mobile_url) {
+      setMobileLogoPreviewUrl(null);
+      return;
+    }
+
+    if (mediaPreviews.logo_mobile_url) {
+      setMobileLogoPreviewUrl(mediaPreviews.logo_mobile_url);
+      return;
+    }
+
+    const lower = formData.logo_mobile_url.toLowerCase?.() ?? '';
+    if (lower.startsWith('http://') || lower.startsWith('https://')) {
+      setMobileLogoPreviewUrl(formData.logo_mobile_url);
+    } else {
+      setMobileLogoPreviewUrl(null);
+    }
+  }, [formData.logo_mobile_url, mediaPreviews.logo_mobile_url]);
+
+  useEffect(() => {
+    if (!formData.egh_logo) {
+      setFooterLogoPreviewUrl(null);
+      return;
+    }
+
+    if (mediaPreviews.egh_logo) {
+      setFooterLogoPreviewUrl(mediaPreviews.egh_logo);
+      return;
+    }
+
+    const lower = formData.egh_logo.toLowerCase?.() ?? '';
+    if (lower.startsWith('http://') || lower.startsWith('https://')) {
+      setFooterLogoPreviewUrl(formData.egh_logo);
+    } else {
+      setFooterLogoPreviewUrl(null);
+    }
+  }, [formData.egh_logo, mediaPreviews.egh_logo]);
 
   return (
     <div className="space-y-8">
@@ -142,13 +228,16 @@ export default function GeneralSettings({ formData, onChange }: GeneralSettingsP
           </label>
           <div className="space-y-3">
             {/* Current Logo Preview */}
-            {formData.logo_url && !logoPreviewError && (
+            {logoResolvedPreview && !logoPreviewError && (
               <div className="relative inline-block">
                 <div className="p-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg">
                   <div className="flex items-center justify-center p-4 bg-white rounded">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={formData.logo_url}
+                      src={logoResolvedPreview.includes('localhost:9000') || logoResolvedPreview.includes('minio:9000') 
+                        ? `/api/admin/media/proxy?url=${encodeURIComponent(logoResolvedPreview)}`
+                        : logoResolvedPreview
+                      }
                       alt="Logo preview"
                       className="max-h-20 max-w-full object-contain"
                       onError={() => setLogoPreviewError(true)}
@@ -157,7 +246,10 @@ export default function GeneralSettings({ formData, onChange }: GeneralSettingsP
                 </div>
                 <button
                   type="button"
-                  onClick={() => onChange('logo_url', '')}
+                  onClick={() => {
+                    onChange('logo_url', '');
+                    setLogoPreviewUrl(null);
+                  }}
                   className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs"
                   title="Remove logo"
                 >
@@ -181,7 +273,14 @@ export default function GeneralSettings({ formData, onChange }: GeneralSettingsP
               type="text"
               id="logo_url"
               value={formData.logo_url || ''}
-              onChange={(e) => onChange('logo_url', e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                onChange('logo_url', value);
+                const lower = value?.trim().toLowerCase() ?? '';
+                const isAbsolute = lower.startsWith('http://') || lower.startsWith('https://');
+                setLogoPreviewUrl(isAbsolute ? value : null);
+                setLogoPreviewError(false);
+              }}
               className="w-full px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-brand-maroon transition-colors"
               placeholder="/images/logo.png or select from media library"
             />
@@ -190,7 +289,89 @@ export default function GeneralSettings({ formData, onChange }: GeneralSettingsP
             </p>
 
           {/* Preview Error */}
-          {formData.logo_url && logoPreviewError && (
+          {logoResolvedPreview && logoPreviewError && (
+            <div className="p-4 bg-red-900/20 border border-red-800 rounded-lg flex items-start gap-3">
+              <ImageIcon className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-red-400 font-medium">Unable to load image</p>
+                <p className="text-xs text-red-300/80 mt-1">
+                  Please check the URL is correct and the image is accessible
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+        {/* Mobile Logo URL */}
+        <div>
+          <label htmlFor="logo_mobile_url" className="block text-sm font-medium text-gray-300 mb-2">
+            Mobile Logo URL
+          </label>
+          <div className="space-y-3">
+            {/* Current Mobile Logo Preview */}
+            {mobileLogoResolvedPreview && !mobileLogoPreviewError && (
+              <div className="relative inline-block">
+                <div className="p-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg">
+                  <div className="flex items-center justify-center p-4 bg-white rounded">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={mobileLogoResolvedPreview.includes('localhost:9000') || mobileLogoResolvedPreview.includes('minio:9000') 
+                        ? `/api/admin/media/proxy?url=${encodeURIComponent(mobileLogoResolvedPreview)}`
+                        : mobileLogoResolvedPreview
+                      }
+                      alt="Mobile logo preview"
+                      className="max-h-20 max-w-full object-contain"
+                      onError={() => setMobileLogoPreviewError(true)}
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange('logo_mobile_url', '');
+                    setMobileLogoPreviewUrl(null);
+                  }}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs"
+                  title="Remove mobile logo"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {/* Media Library Picker Button */}
+            <button
+              type="button"
+              onClick={() => setMobileLogoMediaPickerOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-[#6e0000] hover:bg-[#8e0000] text-white rounded-lg transition-colors"
+            >
+              <ImageIcon className="w-4 h-4" />
+              {formData.logo_mobile_url ? 'Change Mobile Logo' : 'Select from Media Library'}
+            </button>
+
+            {/* Manual URL Input (Optional) */}
+            <input
+              type="text"
+              id="logo_mobile_url"
+              value={formData.logo_mobile_url || ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                onChange('logo_mobile_url', value);
+                const lower = value?.trim().toLowerCase() ?? '';
+                const isAbsolute = lower.startsWith('http://') || lower.startsWith('https://');
+                setMobileLogoPreviewUrl(isAbsolute ? value : null);
+                setMobileLogoPreviewError(false);
+              }}
+              className="w-full px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-brand-maroon transition-colors"
+              placeholder="/images/mobile-logo.png or select from media library"
+            />
+            <p className="text-xs text-gray-500">
+              Select from Media Library or enter a URL manually. This logo appears in the site header on mobile devices (screens &lt; 768px). If not set, desktop logo will be used.
+            </p>
+
+          {/* Preview Error */}
+          {mobileLogoResolvedPreview && mobileLogoPreviewError && (
             <div className="p-4 bg-red-900/20 border border-red-800 rounded-lg flex items-start gap-3">
               <ImageIcon className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <div>
@@ -281,18 +462,25 @@ export default function GeneralSettings({ formData, onChange }: GeneralSettingsP
         </label>
         <div className="space-y-4">
           {/* Current Image Preview */}
-          {formData.egh_logo && (
+          {footerLogoResolvedPreview && (
             <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
               <p className="text-xs text-gray-400 mb-2">Current Image:</p>
               <div className="relative inline-block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={formData.egh_logo}
+                  src={footerLogoResolvedPreview.includes('localhost:9000') || footerLogoResolvedPreview.includes('minio:9000')
+                    ? `/api/admin/media/proxy?url=${encodeURIComponent(footerLogoResolvedPreview)}`
+                    : footerLogoResolvedPreview
+                  }
                   alt="Footer Logo Preview"
                   className="h-20 object-contain bg-gray-900 p-3 rounded-lg border border-gray-700"
                 />
                 <button
                   type="button"
-                  onClick={() => onChange('egh_logo', '')}
+                  onClick={() => {
+                    onChange('egh_logo', '');
+                    setFooterLogoPreviewUrl(null);
+                  }}
                   className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg transition-all hover:scale-110"
                   title="Remove image"
                 >
@@ -327,7 +515,13 @@ export default function GeneralSettings({ formData, onChange }: GeneralSettingsP
             type="url"
             id="egh_logo"
             value={formData.egh_logo || ''}
-            onChange={(e) => onChange('egh_logo', e.target.value)}
+            onChange={(e) => {
+                const value = e.target.value;
+                onChange('egh_logo', value);
+                const lower = value?.trim().toLowerCase() ?? '';
+                const isAbsolute = lower.startsWith('http://') || lower.startsWith('https://');
+                setFooterLogoPreviewUrl(isAbsolute ? value : null);
+            }}
             placeholder="https://example.com/image.png"
             className="w-full px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-brand-maroon transition-colors text-sm"
           />
@@ -417,16 +611,36 @@ export default function GeneralSettings({ formData, onChange }: GeneralSettingsP
       <MediaPickerModal
         isOpen={logoMediaPickerOpen}
         onClose={() => setLogoMediaPickerOpen(false)}
-        onSelect={(url) => onChange('logo_url', url)}
+        onSelect={(file: MediaFile) => {
+          onChange('logo_url', file.key);
+          setLogoPreviewUrl(file.url);
+          setLogoPreviewError(false);
+        }}
         currentImage={formData.logo_url}
         title="Select Site Logo"
+      />
+
+      {/* Media Picker Modal for Mobile Logo */}
+      <MediaPickerModal
+        isOpen={mobileLogoMediaPickerOpen}
+        onClose={() => setMobileLogoMediaPickerOpen(false)}
+        onSelect={(file: MediaFile) => {
+          onChange('logo_mobile_url', file.key);
+          setMobileLogoPreviewUrl(file.url);
+          setMobileLogoPreviewError(false);
+        }}
+        currentImage={formData.logo_mobile_url}
+        title="Select Mobile Logo"
       />
 
       {/* Media Picker Modal for Footer Logo */}
       <MediaPickerModal
         isOpen={mediaPickerOpen}
         onClose={() => setMediaPickerOpen(false)}
-        onSelect={(url) => onChange('egh_logo', url)}
+        onSelect={(file: MediaFile) => {
+          onChange('egh_logo', file.key);
+          setFooterLogoPreviewUrl(file.url);
+        }}
         currentImage={formData.egh_logo}
         title="Select Footer Logo"
       />

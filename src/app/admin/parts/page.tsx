@@ -1,10 +1,11 @@
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { Search, Plus, Package } from 'lucide-react';
 import AdminHeader from '@/components/admin/AdminHeader';
 import ProductTable from '@/components/admin/parts/ProductTable';
 import CSVActions from '@/components/admin/products/CSVActions';
+import { hasPermission } from '@/lib/rbac/check-permission';
 
 interface SearchParams {
   search?: string;
@@ -19,7 +20,7 @@ interface ProductListPageProps {
 }
 
 export default async function ProductListPage({ searchParams }: ProductListPageProps) {
-  await requireAdmin();
+  const user = await requirePermission('products.view');
 
   const params = await searchParams;
   const search = params.search || '';
@@ -198,13 +199,15 @@ export default async function ProductListPage({ searchParams }: ProductListPageP
               }}
             />
 
-            <Link
-              href="/admin/parts/new"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#6e0000] text-white rounded-lg hover:bg-[#8a0000] transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              New Product
-            </Link>
+            {hasPermission(user, 'products.create') && (
+              <Link
+                href="/admin/parts/new"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#6e0000] text-white rounded-lg hover:bg-[#8a0000] transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                New Product
+              </Link>
+            )}
           </div>
         </div>
 

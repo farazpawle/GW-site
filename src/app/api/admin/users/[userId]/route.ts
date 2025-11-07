@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { requireCanManageUser } from '@/lib/rbac';
 
 /**
  * GET /api/admin/users/[userId]
  * 
  * Get details for a single user by ID
+ * RBAC: Requires ability to manage the target user (role hierarchy check)
  * 
  * @param userId - The Clerk user ID
  * @returns User details including all fields
@@ -15,43 +16,40 @@ export async function GET(
   context: { params: Promise<{ userId: string }> }
 ) {
   try {
-    // Ensure user is an admin
-    await requireAdmin();
-
     // Get userId from params (Next.js 15 async params pattern)
     const { userId } = await context.params;
 
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
-      );
-    }
+    // RBAC: Check if current user can manage target user
+    const result = await requireCanManageUser(userId);
+    if (result instanceof NextResponse) return result;
+    
+    const { targetUser } = result;
 
-    // Fetch user from database
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true
-      }
+    // Fetch full user data from database with all fields
+    const fullUser = await prisma.user.findUnique({
+      where: { id: userId }
     });
 
-    // Return 404 if user not found
-    if (!user) {
+    if (!fullUser) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
       );
     }
 
+    // Return user details (already verified access via requireCanManageUser)
     return NextResponse.json({
       success: true,
-      data: user
+      data: {
+        id: fullUser.id,
+        email: fullUser.email,
+        name: fullUser.name,
+        role: fullUser.role,
+        createdAt: fullUser.createdAt,
+        updatedAt: fullUser.updatedAt,
+        roleLevel: (fullUser as any).roleLevel || 10,
+        permissions: (fullUser as any).permissions || [],
+      }
     });
 
   } catch (error) {

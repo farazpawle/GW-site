@@ -15,8 +15,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireSuperAdmin } from '@/lib/admin/auth';
+import { requirePermission } from '@/lib/rbac/guards';
 import { getSetting, updateSetting } from '@/lib/settings/settings-manager';
+import { PERMISSIONS } from '@/lib/rbac/permissions';
 import { z } from 'zod';
 
 type RouteParams = {
@@ -32,8 +33,9 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    // Require SUPER_ADMIN role (API route mode)
-    await requireSuperAdmin(true);
+    // Require settings.view permission
+    const userOrError = await requirePermission(PERMISSIONS.SETTINGS_VIEW);
+    if (userOrError instanceof NextResponse) return userOrError;
 
     // Get key from route params (awaited in Next.js 15)
     const { key } = await params;
@@ -117,7 +119,7 @@ export async function GET(
 // Validation schema for update request
 const updateSettingSchema = z.object({
   value: z.string(),
-  category: z.enum(['GENERAL', 'CONTACT', 'SEO', 'EMAIL', 'PAYMENT', 'SHIPPING']).optional()
+  category: z.enum(['GENERAL', 'CONTACT', 'SEO', 'SHIPPING']).optional(),
 });
 
 export async function PUT(
@@ -125,8 +127,10 @@ export async function PUT(
   { params }: RouteParams
 ) {
   try {
-    // Require SUPER_ADMIN role (API route mode)
-    const user = await requireSuperAdmin(true);
+    // Require settings.edit permission
+    const userOrError = await requirePermission(PERMISSIONS.SETTINGS_EDIT);
+    if (userOrError instanceof NextResponse) return userOrError;
+    const user = userOrError;
 
     // Get key from route params
     const { key } = await params;

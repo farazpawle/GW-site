@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 import { stringify } from 'csv-stringify/sync';
 import { CSV_HEADERS } from '@/lib/csv-utils';
 
@@ -9,7 +9,13 @@ import { CSV_HEADERS } from '@/lib/csv-utils';
  */
 export async function GET() {
   try {
-    await requireAdmin();
+    const user = await checkAdmin();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     // Example row with sample data for all fields
     const exampleRow = {

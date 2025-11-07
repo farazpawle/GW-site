@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 import { deleteFile } from '@/lib/minio';
 import type { DeleteFileResponse } from '@/types/media';
 
@@ -13,7 +13,13 @@ export async function DELETE(
 ) {
   try {
     // Verify admin authentication
-    await requireAdmin();
+    const user = await checkAdmin();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const { key } = await params;
 

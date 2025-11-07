@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { buildProductWhereClause, getSortOrder } from '@/lib/product-filters';
 import { collectionFilterRulesSchema } from '@/lib/validations/collection';
@@ -16,7 +16,13 @@ import { ZodError } from 'zod';
 export async function POST(request: NextRequest) {
   try {
     // Require admin authentication
-    await requireAdmin();
+    const user = await checkAdmin();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     // Parse request body
     const body = await request.json();

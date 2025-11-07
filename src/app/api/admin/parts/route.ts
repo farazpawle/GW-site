@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin, checkPermission } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { createProductSchema, generateSlug } from '@/lib/validations/product';
 import { DEFAULT_IMAGES } from '@/lib/default-images';
@@ -11,7 +11,13 @@ import { Prisma } from '@prisma/client';
  */
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
+    const user = await checkPermission('products.view');
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const { searchParams } = new URL(request.url);
     
@@ -100,7 +106,13 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
+    const user = await checkPermission('products.create');
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const body = await request.json();
 

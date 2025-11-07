@@ -213,6 +213,19 @@ export default function SEOSettings({ formData, onChange }: SEOSettingsProps) {
             <li>Update SEO settings when your site content or focus changes</li>
           </ul>
         </div>
+
+        {/* Analytics Implementation Notice */}
+        <div className="mt-4 p-4 bg-green-900/20 border border-green-700/30 rounded-lg">
+          <p className="text-sm text-green-300 mb-2">
+            ✅ <strong>Analytics Integration:</strong>
+          </p>
+          <ul className="text-xs text-green-300/90 space-y-1 ml-5 list-disc">
+            <li>Analytics scripts automatically injected when IDs are provided</li>
+            <li>GA4 and GTM will load on all pages after saving</li>
+            <li>Scripts use Next.js Script component with proper loading strategy</li>
+            <li>Clear your browser cache after updating IDs to see changes</li>
+          </ul>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { checkAdmin, checkPermission } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { updateProductSchema, generateSlug } from '@/lib/validations/product';
 import { deleteFile, extractKeyFromUrl } from '@/lib/minio';
@@ -15,7 +15,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    const user = await checkPermission('products.view');
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const { id } = await params;
 
@@ -62,7 +68,13 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    const user = await checkPermission('products.edit');
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const { id } = await params;
     const body = await request.json();
@@ -139,13 +151,11 @@ export async function PUT(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id: _, categoryId, ...updateData } = validatedData;
 
-    // Ensure images array has at least the default image if empty
-    // This creates a fluent chain: Form submits empty array → API inserts default → DB stores default → Frontend displays from DB
+    // Handle images array - allow empty array when updating (user wants to remove all images)
+    // Only add default placeholder if images field is not being updated at all
     const images = updateData.images !== undefined
-      ? (updateData.images && updateData.images.length > 0
-          ? updateData.images
-          : [DEFAULT_IMAGES.PRODUCT])
-      : undefined;
+      ? updateData.images // Use whatever the user sent (even if empty array)
+      : undefined; // Don't update images field if not provided
 
     // Handle publishedAt auto-setting
     // If published is changing from false to true, set publishedAt to current time
@@ -232,7 +242,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    const user = await checkPermission('products.delete');
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const { id } = await params;
 

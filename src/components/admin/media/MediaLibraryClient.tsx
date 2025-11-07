@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, Lock } from 'lucide-react';
 import type { BucketInfo, MediaFile, ListBucketsResponse, ListFilesResponse } from '@/types/media';
 import StorageStats from './StorageStats';
 import FolderFilter from './BucketTabs'; // Re-exported as FolderFilter
@@ -27,6 +27,41 @@ export default function MediaLibraryClient() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
+
+  // Fetch user permissions
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserPermissions(data.permissions || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch permissions:', error);
+      } finally {
+        setPermissionsLoading(false);
+      }
+    };
+    fetchPermissions();
+  }, []);
+
+  // Helper function to check permissions
+  const hasPermission = (permission: string): boolean => {
+    if (userPermissions.includes('*')) return true;
+    if (userPermissions.includes(permission)) return true;
+    const [resource] = permission.split('.');
+    if (userPermissions.includes(`${resource}.*`)) return true;
+    return false;
+  };
+
+  const canUpload = hasPermission('media.upload');
+  const canDelete = hasPermission('media.delete');
 
   // Fetch folders and stats
   const fetchFolders = useCallback(async () => {
@@ -130,6 +165,10 @@ export default function MediaLibraryClient() {
 
   // Open delete modal
   const handleDeleteClick = (file: MediaFile) => {
+    if (!canDelete) {
+      showMessage('error', '⛔ Access Denied - You do not have permission to delete media files. Missing permission: media.delete');
+      return;
+    }
     setDeleteModal({ show: true, file });
   };
 
@@ -213,13 +252,24 @@ export default function MediaLibraryClient() {
             viewMode={viewMode}
             onViewModeChange={setViewMode}
           />
-          <button
-            onClick={() => setUploadModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#6e0000] text-white rounded-lg hover:bg-[#8e0000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium whitespace-nowrap shadow-lg shadow-[#6e0000]/20"
-          >
-            <Upload className="w-4 h-4" />
-            Upload
-          </button>
+          {canUpload ? (
+            <button
+              onClick={() => setUploadModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#6e0000] text-white rounded-lg hover:bg-[#8e0000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium whitespace-nowrap shadow-lg shadow-[#6e0000]/20"
+            >
+              <Upload className="w-4 h-4" />
+              Upload
+            </button>
+          ) : (
+            <button
+              onClick={() => showMessage('error', '⛔ Access Denied - You do not have permission to upload media files. Missing permission: media.upload')}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gray-900/30 text-gray-500 border border-gray-800 rounded-lg cursor-not-allowed font-medium whitespace-nowrap"
+              disabled
+            >
+              <Lock className="w-4 h-4" />
+              Upload
+            </button>
+          )}
         </div>
       )}
 
@@ -232,6 +282,7 @@ export default function MediaLibraryClient() {
               onDelete={handleDeleteClick}
               onCopyUrl={handleCopyUrl}
               loading={filesLoading}
+              canDelete={canDelete}
             />
           ) : (
             <FileGrid
@@ -240,6 +291,7 @@ export default function MediaLibraryClient() {
               onCopyUrl={handleCopyUrl}
               loading={filesLoading}
               size={viewMode === 'compact' ? 'compact' : 'normal'}
+              canDelete={canDelete}
             />
           )}
         </>

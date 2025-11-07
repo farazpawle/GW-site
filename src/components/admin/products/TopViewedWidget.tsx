@@ -61,14 +61,14 @@ export default function TopViewedWidget() {
   return (
     <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-[#2a2a2a] rounded-xl p-6 lg:p-8 shadow-xl">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="text-blue-400" size={20} />
-        <h2 className="text-lg font-bold text-white">Top 20 Viewed Products</h2>
+      <div className="flex items-center gap-2 mb-6">
+        <TrendingUp className="text-blue-400" size={24} />
+        <h2 className="text-xl lg:text-2xl font-bold text-white">Top 20 Viewed Products</h2>
       </div>
 
       {/* Products List */}
       {products.length > 0 ? (
-        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-brand-maroon/50 scrollbar-track-[#1a1a1a]">
+        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-brand-maroon/50 scrollbar-track-[#1a1a1a]">
           {products.map((product) => (
             <ProductPerformanceCard key={product.id} product={product} variant="topViewed" />
           ))}

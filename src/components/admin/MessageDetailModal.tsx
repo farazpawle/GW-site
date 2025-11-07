@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Mail, MailOpen, MailCheck, Trash2, Loader2 } from 'lucide-react';
+import { X, Mail, MailOpen, MailCheck, Trash2, Loader2, Lock } from 'lucide-react';
 
 interface ContactMessage {
   id: string;
@@ -20,6 +20,7 @@ interface MessageDetailModalProps {
   onClose: () => void;
   onStatusUpdate: (id: string, status: 'UNREAD' | 'READ' | 'REPLIED') => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  canDelete?: boolean;
 }
 
 export default function MessageDetailModal({
@@ -27,7 +28,8 @@ export default function MessageDetailModal({
   isOpen,
   onClose,
   onStatusUpdate,
-  onDelete
+  onDelete,
+  canDelete = true
 }: MessageDetailModalProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -273,18 +275,30 @@ export default function MessageDetailModal({
           <div className="flex-1" /> {/* Spacer */}
 
           {/* Delete Button */}
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="flex items-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isDeleting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Trash2 className="w-4 h-4" />
-            )}
-            Delete
-          </button>
+          {canDelete ? (
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="flex items-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isDeleting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              Delete
+            </button>
+          ) : (
+            <button
+              onClick={handleDelete}
+              disabled
+              className="flex items-center gap-2 px-4 py-2.5 bg-gray-900/30 text-gray-600 border border-gray-800 rounded-lg cursor-not-allowed"
+              title="No permission to delete"
+            >
+              <Lock className="w-4 h-4" />
+              Delete
+            </button>
+          )}
 
           {/* Close Button */}
           <button

@@ -1,12 +1,10 @@
 /**
  * Phase 9: Site Settings Seed Script
  * 
- * Seeds default settings covering all 6 categories:
+ * Seeds default settings covering 4 categories:
  * - GENERAL: Site branding and configuration
  * - CONTACT: Contact information and business hours
  * - SEO: Search engine optimization
- * - EMAIL: SMTP configuration (sensitive)
- * - PAYMENT: Payment gateway settings (sensitive)
  * - SHIPPING: Shipping rules and costs
  * 
  * This script is idempotent - running multiple times won't create duplicates.
@@ -16,8 +14,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Type for settings categories (matching Prisma schema)
-type SettingsCategory = 'GENERAL' | 'CONTACT' | 'SEO' | 'EMAIL' | 'PAYMENT' | 'SHIPPING';
+type SettingsCategory = 'GENERAL' | 'CONTACT' | 'SEO' | 'SHIPPING';
 
 interface DefaultSetting {
   key: string;
@@ -32,27 +29,27 @@ const defaultSettings: DefaultSetting[] = [
   {
     key: 'site_name',
     value: 'Garrit Wulf Auto Parts',
-    category: 'GENERAL'
+    category: 'GENERAL',
   },
   {
     key: 'site_tagline',
     value: 'Premium Automotive Parts & Accessories',
-    category: 'GENERAL'
+    category: 'GENERAL',
   },
   {
     key: 'logo_url',
     value: '/images/logo.png',
-    category: 'GENERAL'
+    category: 'GENERAL',
   },
   {
     key: 'timezone',
     value: 'Asia/Dubai',
-    category: 'GENERAL'
+    category: 'GENERAL',
   },
   {
     key: 'currency',
     value: 'AED',
-    category: 'GENERAL'
+    category: 'GENERAL',
   },
 
   // ============================================================
@@ -61,42 +58,42 @@ const defaultSettings: DefaultSetting[] = [
   {
     key: 'contact_email',
     value: 'info@garritwulf.com',
-    category: 'CONTACT'
+    category: 'CONTACT',
   },
   {
     key: 'contact_phone',
     value: '+971 4 123 4567',
-    category: 'CONTACT'
+    category: 'CONTACT',
   },
   {
     key: 'contact_address',
     value: 'Dubai, United Arab Emirates',
-    category: 'CONTACT'
+    category: 'CONTACT',
   },
   {
     key: 'business_hours',
     value: 'Sunday - Thursday: 9:00 AM - 6:00 PM',
-    category: 'CONTACT'
+    category: 'CONTACT',
   },
   {
     key: 'social_facebook',
     value: 'https://facebook.com/garritwulf',
-    category: 'CONTACT'
+    category: 'CONTACT',
   },
   {
     key: 'social_instagram',
     value: 'https://instagram.com/garritwulf',
-    category: 'CONTACT'
+    category: 'CONTACT',
   },
   {
     key: 'social_twitter',
     value: 'https://twitter.com/garritwulf',
-    category: 'CONTACT'
+    category: 'CONTACT',
   },
   {
     key: 'social_linkedin',
     value: 'https://linkedin.com/company/garritwulf',
-    category: 'CONTACT'
+    category: 'CONTACT',
   },
 
   // ============================================================
@@ -105,100 +102,61 @@ const defaultSettings: DefaultSetting[] = [
   {
     key: 'seo_title',
     value: 'Garrit Wulf - Premium Auto Parts & Accessories',
-    category: 'SEO'
+    category: 'SEO',
   },
   {
     key: 'seo_description',
     value: 'Shop premium automotive parts and accessories at Garrit Wulf. Quality products for all vehicle makes and models.',
-    category: 'SEO'
+    category: 'SEO',
   },
   {
     key: 'seo_keywords',
     value: 'auto parts, car accessories, automotive parts, vehicle parts, Dubai auto parts',
-    category: 'SEO'
+    category: 'SEO',
   },
   {
     key: 'seo_og_image',
     value: '/images/og-image.jpg',
-    category: 'SEO'
+    category: 'SEO',
   },
   {
     key: 'google_analytics_id',
     value: '',
-    category: 'SEO'
+    category: 'SEO',
   },
   {
     key: 'google_tag_manager_id',
     value: '',
-    category: 'SEO'
+    category: 'SEO',
   },
 
   // ============================================================
-  // EMAIL CATEGORY (5 settings) - SENSITIVE
+  // FAVICON CATEGORY (5 settings)
   // ============================================================
   {
-    key: 'email_smtp_host',
-    value: 'smtp.gmail.com',
-    category: 'EMAIL'
+    key: 'favicon_ico',
+    value: '/favicon.ico',
+    category: 'SEO',
   },
   {
-    key: 'email_smtp_port',
-    value: '587',
-    category: 'EMAIL'
-  },
-  {
-    key: 'email_smtp_user',
+    key: 'favicon_16',
     value: '',
-    category: 'EMAIL'
+    category: 'SEO',
   },
   {
-    key: 'email_smtp_password',
-    value: '', // Will be encrypted automatically
-    category: 'EMAIL'
-  },
-  {
-    key: 'email_from_address',
-    value: 'noreply@garritwulf.com',
-    category: 'EMAIL'
-  },
-
-  // ============================================================
-  // PAYMENT CATEGORY (7 settings) - SENSITIVE
-  // ============================================================
-  {
-    key: 'payment_enabled',
-    value: 'false',
-    category: 'PAYMENT'
-  },
-  {
-    key: 'payment_gateway',
-    value: 'stripe', // stripe | paypal | square
-    category: 'PAYMENT'
-  },
-  {
-    key: 'payment_stripe_publishable_key',
+    key: 'favicon_32',
     value: '',
-    category: 'PAYMENT'
+    category: 'SEO',
   },
   {
-    key: 'payment_stripe_secret_key',
-    value: '', // Will be encrypted automatically
-    category: 'PAYMENT'
-  },
-  {
-    key: 'payment_paypal_client_id',
+    key: 'favicon_192',
     value: '',
-    category: 'PAYMENT'
+    category: 'SEO',
   },
   {
-    key: 'payment_paypal_secret',
-    value: '', // Will be encrypted automatically
-    category: 'PAYMENT'
-  },
-  {
-    key: 'payment_square_secret',
-    value: '', // Will be encrypted automatically
-    category: 'PAYMENT'
+    key: 'apple_touch_icon',
+    value: '',
+    category: 'SEO',
   },
 
   // ============================================================
@@ -207,23 +165,23 @@ const defaultSettings: DefaultSetting[] = [
   {
     key: 'shipping_enabled',
     value: 'true',
-    category: 'SHIPPING'
+    category: 'SHIPPING',
   },
   {
     key: 'shipping_flat_rate',
     value: '50.00',
-    category: 'SHIPPING'
+    category: 'SHIPPING',
   },
   {
     key: 'shipping_free_over',
     value: '500.00',
-    category: 'SHIPPING'
+    category: 'SHIPPING',
   },
   {
     key: 'shipping_international',
     value: 'false',
-    category: 'SHIPPING'
-  }
+    category: 'SHIPPING',
+  },
 ];
 
 /**
@@ -242,12 +200,12 @@ export async function seedSettings() {
         where: { key: setting.key },
         update: {
           value: setting.value,
-          category: setting.category
+          category: setting.category,
         },
         create: {
           key: setting.key,
           value: setting.value,
-          category: setting.category
+          category: setting.category,
         }
       });
 
