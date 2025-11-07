@@ -8,10 +8,10 @@ import { hasPermission, canManageUser, type RBACUser } from '@/lib/rbac/check-pe
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     
     // Get current user
     const currentUser = await getCurrentRBACUser();

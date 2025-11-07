@@ -329,8 +329,6 @@ export default function ProductCatalogPage() {
                   <ProductCard
                     key={product.id}
                     product={product}
-                    ecommerceMode={mode === 'ecommerce'}
-                    showPricing={mode === 'ecommerce'}
                   />
                 ))}
               </div>

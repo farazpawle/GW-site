@@ -50,7 +50,7 @@ export default function MobileFilterDrawer() {
         
         {/* Filter Content */}
         <div className="px-2">
-          <SearchFilters isMobile onClose={() => setIsOpen(false)} />
+          <SearchFilters />
         </div>
       </div>
     </>

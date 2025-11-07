@@ -63,15 +63,9 @@ async function main() {
         compatibility: [
           'Mercedes-Benz Actros (2011-2023)',
           'Volvo FH Series (2012-2023)',
-          'Scania R Series (2010-2023)',
-          'MAN TGX (2007-2023)',
+        'Scania R Series (2010-2023)',
+        'MAN TGX (2007-2023)',
         ],
-        
-        // Add difficulty (rotate between options)
-        difficulty: ['Easy', 'Moderate', 'Professional', 'Advanced'][updated % 4],
-        
-        // Add video URL
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         
         // Add brand if not exists
         brand: product.brand || 'Garrit & Wulf Premium',

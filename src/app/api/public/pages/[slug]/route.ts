@@ -183,7 +183,6 @@ export async function GET(
       category: product.category,
       inStock: product.inStock,
       stockQuantity: product.stockQuantity,
-      difficulty: product.difficulty,
     }));
 
     // Debug logging - REMOVE AFTER VERIFICATION

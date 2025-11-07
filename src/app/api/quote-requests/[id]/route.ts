@@ -11,12 +11,13 @@ import { NotFoundError } from '@/lib/errors';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const quoteRequest = await prisma.quoteRequest.findUnique({
       where: {
-        id: params.id,
+        id,
       },
     });
 
@@ -36,9 +37,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const validatedData = quoteRequestUpdateSchema.parse(body);
 
@@ -53,7 +55,7 @@ export async function PATCH(
 
     const quoteRequest = await prisma.quoteRequest.update({
       where: {
-        id: params.id,
+        id,
       },
       data: updateData,
     });
@@ -70,12 +72,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await prisma.quoteRequest.delete({
       where: {
-        id: params.id,
+        id,
       },
     });
 

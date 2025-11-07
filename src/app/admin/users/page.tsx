@@ -183,8 +183,7 @@ export default function UsersPage() {
       >
         {currentUser && (
           <UserTable 
-            users={filteredUsers} 
-            onRoleChange={handleRoleChange} 
+            users={filteredUsers}
             currentUser={currentUser} 
           />
         )}

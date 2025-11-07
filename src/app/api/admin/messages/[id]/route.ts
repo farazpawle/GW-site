@@ -15,7 +15,7 @@ const updateStatusSchema = z.object({
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await checkPermission('messages.view');
@@ -26,8 +26,10 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
+
     const message = await prisma.contactMessage.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         id: true,
         name: true,
@@ -67,7 +69,7 @@ export async function GET(
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await checkPermission('messages.edit');
@@ -77,6 +79,8 @@ export async function PATCH(
         { status: 401 }
       );
     }
+
+    const { id } = await params;
 
     const body = await req.json();
     
@@ -104,7 +108,7 @@ export async function PATCH(
 
     // Update message status
     const message = await prisma.contactMessage.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       select: {
         id: true,
@@ -148,7 +152,7 @@ export async function PATCH(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await checkPermission('messages.delete');
@@ -159,8 +163,10 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
+
     await prisma.contactMessage.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({

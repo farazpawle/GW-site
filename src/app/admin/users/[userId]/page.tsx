@@ -134,7 +134,6 @@ export default function UserDetailsPage({
         <UserProfile 
           user={user} 
           currentUser={currentUser}
-          onChangeRole={() => {}} // Not used anymore - modals are inside UserProfile
           onUpdate={fetchUser} 
         />
       )}

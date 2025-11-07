@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { buildProductWhereClause, getSortOrder } from '@/lib/product-filters';
+import { buildProductWhereClause, getCollectionSortOrder, CollectionSortBy } from '@/lib/product-filters';
 import { collectionFilterRulesSchema } from '@/lib/validations/collection';
 import { ZodError } from 'zod';
 
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { filterRules, page = 1, pageSize = 12, sortBy = 'name' } = body;
+    const { filterRules, page = 1, pageSize = 12, sortBy = 'created_desc' } = body;
 
     // Validate filter rules
     let validatedFilters;
@@ -47,23 +47,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Build Prisma where clause from filter rules
-    const where = buildProductWhereClause({
-      categoryIds: validatedFilters.categoryIds,
-      brands: validatedFilters.brands,
-      tags: validatedFilters.tags,
-      origins: validatedFilters.origins,
-      difficulties: validatedFilters.difficulties,
-      minPrice: validatedFilters.minPrice,
-      maxPrice: validatedFilters.maxPrice,
-      inStock: validatedFilters.inStock,
-      featured: validatedFilters.featured,
-    });
+    const where = buildProductWhereClause(validatedFilters);
 
     // Always ensure only published products
     where.published = true;
 
     // Get sort order
-    const orderBy = getSortOrder(sortBy);
+    const orderBy = getCollectionSortOrder(sortBy as CollectionSortBy);
 
     // Fetch products with pagination
     const [products, total] = await Promise.all([

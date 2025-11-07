@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { bulkOperationSchema } from '@/lib/validations/product';
-import { deleteFile, extractKeyFromUrl, BUCKETS } from '@/lib/minio';
+import { deleteFileWithBucket, extractKeyFromUrl, BUCKETS } from '@/lib/minio';
 import { Prisma } from '@prisma/client';
 
 /**
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
               (async () => {
                 try {
                   const key = extractKeyFromUrl(imageUrl);
-                  await deleteFile(BUCKETS.PRODUCT_IMAGES, key);
+                  await deleteFileWithBucket(BUCKETS.PRODUCT_IMAGES, key);
                 } catch (error) {
                   console.error(`Failed to delete image ${imageUrl}:`, error);
                   // Continue even if image deletion fails

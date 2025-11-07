@@ -158,8 +158,7 @@ export default function DynamicPageRenderer() {
                   images: product.images,
                   price: product.price,
                   inStock: product.stockQuantity > 0,
-                }} 
-                showPricing={true}
+                }}
               />
             ))}
           </div>

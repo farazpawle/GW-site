@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     }
 
     // If manual mode, validate that all product IDs exist
-    if (validatedData.useManual && validatedData.manualProductIds) {
+    if (validatedData.collectionType === 'manual' && validatedData.manualProductIds) {
       const productCount = await prisma.part.count({
         where: {
           id: {
@@ -133,17 +133,15 @@ export async function POST(req: NextRequest) {
         name: validatedData.name,
         slug: validatedData.slug,
         description: validatedData.description || null,
-        filterRules: validatedData.filterRules as Prisma.InputJsonValue,
-        useManual: validatedData.useManual,
-        layout: validatedData.layout,
+        filterRules: validatedData.conditions as Prisma.InputJsonValue,
+        useManual: validatedData.collectionType === 'manual',
         sortBy: validatedData.sortBy,
-        itemsPerPage: validatedData.itemsPerPage,
         metaTitle: validatedData.metaTitle || null,
         metaDesc: validatedData.metaDescription || null,
         published: validatedData.published,
         publishedAt: validatedData.published ? new Date() : null,
         // Connect manual products if in manual mode
-        ...(validatedData.useManual && validatedData.manualProductIds
+        ...(validatedData.collectionType === 'manual' && validatedData.manualProductIds
           ? {
               manualProducts: {
                 create: validatedData.manualProductIds.map((partId, index) => ({

@@ -120,7 +120,7 @@ export async function PUT(
     }
 
     // If manual mode, validate that all product IDs exist
-    if (validatedData.useManual && validatedData.manualProductIds) {
+    if (validatedData.collectionType === 'manual' && validatedData.manualProductIds) {
       const productCount = await prisma.part.count({
         where: {
           id: {
@@ -144,12 +144,10 @@ export async function PUT(
         name: validatedData.name,
         slug: validatedData.slug,
         description: validatedData.description || null,
+        useManual: validatedData.collectionType === 'manual',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        filterRules: validatedData.filterRules as any,
-        useManual: validatedData.useManual,
-        layout: validatedData.layout,
+        filterRules: validatedData.conditions as any,
         sortBy: validatedData.sortBy,
-        itemsPerPage: validatedData.itemsPerPage,
         metaTitle: validatedData.metaTitle || null,
         metaDesc: validatedData.metaDescription || null,
         published: validatedData.published,
@@ -158,7 +156,7 @@ export async function PUT(
             ? new Date()
             : existingCollection.publishedAt,
         // Update manual products if in manual mode
-        manualProducts: validatedData.useManual && validatedData.manualProductIds
+        manualProducts: validatedData.collectionType === 'manual' && validatedData.manualProductIds
           ? {
               deleteMany: {}, // Clear existing
               create: validatedData.manualProductIds.map((partId, index) => ({

@@ -40,7 +40,10 @@ async function addDummySkus() {
     // Get all products without SKUs
     const productsWithoutSku = await prisma.part.findMany({
       where: {
-        sku: null
+        OR: [
+          { sku: '' },
+          { sku: { startsWith: '' } }
+        ]
       },
       include: {
         category: true
