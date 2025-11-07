@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdmin, checkPermission } from '@/lib/auth';
+import { checkPermission } from '@/lib/auth';
 import { listObjects, formatBytes, isImageFile, getPresignedUrl, FOLDERS } from '@/lib/minio';
 import type { ListFilesResponse, MediaFile } from '@/types/media';
 

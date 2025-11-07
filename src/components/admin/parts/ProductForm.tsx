@@ -723,7 +723,7 @@ export default function ProductForm({
       <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
         <h2 className="text-xl font-bold text-white mb-6">Inventory Management</h2>
         <p className="text-sm text-gray-400 mb-6">
-          Track product availability and stock quantities. When "Show Availability" is enabled in settings, 
+          Track product availability and stock quantities. When &quot;Show Availability&quot; is enabled in settings, 
           this information will be visible on the public product pages.
         </p>
         

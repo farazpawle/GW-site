@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Check user's saved permissions in database
  * Usage: npx tsx scripts/check-user-permissions.ts <email>

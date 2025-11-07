@@ -43,7 +43,8 @@ export default function MenuItemsClient({ initialMenuItems, initialIncludeHidden
   const [isSaving, setIsSaving] = useState(false);
   const [pendingReorder, setPendingReorder] = useState<{ id: string; position: number }[]>([]);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
-  const [permissionsLoading, setPermissionsLoading] = useState(true);
+  // permissionsLoading is set but currently not displayed in UI
+  const [, setPermissionsLoading] = useState(true);
 
   // Fetch user permissions
   useEffect(() => {

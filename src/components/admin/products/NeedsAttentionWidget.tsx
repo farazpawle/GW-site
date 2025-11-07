@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import ProductPerformanceCard from './ProductPerformanceCard';
 import { AlertTriangle, Loader2, HelpCircle } from 'lucide-react';
-import Link from 'next/link';
 
 interface Product {
   id: string;

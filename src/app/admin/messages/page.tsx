@@ -24,7 +24,8 @@ interface Stats {
 }
 
 export default function MessagesPage() {
-  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  // messages is synced with filteredMessages but kept for reference
+  const [, setMessages] = useState<ContactMessage[]>([]);
   const [filteredMessages, setFilteredMessages] = useState<ContactMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -99,6 +100,8 @@ export default function MessagesPage() {
 
   useEffect(() => {
     fetchMessages();
+    // fetchMessages is stable and doesn't need to be in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, searchQuery, statusFilter]);
 
   // Mark message as read or update status

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { ROLE_PERMISSIONS } from '@/lib/rbac/permissions';
 import { User } from '@prisma/client';
@@ -8,7 +8,7 @@ import { User } from '@prisma/client';
  * Get current authenticated user with their role and permissions
  * Returns custom permissions if set, otherwise falls back to role defaults
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const user = await getCurrentUser();
 

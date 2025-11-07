@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
@@ -11,7 +11,7 @@ import { prisma } from '@/lib/prisma';
  * - stats: total, unread, read, replied counts, response rate, average response time, today count, week trend
  * - recentUnread: Last 5 unread messages
  */
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Ensure user is an admin
     const user = await checkAdmin();
@@ -94,8 +94,7 @@ export async function GET(req: NextRequest) {
       })
     ]);
 
-    // Calculate response rate
-    const totalProcessed = readCount + repliedCount;
+    // Calculate response rate (using repliedCount, not totalProcessed)
     const responseRate = totalCount > 0 ? (repliedCount / totalCount) * 100 : 0;
 
     // Calculate average response time using actual repliedAt timestamps

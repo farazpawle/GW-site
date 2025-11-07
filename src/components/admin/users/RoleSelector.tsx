@@ -87,7 +87,7 @@ const COLOR_CLASSES = {
 };
 
 export default function RoleSelector({
-  userId,
+  // userId not used in this component
   currentRole,
   currentUserRole,
   currentUserRoleLevel,
@@ -156,7 +156,7 @@ export default function RoleSelector({
             <div>
               <h3 className="text-lg font-bold text-white mb-1">Confirm Role Change</h3>
               <p className="text-sm text-gray-400">
-                This action will change the user's role and permissions.
+                This action will change the user&apos;s role and permissions.
               </p>
             </div>
           </div>

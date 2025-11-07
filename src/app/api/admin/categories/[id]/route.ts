@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdmin, checkPermission } from '@/lib/auth';
+import { checkPermission } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { updateCategorySchema, generateCategorySlug } from '@/lib/validations/category';
 

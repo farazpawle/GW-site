@@ -111,7 +111,6 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
     },
   });
 
-  const currentForm = pageType === 'static' ? staticForm : dynamicForm;
   const slug = pageType === 'static' ? staticForm.watch('slug') : dynamicForm.watch('slug');
   const currentGroupType = pageType === 'dynamic' ? dynamicForm.watch('groupType') : null;
   
@@ -161,6 +160,8 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
         setSelectedCollections([groupVals.collectionId]);
       }
     }
+    // Only run once on mount to avoid resetting form state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onSubmit = async (data: PageFormValues) => {

@@ -331,7 +331,7 @@ async function main() {
   console.log(`📦 Creating ${defaultSections.length} sections...`);
   
   for (const section of defaultSections) {
-    const created = await prisma.pageSection.create({
+    await prisma.pageSection.create({
       data: {
         pageId: homepage.id,
         sectionType: section.sectionType,

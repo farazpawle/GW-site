@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireCanManageUser } from '@/lib/rbac';
@@ -22,8 +23,6 @@ export async function GET(
     // RBAC: Check if current user can manage target user
     const result = await requireCanManageUser(userId);
     if (result instanceof NextResponse) return result;
-    
-    const { targetUser } = result;
 
     // Fetch full user data from database with all fields
     const fullUser = await prisma.user.findUnique({

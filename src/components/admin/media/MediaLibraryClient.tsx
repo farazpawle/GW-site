@@ -28,7 +28,8 @@ export default function MediaLibraryClient() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
-  const [permissionsLoading, setPermissionsLoading] = useState(true);
+  // permissionsLoading is set but currently not displayed in UI
+  const [, setPermissionsLoading] = useState(true);
 
   // Fetch user permissions
   useEffect(() => {

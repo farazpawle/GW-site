@@ -1,10 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { 
   createPageSectionSchema, 
-  validateSectionConfig,
-  type PageSection 
+  validateSectionConfig
 } from '@/types/page-section';
 import { ZodError } from 'zod';
 import { checkPermission } from '@/lib/auth';

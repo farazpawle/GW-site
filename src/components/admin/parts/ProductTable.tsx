@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -57,7 +58,8 @@ export default function ProductTable({ products, currentSort }: ProductTableProp
   const [productToDelete, setProductToDelete] = useState<{ id: string; name: string } | null>(null);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
-  const [permissionsLoading, setPermissionsLoading] = useState(true);
+  // permissionsLoading is set but currently not displayed in UI
+  const [, setPermissionsLoading] = useState(true);
 
   // Fetch user permissions on mount
   useEffect(() => {

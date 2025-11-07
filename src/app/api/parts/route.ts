@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { PrismaClient, Prisma } from '@prisma/client'
 import { partCreateSchema } from '@/lib/validation'
 import { handleApiError, successResponse } from '@/lib/error-handler'

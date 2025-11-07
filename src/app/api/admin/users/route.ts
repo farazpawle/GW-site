@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
 
     // RBAC: Filter users based on role hierarchy
     // Lower roles cannot see higher roles
-    // @ts-ignore - roleLevel exists at runtime after migration
+    // @ts-expect-error - roleLevel exists at runtime after migration
     const users = filterManageableUsers(currentUser, allUsers);
 
     // Calculate pagination metadata

@@ -76,7 +76,6 @@ export default function SearchAnalytics() {
   }
   
   // Normalize numeric values before rendering
-  const averageResults = Number(data.stats.averageResults ?? 0);
   const topSearches = Array.isArray(data.topSearches) ? data.topSearches : [];
 
   // Calculate max count for bar chart scaling

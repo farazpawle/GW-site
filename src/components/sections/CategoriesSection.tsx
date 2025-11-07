@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { 
   Car, Truck, Cog, 
   Wrench, Settings, Package,

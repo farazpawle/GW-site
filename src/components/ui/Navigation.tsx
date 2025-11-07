@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Menu, X, Mail, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, Menu, X, ChevronDown } from 'lucide-react';
 import SearchBar from '@/components/search/SearchBar';
 
 interface NavigationItem {

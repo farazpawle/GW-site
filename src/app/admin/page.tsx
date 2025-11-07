@@ -15,8 +15,8 @@ export default async function AdminDashboard() {
   // Get current user info
   const user = await getCurrentUser();
 
-  // Fetch statistics from database
-  const [usersCount, adminsCount, partsCount, categoriesCount, recentPartsRaw] = await Promise.all([
+  // Fetch statistics from database (adminsCount not currently displayed)
+  const [usersCount, , partsCount, categoriesCount, recentPartsRaw] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } } }),
     prisma.part.count(),

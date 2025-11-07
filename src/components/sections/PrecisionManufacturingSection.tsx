@@ -15,7 +15,6 @@ export default function PrecisionManufacturingSection({ config }: PrecisionManuf
   // Get config values with defaults
   const accentColor = config.accentColor || '#6e0000';
   const gridColumns = config.gridColumns || 4;
-  const cardStyle = config.cardStyle || 'standard';
   const ctaStyle = config.ctaStyle || 'solid';
   const badge = config.badge || { show: true, position: 'top-right' };
 

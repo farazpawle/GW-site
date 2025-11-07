@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import ProductPerformanceCard from './ProductPerformanceCard';
 import { TrendingUp, Loader2 } from 'lucide-react';
-import Link from 'next/link';
 
 interface Product {
   id: string;

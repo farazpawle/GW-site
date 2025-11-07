@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Package, FolderOpen, FileText, Menu, Layers, Settings, Users, Image as ImageIcon, Mail, Home, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';

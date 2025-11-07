@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { textStyleSchema, type TextStyle } from './typography';
+import { textStyleSchema } from './typography';
 
 // ============================================================================
 // Section Types

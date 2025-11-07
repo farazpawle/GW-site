@@ -191,7 +191,7 @@ const ShaderBackground = () => {
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    let startTime = Date.now();
+    const startTime = Date.now();
     let animationFrameId: number;
 
     const render = () => {
@@ -228,6 +228,8 @@ const ShaderBackground = () => {
         cancelAnimationFrame(animationFrameId);
       }
     };
+    // Shader sources are static and don't change - only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

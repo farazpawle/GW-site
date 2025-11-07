@@ -1,4 +1,5 @@
 import { CheckCircle, Users, Award, Target, Sparkles, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 export default function About() {
   return (
@@ -320,7 +321,7 @@ export default function About() {
             <p className="text-white/90 text-xl mb-10 leading-relaxed">
               Discover how Garrit & Wulf can provide the premium auto parts your business needs to succeed.
             </p>
-            <a 
+            <Link 
               href="/contact" 
               className="inline-flex items-center gap-3 bg-white text-[#6e0000] px-10 py-5 rounded-lg text-lg font-bold transition-all duration-300 hover:shadow-2xl hover:scale-105 group"
             >
@@ -333,7 +334,7 @@ export default function About() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
-            </a>
+            </Link>
           </div>
         </div>
       </section>

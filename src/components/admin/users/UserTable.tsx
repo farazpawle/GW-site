@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { User } from '@prisma/client';
@@ -16,8 +17,9 @@ interface UserTableProps {
  * UserTable Component
  * 
  * Displays a table of users with their details and action buttons
+ * Note: onRoleChange prop is passed but not used - role changes are handled internally
  */
-export default function UserTable({ users, currentUser, onRoleChange }: UserTableProps) {
+export default function UserTable({ users, currentUser }: Omit<UserTableProps, 'onRoleChange'>) {
   const currentUserIsSuperAdmin = isSuperAdmin(currentUser);
   // Generate initials from name or email
   const getInitials = (user: User): string => {

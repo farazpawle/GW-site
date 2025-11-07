@@ -36,7 +36,8 @@ export default function PagesListClient({ initialPages }: PagesListClientProps) 
   });
   const [isDeleting, setIsDeleting] = useState(false);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
-  const [permissionsLoading, setPermissionsLoading] = useState(true);
+  // permissionsLoading is set but currently not displayed in UI
+  const [, setPermissionsLoading] = useState(true);
 
   // Fetch user permissions
   useEffect(() => {

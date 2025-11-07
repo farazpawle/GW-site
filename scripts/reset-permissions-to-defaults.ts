@@ -19,6 +19,7 @@
  */
 
 import { PrismaClient, UserRole } from '@prisma/client';
+import readline from 'readline';
 
 const prisma = new PrismaClient();
 
@@ -60,16 +61,16 @@ async function main() {
     });
 
     // Ask for confirmation
-    const readline = require('readline').createInterface({
+    const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
     });
 
     await new Promise<void>((resolve) => {
-      readline.question(
+      rl.question(
         '⚠️  This will clear all custom permissions and use role defaults. Continue? (yes/no): ',
         async (answer: string) => {
-          readline.close();
+          rl.close();
           
           if (answer.toLowerCase() !== 'yes') {
             console.log('\n❌ Operation cancelled');

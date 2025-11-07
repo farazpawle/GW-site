@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Migration Script: Update MANAGER role to ADMIN
  * 

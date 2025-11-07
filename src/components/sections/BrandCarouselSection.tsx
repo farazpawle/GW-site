@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef } from "react";
 import Image from "next/image";
 import AutoScroll from "embla-carousel-auto-scroll";
-import { type CarouselApi } from "@/components/ui/carousel";
 
 import {
   Carousel,
@@ -12,13 +11,6 @@ import {
 } from "@/components/ui/carousel";
 import { CarouselSectionConfig } from '@/types/page-section';
 import { applyTextStyles } from '@/lib/utils/typography';
-
-interface Logo {
-  id: string;
-  description: string;
-  image: string;
-  className?: string;
-}
 
 interface BrandCarouselSectionProps {
   config: CarouselSectionConfig;
@@ -91,10 +83,6 @@ const BrandCarouselSection = ({
             >
               <CarouselContent className="-ml-4 md:-ml-6">
                 {duplicatedLogos.map((logo, idx) => {
-                  const mobile = config.itemsPerView?.mobile || 2;
-                  const tablet = config.itemsPerView?.tablet || 3;
-                  const desktop = config.itemsPerView?.desktop || 5;
-                  
                   return (
                   <CarouselItem
                     key={`${logo.id}-${idx}`}

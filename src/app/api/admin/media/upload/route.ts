@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdmin, checkPermission } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 import {
   uploadFile,
   generateUniqueFilename,

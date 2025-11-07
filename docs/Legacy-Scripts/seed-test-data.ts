@@ -7,10 +7,13 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Sample data arrays
-const brands = ['ACDelco', 'Bosch', 'Denso', 'NGK', 'Monroe', 'Moog', 'Raybestos', 'Wagner'];
-const origins = ['USA', 'Germany', 'Japan', 'China', 'Mexico', 'South Korea'];
-const tags = [
+// Sample data arrays (currently unused but kept for reference)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _brands = ['ACDelco', 'Bosch', 'Denso', 'NGK', 'Monroe', 'Moog', 'Raybestos', 'Wagner'];
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _origins = ['USA', 'Germany', 'Japan', 'China', 'Mexico', 'South Korea'];
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _tags = [
   'Performance',
   'Heavy-Duty',
   'OEM-Quality',

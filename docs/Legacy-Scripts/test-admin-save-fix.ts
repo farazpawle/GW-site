@@ -3,6 +3,8 @@
  * This script verifies that when admin toggles are changed, they save to BOTH tables
  */
 
+import readline from 'readline';
+
 import { prisma } from '../src/lib/prisma';
 
 async function main() {
@@ -31,7 +33,6 @@ async function main() {
 
   // Wait for user
   await new Promise<void>((resolve) => {
-    const readline = require('readline');
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout

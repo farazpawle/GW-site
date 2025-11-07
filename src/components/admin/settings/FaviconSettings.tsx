@@ -74,6 +74,8 @@ export default function FaviconSettings({ formData, onChange }: FaviconSettingsP
       }
     });
     setPreviews(newPreviews);
+    // faviconFields is constant and formData is the dependency we track
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData]);
 
   const handleFileUpload = async (key: string, file: File) => {

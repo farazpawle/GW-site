@@ -82,7 +82,7 @@ export default function SEOHealthDashboard() {
         <div>
           <h1 className="text-3xl font-bold text-white">SEO Health Dashboard</h1>
           <p className="text-gray-400 mt-1">
-            Monitor your website's SEO performance and identify issues
+            Monitor your website&apos;s SEO performance and identify issues
           </p>
         </div>
         <button

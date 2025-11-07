@@ -5,7 +5,7 @@
  * Use this until TypeScript language server picks up the regenerated Prisma client.
  */
 
-import { User as PrismaUser, UserRole } from '@prisma/client';
+import { User as PrismaUser } from '@prisma/client';
 
 // Extended User type with RBAC fields
 export interface UserWithRBAC extends PrismaUser {

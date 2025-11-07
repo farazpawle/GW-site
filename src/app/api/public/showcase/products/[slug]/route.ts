@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { isEcommerceEnabled } from '@/lib/settings';
-import type { Part } from '@prisma/client';
 
 /**
  * Public Product Detail API - Mode-Aware

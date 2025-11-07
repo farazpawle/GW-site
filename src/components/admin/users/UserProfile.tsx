@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState } from 'react';
@@ -20,8 +21,9 @@ interface UserProfileProps {
  * UserProfile Component
  * 
  * Displays user profile information with action buttons
+ * Note: onChangeRole prop is passed but not used - role changes are handled internally
  */
-export default function UserProfile({ user, currentUser, onChangeRole, onUpdate }: UserProfileProps) {
+export default function UserProfile({ user, currentUser, onUpdate }: Omit<UserProfileProps, 'onChangeRole'>) {
   const [showPermissionEditor, setShowPermissionEditor] = useState(false);
   const [showRoleSelector, setShowRoleSelector] = useState(false);
   const [showAllPermissions, setShowAllPermissions] = useState(false);

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Check, X, Star, Search, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Star, Search, AlertCircle } from 'lucide-react';
 import { RESOURCES, PERMISSIONS, PERMISSION_DESCRIPTIONS } from '@/lib/rbac/permissions';
 
 interface PermissionEditorProps {
@@ -83,7 +83,7 @@ const PERMISSION_GROUPS = {
 };
 
 export default function PermissionEditor({
-  userId,
+  // userId not used in this component
   currentPermissions,
   onSave,
   onCancel,
@@ -233,7 +233,7 @@ export default function PermissionEditor({
             {filteredCategories.length === 0 ? (
               <div className="text-center py-12">
                 <AlertCircle className="mx-auto mb-3 text-gray-500" size={48} />
-                <p className="text-gray-400">No permissions found matching "{searchQuery}"</p>
+                <p className="text-gray-400">No permissions found matching &quot;{searchQuery}&quot;</p>
               </div>
             ) : (
               filteredCategories.map(category => {

@@ -8,8 +8,6 @@
 
 'use client';
 
-import { Eye, EyeOff } from 'lucide-react';
-
 interface ProductCardSettingsProps {
   formData: Record<string, string>;
   onChange: (key: string, value: string) => void;

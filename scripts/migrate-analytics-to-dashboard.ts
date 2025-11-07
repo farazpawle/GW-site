@@ -80,7 +80,7 @@ async function migrateAnalyticsToDashboard() {
       let hasChanges = false;
 
       // Remove old analytics permissions and add new dashboard ones
-      Object.entries(OLD_PERMISSIONS).forEach(([key, oldPerm]) => {
+      Object.entries(OLD_PERMISSIONS).forEach(([, oldPerm]) => {
         if (currentPermissions.includes(oldPerm)) {
           console.log(`   🔄 Found: ${oldPerm}`);
           

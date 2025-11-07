@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { collectionSchema } from '@/lib/validations/collection';
 import { Loader2, Save } from 'lucide-react';
 import FilterBuilder from './FilterBuilder';
@@ -102,7 +102,7 @@ export default function CollectionForm({ initialData, collectionId }: Collection
         ? {
             match: 'all' as const,
             conditions: Object.entries(filterRules)
-              .filter(([_, value]) => value !== undefined && value !== null && (Array.isArray(value) ? value.length > 0 : true))
+              .filter(([, value]) => value !== undefined && value !== null && (Array.isArray(value) ? value.length > 0 : true))
               .flatMap(([key, value]): any[] => {
                 if (key === 'categoryIds' && Array.isArray(value)) {
                   return value.map(id => ({

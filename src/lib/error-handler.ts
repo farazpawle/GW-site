@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
-import { AppError, ValidationError, ConflictError, isOperationalError } from './errors';
+import { AppError } from './errors';
 
 /**
  * Standard API error response format

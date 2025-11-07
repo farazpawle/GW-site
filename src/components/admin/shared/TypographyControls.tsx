@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState } from 'react';
@@ -45,7 +46,8 @@ export default function TypographyControls({ label, value, onChange, defaultOpen
     if (size.trim()) {
       handleChange({ fontSize: size.trim() });
     } else {
-      const { fontSize, ...rest } = value || {};
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { fontSize: _, ...rest } = value || {};
       onChange(Object.keys(rest).length > 0 ? rest : undefined);
     }
   };

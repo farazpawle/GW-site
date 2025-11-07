@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdmin, checkPermission } from '@/lib/auth';
+import { checkPermission } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { updateProductSchema, generateSlug } from '@/lib/validations/product';
 import { deleteFile, extractKeyFromUrl } from '@/lib/minio';
-import { DEFAULT_IMAGES } from '@/lib/default-images';
 import { Prisma } from '@prisma/client';
 
 /**

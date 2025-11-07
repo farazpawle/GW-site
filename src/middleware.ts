@@ -27,7 +27,7 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 // ============================================================================
-// ADMIN ROUTE PERMISSIONS MAPPING
+// ADMIN ROUTE PERMISSIONS MAPPING (Reference)
 // ============================================================================
 
 /**
@@ -42,7 +42,8 @@ const isPublicRoute = createRouteMatcher([
  * 
  * This mapping is kept for reference and future use.
  */
-const ADMIN_ROUTE_PERMISSIONS: Record<string, string> = {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _ADMIN_ROUTE_PERMISSIONS: Record<string, string> = {
   // Dashboard
   '/admin': 'products.view', // Default permission for admin dashboard
 
@@ -78,37 +79,11 @@ const ADMIN_ROUTE_PERMISSIONS: Record<string, string> = {
   '/admin/collections/new': 'collections.create',
 };
 
-/**
- * Get required permission for an admin route
- * Supports wildcard matching (e.g., /admin/products/123 matches /admin/products)
- */
-function getRequiredPermission(pathname: string): string | null {
-  // Exact match
-  if (ADMIN_ROUTE_PERMISSIONS[pathname]) {
-    return ADMIN_ROUTE_PERMISSIONS[pathname];
-  }
-
-  // Check for wildcard matches (e.g., /admin/products/123 -> /admin/products)
-  for (const [route, permission] of Object.entries(ADMIN_ROUTE_PERMISSIONS)) {
-    if (pathname.startsWith(route + '/')) {
-      return permission;
-    }
-  }
-
-  // Default: If it's an admin route but not mapped, require products.view (basic access)
-  if (pathname.startsWith('/admin')) {
-    return 'products.view';
-  }
-
-  return null;
-}
-
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
 
 export default clerkMiddleware(async (auth, request) => {
-  const pathname = request.nextUrl.pathname;
 
   // Allow public routes
   if (isPublicRoute(request)) {

@@ -172,7 +172,7 @@ async function main() {
   });
 
   if (categories.length > 0) {
-    const enginePage = await prisma.page.upsert({
+    await prisma.page.upsert({
       where: { slug: 'engine-parts' },
       update: {},
       create: {
@@ -202,7 +202,7 @@ async function main() {
   // Step 4: Create menu items
   console.log('\n📋 Creating menu items...');
 
-  const homeMenu = await prisma.menuItem.create({
+  await prisma.menuItem.create({
     data: {
       label: 'Home',
       externalUrl: '/',
@@ -213,7 +213,7 @@ async function main() {
   });
   console.log('✅ Created: Home menu item');
 
-  const productsMenu = await prisma.menuItem.create({
+  await prisma.menuItem.create({
     data: {
       label: 'Products',
       pageId: allPartsPage.id,
@@ -224,7 +224,7 @@ async function main() {
   });
   console.log('✅ Created: Products menu item → All Parts page');
 
-  const aboutMenu = await prisma.menuItem.create({
+  await prisma.menuItem.create({
     data: {
       label: 'About',
       pageId: aboutPage.id,
@@ -235,7 +235,7 @@ async function main() {
   });
   console.log('✅ Created: About menu item → About Us page');
 
-  const contactMenu = await prisma.menuItem.create({
+  await prisma.menuItem.create({
     data: {
       label: 'Contact',
       pageId: contactPage.id,

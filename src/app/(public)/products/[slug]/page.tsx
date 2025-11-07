@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { Loader2, ChevronRight, Home, Shield, Award, Package, Truck, Star, Check, TrendingUp, Users, Store } from 'lucide-react';
+import { Loader2, ChevronRight, Home, Shield, Award, Package, Check, TrendingUp, Users } from 'lucide-react';
 import Link from 'next/link';
 import ProductInquiry from '@/components/public/ProductInquiry';
 import CrossReferencesDisplay from '@/components/public/CrossReferencesDisplay';
