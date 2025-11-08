@@ -41,7 +41,7 @@ export default function MediaLibraryClient() {
         });
         if (response.ok) {
           const data = await response.json();
-          setUserPermissions(data.permissions || []);
+          setUserPermissions(data.data?.permissions || []);
         }
       } catch (error) {
         console.error('Failed to fetch permissions:', error);

@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
+import { ROLE_PERMISSIONS } from '@/lib/rbac/permissions';
 
 export async function GET() {
   try {
@@ -26,6 +27,12 @@ export async function GET() {
       );
     }
 
+    // Use custom permissions if set, otherwise fall back to role defaults
+    const userPermissions = (user as any).permissions || [];
+    const permissions = userPermissions.length > 0
+      ? userPermissions
+      : ROLE_PERMISSIONS[user.role];
+
     // Return full user object with all RBAC fields
     return NextResponse.json({
       success: true,
@@ -37,7 +44,7 @@ export async function GET() {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         roleLevel: (user as any).roleLevel || 10,
-        permissions: (user as any).permissions || [],
+        permissions: permissions,
       }
     });
   } catch (error) {
