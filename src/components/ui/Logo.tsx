@@ -22,9 +22,9 @@ export default function Logo({
   const [imgError, setImgError] = useState(false);
   const [mobileImgError, setMobileImgError] = useState(false);
   const sizeMap = {
-    sm: { width: 120, height: 40 },
-    md: { width: 150, height: 50 },
-    lg: { width: 180, height: 60 }
+    sm: { width: 180, height: 60 },
+    md: { width: 220, height: 75 },
+    lg: { width: 260, height: 90 }
   };
 
   const dimensions = sizeMap[size];
@@ -45,8 +45,8 @@ export default function Logo({
   if (!mobileProxyUrl) {
     return (
       <Link href="/" className={`flex items-center ${className}`}>
-        <div className="relative w-full max-w-[120px] md:max-w-[150px] lg:max-w-[180px] flex items-center justify-center" style={{ 
-          maxHeight: '50px',
+        <div className="relative w-full max-w-[180px] md:max-w-[220px] lg:max-w-[260px] flex items-center justify-center" style={{ 
+          maxHeight: '75px',
           height: 'auto'
         }}>
           {imgError ? (
@@ -60,7 +60,7 @@ export default function Logo({
               width={dimensions.width}
               height={dimensions.height}
               priority
-              className="object-contain w-full h-auto max-h-[50px]"
+              className="object-contain w-full h-auto max-h-[75px]"
               onError={() => setImgError(true)}
               unoptimized
             />
@@ -75,7 +75,7 @@ export default function Logo({
     <Link href="/" className={`flex items-center ${className}`}>
       {/* Desktop Logo - Hidden on mobile (< 768px) */}
       <div 
-        className="hidden md:flex relative w-full max-w-[150px] lg:max-w-[180px] items-center justify-center"
+        className="hidden md:flex relative w-full max-w-[220px] lg:max-w-[260px] items-center justify-center"
         style={{ 
           height: `${dimensions.height}px`
         }}
@@ -91,7 +91,7 @@ export default function Logo({
             width={dimensions.width}
             height={dimensions.height}
             priority
-            className="object-contain w-full h-auto max-h-[50px]"
+            className="object-contain w-full h-auto max-h-[75px]"
             onError={() => setImgError(true)}
             unoptimized
           />
@@ -100,9 +100,9 @@ export default function Logo({
 
       {/* Mobile Logo - Shown only on mobile (< 768px) */}
       <div 
-        className="flex md:hidden relative w-full max-w-[120px] items-center justify-center"
+        className="flex md:hidden relative w-full max-w-[150px] items-center justify-center"
         style={{ 
-          maxHeight: '40px'
+          maxHeight: '55px'
         }}
       >
         {mobileImgError ? (
@@ -113,10 +113,10 @@ export default function Logo({
           <Image 
             src={mobileProxyUrl}
             alt={`${siteName} Mobile Logo`}
-            width={120}
-            height={40}
+            width={150}
+            height={55}
             priority
-            className="object-contain w-full h-auto max-h-[40px]"
+            className="object-contain w-full h-auto max-h-[55px]"
             onError={() => setMobileImgError(true)}
             unoptimized
           />
