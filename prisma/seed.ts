@@ -1,13 +1,9 @@
 import { PrismaClient } from '@prisma/client'
-import { seedSettings } from '../scripts/seed-settings'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  // Phase 9: Seed new settings system
-  await seedSettings()
-
-  // Seed site settings (legacy - can be migrated to new settings system later)
+  // Seed site settings
   await prisma.siteSettings.upsert({
     where: { key: 'ecommerce_enabled' },
     update: {},
