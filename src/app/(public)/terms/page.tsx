@@ -21,8 +21,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function TermsPage() {
-  const page = await prisma.page.findUnique({
-    where: { slug: 'terms', published: true },
+  const page = await prisma.page.findFirst({
+    where: { 
+      slug: 'terms', 
+      published: true 
+    },
     select: { title: true, content: true, description: true },
   });
 

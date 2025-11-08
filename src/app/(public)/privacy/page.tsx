@@ -21,8 +21,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PrivacyPage() {
-  const page = await prisma.page.findUnique({
-    where: { slug: 'privacy', published: true },
+  const page = await prisma.page.findFirst({
+    where: { 
+      slug: 'privacy', 
+      published: true 
+    },
     select: { title: true, content: true, description: true },
   });
 
