@@ -198,6 +198,16 @@ export async function PUT(request: NextRequest) {
     clearCache(); // settings-manager cache
     clearSettingsCache(); // settings.ts cache (for product card settings)
 
+    // If logo settings were updated, revalidate all pages to update the header
+    const hasLogoUpdate = Object.keys(updates).some(key => 
+      key === 'logo_url' || key === 'logo_mobile_url' || key === 'site_name'
+    );
+
+    if (hasLogoUpdate) {
+      const { revalidatePath } = await import('next/cache');
+      revalidatePath('/', 'layout'); // Revalidate root layout and all pages
+    }
+
     return NextResponse.json(
       {
         success: true,

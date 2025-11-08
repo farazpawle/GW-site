@@ -2,6 +2,9 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getSetting, getMediaSettingUrl } from '@/lib/settings/settings-manager';
 
+// Revalidate every 60 seconds to ensure logo updates are reflected
+export const revalidate = 60;
+
 export default async function PublicLayout({
   children,
 }: {
