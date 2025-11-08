@@ -19,15 +19,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
-    "setup:minio": "tsx scripts/setup-minio.ts",
+    "setup:minio": "tsx scripts/setup/setup-minio.ts",
     "setup:all": "npm run docker:dev && timeout /t 10 && npm run db:generate && npm run db:migrate && npm run setup:minio",
-    "setup:super-admin": "tsx scripts/setup-super-admin.ts",
-    "clerk:sync": "tsx scripts/sync-existing-users.ts",
-    "clerk:cleanup": "tsx scripts/cleanup-deleted-users.ts",
-    "aggregate:engagement": "tsx scripts/aggregate-engagement.ts",
-    "seed:analytics": "tsx scripts/seed-analytics-data.ts",
-    "seed:search": "tsx scripts/seed-search-analytics.ts",
-    "mark:featured": "tsx scripts/mark-featured-products.ts",
+    "setup:super-admin": "tsx scripts/setup/setup-super-admin.ts",
     "prepare": "husky"
   },
   "dependencies": {

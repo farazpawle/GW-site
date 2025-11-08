@@ -49,9 +49,16 @@ next-env.d.ts
 # Clerk configuration (runtime secrets)
 /.clerk/
 
-# GitHub Copilot instructions and prompts (keep other .github files)
+# Documentation and AI context (not needed in production)
+/docs/
+/memory-bank/
+/.github/Prompt/
 /.github/copilot-instructions.md
 /.github/prompts/
+
+# Development/Testing Scripts (keep only setup scripts)
+/scripts/*
+!/scripts/setup/
 
 # Editor/IDE temporary files
 .cursor/
@@ -71,8 +78,8 @@ nginx.conf
 nginx.prod.conf
 /ssl/
 
-# NOTE: The following should be committed to git:
-# ✅ /docs/ - Project documentation
-# ✅ /memory-bank/ - AI context and project knowledge
+# NOTE: Only production-essential files should be in git:
+# ✅ /prisma/ - Database schema and migrations (REQUIRED)
+# ✅ /scripts/setup/ - Deployment setup scripts (REQUIRED)
 # ✅ .env.example files - Template files for environment setup
 # ✅ All source code including lib/, middleware, API routes
