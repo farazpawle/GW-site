@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
-import ClientOnly from './ui/ClientOnly';
 import Logo from './ui/Logo';
 import Navigation from './ui/Navigation';
 import AnnouncementBar from './ui/AnnouncementBar';
@@ -77,15 +76,13 @@ export default function Header({ logoUrl, mobileLogoUrl, siteName }: HeaderProps
                   </SignUpButton>
                 </SignedOut>
                 <SignedIn>
-                  <ClientOnly fallback={<div className="w-9 h-9" />}>
-                    <UserButton 
-                      appearance={{
-                        elements: {
-                          avatarBox: "w-9 h-9"
-                        }
-                      }}
-                    />
-                  </ClientOnly>
+                  <UserButton 
+                    appearance={{
+                      elements: {
+                        avatarBox: "w-9 h-9 ring-2 ring-[#6e0000]"
+                      }
+                    }}
+                  />
                 </SignedIn>
               </div>
             </div>
