@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/auth';
 import { uploadFile, generateUniqueFilename, FOLDERS } from '@/lib/minio';
+import { applyRateLimit, uploadRateLimiter } from '@/lib/rate-limit';
 
 // Maximum file size: 5MB
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -14,6 +15,10 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
  */
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting: 10 uploads per hour per IP
+    const rateLimitResponse = applyRateLimit(request, uploadRateLimiter);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Verify admin authentication
     const user = await checkAdmin();
     if (!user) {

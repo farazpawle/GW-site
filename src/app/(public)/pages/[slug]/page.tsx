@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import ProductCard from '@/components/public/ProductCard';
+import { sanitizeHTML } from '@/lib/sanitize';
 
 interface PageData {
   id: string;
@@ -108,9 +109,9 @@ export default function DynamicPageRenderer() {
   if (pageData.pageType === 'static') {
     return (
       <div className="min-h-screen bg-white">
-        {/* Render HTML content */}
+        {/* Render sanitized HTML content */}
         <div 
-          dangerouslySetInnerHTML={{ __html: pageData.content || '' }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHTML(pageData.content || '') }}
           className="static-page-content"
         />
       </div>

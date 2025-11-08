@@ -3,11 +3,16 @@ import { PrismaClient } from '@prisma/client'
 import { contactMessageSchema } from '@/lib/validation'
 import { handleApiError, successResponse } from '@/lib/error-handler'
 import { BadRequestError } from '@/lib/errors'
+import { applyRateLimit, contactRateLimiter } from '@/lib/rate-limit'
 
 const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting: 3 requests per hour per IP
+    const rateLimitResponse = applyRateLimit(request, contactRateLimiter);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body = await request.json()
     console.log('📝 Contact form submission received:', body)
     

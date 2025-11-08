@@ -46,6 +46,11 @@ A modern, full-stack e-commerce and showcase platform for **Garrit & Wulf**, a p
 - **RBAC System**: Fine-grained permission control at route and API level
 - **API Protection**: Middleware guards for all admin routes
 - **Input Validation**: Zod schemas for all forms and API endpoints
+- **XSS Protection**: DOMPurify HTML sanitization for CMS content
+- **Rate Limiting**: API endpoint protection against abuse (in-memory)
+- **CORS Security**: Environment-based origin restrictions
+- **CSP Headers**: Content Security Policy for additional XSS protection
+- **Security Score**: 8.8/10 (see `docs/SECURITY-AUDIT-REPORT.md`)
 - **Error Handling**: Comprehensive error tracking and logging
 
 ### 🗄️ Database & Storage

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { auth } from '@clerk/nextjs/server';
+import { applyRateLimit, searchRateLimiter } from '@/lib/rate-limit';
 
 /**
  * GET /api/search
@@ -20,6 +21,10 @@ import { auth } from '@clerk/nextjs/server';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Apply rate limiting: 50 searches per 5 minutes per IP
+    const rateLimitResponse = applyRateLimit(request, searchRateLimiter);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { searchParams } = new URL(request.url);
     
     // Get current user ID from Clerk (if authenticated)

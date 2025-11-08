@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { Shield, Lock, Eye, FileText } from 'lucide-react';
 import styles from '../legal-pages.module.css';
+import { sanitizeHTML } from '@/lib/sanitize';
 
 // Force dynamic rendering since we need database access
 export const dynamic = 'force-dynamic';
@@ -142,7 +143,7 @@ export default async function PrivacyPage() {
             >
               <div 
                 className={styles.legalContent}
-                dangerouslySetInnerHTML={{ __html: page.content || '' }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHTML(page.content || '') }}
               />
             </div>
 

@@ -47,11 +47,23 @@ export async function GET(request: NextRequest) {
         const imageBuffer = await response.arrayBuffer();
         const contentType = response.headers.get('content-type') || 'image/jpeg';
 
+        // Determine allowed origin based on environment
+        const origin = request.headers.get('origin');
+        const allowedOrigins = process.env.NODE_ENV === 'production'
+          ? [process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com']
+          : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+        
+        const corsOrigin = origin && allowedOrigins.some(allowed => origin.includes(allowed))
+          ? origin
+          : allowedOrigins[0];
+
         return new NextResponse(imageBuffer, {
           headers: {
             'Content-Type': contentType,
             'Cache-Control': 'public, max-age=3600',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': corsOrigin,
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
           },
         });
       } catch (error) {
@@ -117,12 +129,24 @@ export async function GET(request: NextRequest) {
     const imageBuffer = await response.arrayBuffer();
     const contentType = response.headers.get('content-type') || 'image/jpeg';
 
+    // Determine allowed origin based on environment
+    const origin = request.headers.get('origin');
+    const allowedOrigins = process.env.NODE_ENV === 'production'
+      ? [process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com']
+      : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+    
+    const corsOrigin = origin && allowedOrigins.some(allowed => origin.includes(allowed))
+      ? origin
+      : allowedOrigins[0];
+
     // Return the image with proper headers
     return new NextResponse(imageBuffer, {
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=3600',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': corsOrigin,
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
       },
     });
   } catch (error) {
