@@ -12,6 +12,8 @@ export async function GET() {
   try {
     const user = await getCurrentUser();
 
+    console.log('🔍 [/api/auth/me] User from getCurrentUser:', user?.email, user?.role);
+
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'Not authenticated' },
@@ -20,12 +22,17 @@ export async function GET() {
     }
 
     // Type assertion: Prisma returns full User model but TS doesn't recognize it
-    const userWithPermissions = user as User & { permissions: string[] };
+    const userWithPermissions = user as User & { permissions: string[]; roleLevel: number };
+
+    console.log('🔍 [/api/auth/me] User permissions array:', userWithPermissions.permissions);
+    console.log('🔍 [/api/auth/me] User roleLevel:', userWithPermissions.roleLevel);
 
     // Use custom permissions if set, otherwise fall back to role defaults
     const permissions = userWithPermissions.permissions && userWithPermissions.permissions.length > 0
       ? userWithPermissions.permissions
       : ROLE_PERMISSIONS[user.role];
+
+    console.log('🔍 [/api/auth/me] Final permissions being returned:', permissions);
 
     return NextResponse.json({
       success: true,
@@ -34,11 +41,12 @@ export async function GET() {
         email: user.email,
         name: user.name,
         role: user.role,
+        roleLevel: userWithPermissions.roleLevel || 10,
         permissions: permissions,
       }
     });
   } catch (error) {
-    console.error('Error fetching current user:', error);
+    console.error('❌ [/api/auth/me] Error fetching current user:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch user data' },
       { status: 500 }
