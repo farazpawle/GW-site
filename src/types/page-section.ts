@@ -16,7 +16,7 @@ export type SectionType = 'hero' | 'brandStory' | 'carousel' | 'categories' | 'p
 // ============================================================================
 
 export const heroSectionConfigSchema = z.object({
-  backgroundType: z.enum(['paths', 'shader']).optional().default('paths'),
+  backgroundType: z.enum(['shader', 'gradient-mesh', 'ribbon', 'ribbon-plasma']).optional().default('shader'),
   badge: z.object({
     text: z.string().min(1, 'Badge text is required'),
     icon: z.string().optional(),

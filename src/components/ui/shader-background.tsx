@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo, useState } from 'react';
 
-const ShaderBackground = () => {
+const ShaderBackground = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isLowPerf, setIsLowPerf] = useState(false);
 
   // Vertex shader source code
   const vsSource = `
@@ -13,96 +14,74 @@ const ShaderBackground = () => {
     }
   `;
 
-  // Fragment shader source code
+  // Lightweight Fragment shader - optimized for low-end devices
   const fsSource = `
-    precision highp float;
+    precision mediump float;
     uniform vec2 iResolution;
     uniform float iTime;
 
-    const float overallSpeed = 0.2;
-    const float gridSmoothWidth = 0.015;
-    const float axisWidth = 0.05;
-    const float majorLineWidth = 0.025;
-    const float minorLineWidth = 0.0125;
-    const float majorLineFrequency = 5.0;
-    const float minorLineFrequency = 1.0;
-    const vec4 gridColor = vec4(0.5);
-    const float scale = 5.0;
-    const vec4 lineColor = vec4(0.4, 0.2, 0.8, 1.0);
-    const float minLineWidth = 0.01;
-    const float maxLineWidth = 0.2;
-    const float lineSpeed = 1.0 * overallSpeed;
-    const float lineAmplitude = 1.0;
-    const float lineFrequency = 0.2;
-    const float warpSpeed = 0.2 * overallSpeed;
-    const float warpFrequency = 0.5;
-    const float warpAmplitude = 1.0;
-    const float offsetFrequency = 0.5;
-    const float offsetSpeed = 1.33 * overallSpeed;
-    const float minOffsetSpread = 0.6;
-    const float maxOffsetSpread = 2.0;
-    const int linesPerGroup = 16;
-
-    #define drawCircle(pos, radius, coord) smoothstep(radius + gridSmoothWidth, radius, length(coord - (pos)))
-    #define drawSmoothLine(pos, halfWidth, t) smoothstep(halfWidth, 0.0, abs(pos - (t)))
-    #define drawCrispLine(pos, halfWidth, t) smoothstep(halfWidth + gridSmoothWidth, halfWidth, abs(pos - (t)))
-    #define drawPeriodicLine(freq, width, t) drawCrispLine(freq / 2.0, width, abs(mod(t, freq) - (freq) / 2.0))
-
-    float drawGridLines(float axis) {
-      return drawCrispLine(0.0, axisWidth, axis)
-            + drawPeriodicLine(majorLineFrequency, majorLineWidth, axis)
-            + drawPeriodicLine(minorLineFrequency, minorLineWidth, axis);
-    }
-
-    float drawGrid(vec2 space) {
-      return min(1.0, drawGridLines(space.x) + drawGridLines(space.y));
-    }
+  const float overallSpeed = 0.15;
+  const float scale = 3.5;
+  const vec4 lineColor = vec4(0.72, 0.24, 0.96, 1.0);
+  const vec4 glowColor = vec4(0.32, 0.11, 0.45, 1.0);
+  const float lineSpeed = 0.8 * overallSpeed;
+  const float lineAmplitude = 0.85;
+  const float lineFrequency = 0.27;
+  const float lineWidth = 0.065;
+  const float lineSharpness = 1.6;
+  const float offsetSpeed = 1.0 * overallSpeed;
+  const int linesPerGroup = 22;
 
     float random(float t) {
-      return (cos(t) + cos(t * 1.3 + 1.3) + cos(t * 1.4 + 1.4)) / 3.0;
+      return cos(t) * 0.5 + 0.5;
     }
 
-    float getPlasmaY(float x, float horizontalFade, float offset) {
-      return random(x * lineFrequency + iTime * lineSpeed) * horizontalFade * lineAmplitude + offset;
+    float getPlasmaY(float x, float fade, float offset, float seed) {
+      float amplitudeFactor = lineAmplitude * (0.55 + random(seed + 1.0) * 1.6);
+      float frequencyFactor = lineFrequency * (0.75 + random(seed + 2.0) * 1.8);
+      float secondaryFrequency = frequencyFactor * (1.4 + random(seed + 4.0) * 1.2);
+      float phaseShift = seed * 0.7 + iTime * lineSpeed * (0.8 + random(seed + 3.0) * 1.4);
+      float baseWave = sin(x * frequencyFactor + phaseShift);
+      float layeredWave = baseWave + 0.45 * sin(x * secondaryFrequency + phaseShift * 1.3);
+      float curvature = 0.35 * cos((x + seed) * frequencyFactor * 0.6 + phaseShift * 0.5);
+      return (layeredWave + curvature) * amplitudeFactor * fade + offset;
     }
 
     void main() {
-      vec2 fragCoord = gl_FragCoord.xy;
-      vec4 fragColor;
-      vec2 uv = fragCoord.xy / iResolution.xy;
-      vec2 space = (fragCoord - iResolution.xy / 2.0) / iResolution.x * 2.0 * scale;
+  vec2 fragCoord = gl_FragCoord.xy;
+  vec2 uv = fragCoord.xy / iResolution.xy;
+      
+  vec2 space = (fragCoord - iResolution.xy / 2.0) / iResolution.x * 2.0 * scale;
+  space.y = (space.y) * 0.6;
 
-      float horizontalFade = 1.0 - (cos(uv.x * 6.28) * 0.5 + 0.5);
-      float verticalFade = 1.0 - (cos(uv.y * 6.28) * 0.5 + 0.5);
-
-      space.y += random(space.x * warpFrequency + iTime * warpSpeed) * warpAmplitude * (0.5 + horizontalFade);
-      space.x += random(space.y * warpFrequency + iTime * warpSpeed + 2.0) * warpAmplitude * horizontalFade;
+  float horizontalFade = smoothstep(-0.25, 0.5, uv.x) * smoothstep(-0.25, 0.5, 1.0 - uv.x);
+  float verticalFade = smoothstep(-0.15, 1.05, uv.y);
 
       vec4 lines = vec4(0.0);
-      vec4 bgColor1 = vec4(0.1, 0.1, 0.3, 1.0);
-      vec4 bgColor2 = vec4(0.3, 0.1, 0.5, 1.0);
+  vec4 bgColor1 = vec4(0.04, 0.04, 0.12, 1.0);
+  vec4 bgColor2 = vec4(0.12, 0.04, 0.22, 1.0);
+  vec4 bgColor3 = vec4(0.06, 0.03, 0.16, 1.0);
 
       for(int l = 0; l < linesPerGroup; l++) {
-        float normalizedLineIndex = float(l) / float(linesPerGroup);
         float offsetTime = iTime * offsetSpeed;
-        float offsetPosition = float(l) + space.x * offsetFrequency;
-        float rand = random(offsetPosition + offsetTime) * 0.5 + 0.5;
-        float halfWidth = mix(minLineWidth, maxLineWidth, rand * horizontalFade) / 2.0;
-        float offset = random(offsetPosition + offsetTime * (1.0 + normalizedLineIndex)) * mix(minOffsetSpread, maxOffsetSpread, horizontalFade);
-        float linePosition = getPlasmaY(space.x, horizontalFade, offset);
-        float line = drawSmoothLine(linePosition, halfWidth, space.y) / 2.0 + drawCrispLine(linePosition, halfWidth * 0.15, space.y);
+        float offsetPosition = float(l) + space.x * 0.3;
+  float baseSeed = offsetPosition + offsetTime;
+  float rand = random(baseSeed);
+  float offset = (random(baseSeed * 1.7) - 0.5) * 2.8;
+  float linePosition = getPlasmaY(space.x, horizontalFade, offset, offsetPosition);
+        float dist = abs(linePosition - space.y);
+        float line = smoothstep(lineWidth, 0.0, dist);
+        line = pow(line, lineSharpness);
 
-        float circleX = mod(float(l) + iTime * lineSpeed, 25.0) - 12.0;
-        vec2 circlePosition = vec2(circleX, getPlasmaY(circleX, horizontalFade, offset));
-        float circle = drawCircle(circlePosition, 0.01, space) * 4.0;
+        float glow = smoothstep(0.35, 0.0, dist) * 0.35;
 
-        line = line + circle;
-        lines += line * lineColor * rand;
+        lines += line * lineColor * rand * 1.05;
+        lines += glow * glowColor * rand;
       }
 
-      fragColor = mix(bgColor1, bgColor2, uv.x);
+      vec4 fragColor = mix(bgColor1, bgColor2, uv.x);
+      fragColor = mix(fragColor, bgColor3, uv.y * 0.6);
       fragColor *= verticalFade;
-      fragColor.a = 1.0;
       fragColor += lines;
 
       gl_FragColor = fragColor;
@@ -182,10 +161,24 @@ const ShaderBackground = () => {
       },
     };
 
+    // Detect low-performance devices
+    const checkPerformance = () => {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isLowEnd = navigator.hardwareConcurrency ? navigator.hardwareConcurrency <= 4 : false;
+      return isMobile || isLowEnd;
+    };
+
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const isLowPerformance = checkPerformance();
+      const scale = isLowPerformance ? 0.5 : 0.75; // Render at lower resolution
+      
+      canvas.width = window.innerWidth * scale;
+      canvas.height = window.innerHeight * scale;
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      
       gl.viewport(0, 0, canvas.width, canvas.height);
+      setIsLowPerf(isLowPerformance);
     };
 
     window.addEventListener('resize', resizeCanvas);
@@ -193,8 +186,20 @@ const ShaderBackground = () => {
 
     const startTime = Date.now();
     let animationFrameId: number;
+    let lastFrameTime = 0;
+    const targetFPS = 30; // Throttle to 30 FPS for better performance
+    const frameInterval = 1000 / targetFPS;
 
-    const render = () => {
+    const render = (currentTimestamp: number) => {
+      const elapsed = currentTimestamp - lastFrameTime;
+      
+      // Throttle to target FPS
+      if (elapsed < frameInterval) {
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
+      
+      lastFrameTime = currentTimestamp - (elapsed % frameInterval);
       const currentTime = (Date.now() - startTime) / 1000;
 
       gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -233,8 +238,35 @@ const ShaderBackground = () => {
   }, []);
 
   return (
-    <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+    <>
+      <canvas 
+        ref={canvasRef} 
+        className="absolute inset-0 w-full h-full" 
+        style={{
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden',
+          imageRendering: 'pixelated',
+        }}
+      />
+      {/* CSS Fallback for devices without WebGL */}
+      <div 
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{
+          background: 'linear-gradient(135deg, #0a0a14 0%, #1a0a1f 50%, #0f0a1a 100%)',
+          opacity: 0,
+          transition: 'opacity 0.3s',
+        }}
+        onLoad={(e) => {
+          // Show fallback if canvas is not rendering
+          if (!canvasRef.current?.getContext('webgl')) {
+            (e.target as HTMLElement).style.opacity = '1';
+          }
+        }}
+      />
+    </>
   );
-};
+});
+
+ShaderBackground.displayName = 'ShaderBackground';
 
 export default ShaderBackground;

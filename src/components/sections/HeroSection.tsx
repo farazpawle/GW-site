@@ -4,8 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Statistics from "@/components/ui/Statistics";
 import { Sparkles } from "lucide-react";
-import { BackgroundPaths } from "@/components/ui/background-paths";
 import ShaderBackground from "@/components/ui/shader-background";
+import GradientMeshBackground from "@/components/ui/gradient-mesh-background";
+import RibbonBackground from "@/components/ui/ribbon-background";
+import CombinedRibbonBackground from '@/components/ui/combined-ribbon-background';
 import { HeroSectionConfig } from '@/types/page-section';
 import { applyTextStyles } from '@/lib/utils/typography';
 
@@ -87,12 +89,24 @@ export default function HeroSection({ config }: HeroSectionProps) {
         className="text-white py-20 relative overflow-hidden min-h-screen flex items-center justify-center"
         style={{ backgroundColor: '#0a0a0a' }}
       >
-        {/* Animated Background - Conditional Rendering */}
-        {(config.backgroundType || 'paths') === 'shader' ? (
-          <ShaderBackground />
-        ) : (
-          <BackgroundPaths />
-        )}
+        {/* Background - Conditional Rendering */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            zIndex: 0,
+            isolation: 'isolate',
+          }}
+        >
+          {config.backgroundType === 'gradient-mesh' ? (
+            <GradientMeshBackground />
+          ) : config.backgroundType === 'ribbon-plasma' ? (
+            <CombinedRibbonBackground />
+          ) : config.backgroundType === 'ribbon' ? (
+            <RibbonBackground />
+          ) : (
+            <ShaderBackground />
+          )}
+        </div>
         
         <div className="container mx-auto px-4 text-center relative z-10 max-w-6xl">
           {/* Premium Badge */}

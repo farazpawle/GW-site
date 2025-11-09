@@ -78,7 +78,7 @@ export default function HeroSectionEditor({ section, isOpen, onClose, onSave }: 
       }
 
       const normalizedConfig: HeroSectionConfig = {
-        backgroundType: config.backgroundType || 'paths',
+        backgroundType: config.backgroundType || 'shader',
         badge: {
           ...(config.badge ?? {}),
           text: config.badge?.text?.trim() || 'Badge'
@@ -172,15 +172,25 @@ export default function HeroSectionEditor({ section, isOpen, onClose, onSave }: 
               Background Animation
             </label>
             <select
-              value={config.backgroundType || 'paths'}
-              onChange={(e) => setConfig({ ...config, backgroundType: e.target.value as 'paths' | 'shader' })}
+              value={config.backgroundType}
+              onChange={(e) =>
+                setConfig({ ...config, backgroundType: e.target.value as HeroSectionConfig['backgroundType'] })
+              }
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon focus:border-transparent"
             >
-              <option value="paths">Animated Paths (Default)</option>
-              <option value="shader">Plasma Waves (Shader)</option>
+              <option value="shader">Plasma Motion Shader (Animated)</option>
+              <option value="gradient-mesh">Aurora Gradient Mesh (Animated)</option>
+              <option value="ribbon">Cinematic Ribbon Artwork (Static)</option>
+              <option value="ribbon-plasma">Cinematic Ribbon + Plasma (Composite)</option>
             </select>
             <p className="text-xs text-gray-500 mt-1">
-              Choose between the default animated paths or the new plasma wave shader effect
+              {config.backgroundType === 'shader'
+                ? 'GPU-accelerated plasma wave that adds energetic motion with real-time WebGL shaders.'
+                : config.backgroundType === 'gradient-mesh'
+                ? 'Animated gradient mesh with soft aurora transitions crafted in pure CSS.'
+                : config.backgroundType === 'ribbon'
+                ? 'High-resolution cinematic ribbon artwork with subtle overlays for premium presentation.'
+                : 'Cinematic ribbon artwork with a plasma shader overlay for extra motion and glow.'}
             </p>
           </div>
         </div>

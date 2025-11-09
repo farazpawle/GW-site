@@ -29,6 +29,14 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Performance optimizations for animations */
+canvas, svg {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
 /* Font Families */
 .font-oswald {
   font-family: "Oswald", sans-serif !important;
