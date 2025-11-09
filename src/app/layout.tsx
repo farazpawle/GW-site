@@ -5,6 +5,7 @@ import { getSetting } from "@/lib/settings/settings-manager";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import GoogleTagManager from "@/components/analytics/GoogleTagManager";
 import WebVitals from "@/components/analytics/WebVitals";
+import { initializeApplication } from "@/lib/initialization";
 import "@/lib/env"; // Validate environment variables at startup
 import "./globals.css";
 
@@ -36,50 +37,77 @@ const aclonica = Aclonica({
  */
 export async function generateMetadata(): Promise<Metadata> {
   // Fetch SEO settings with fallbacks
-  const seoTitle = await getSetting('seo_title') || 'Garrit & Wulf - Premium Auto Parts';
-  const seoDescription = await getSetting('seo_description') || 'Quality European, American Vehicle & Truck Parts - Transform Your Drive with Superior Parts. Precision manufacturing and exceptional customer service.';
-  const seoKeywords = await getSetting('seo_keywords') || 'auto parts, European car parts, American vehicle parts, truck parts, premium auto parts, Garrit & Wulf, automotive parts, car accessories';
-  const seoOgImage = await getSetting('seo_og_image') || '/images/og-image.jpg';
-  const siteName = await getSetting('site_name') || 'Garrit & Wulf';
+  const seoTitle =
+    (await getSetting("seo_title")) || "Garrit & Wulf - Premium Auto Parts";
+  const seoDescription =
+    (await getSetting("seo_description")) ||
+    "Quality European, American Vehicle & Truck Parts - Transform Your Drive with Superior Parts. Precision manufacturing and exceptional customer service.";
+  const seoKeywords =
+    (await getSetting("seo_keywords")) ||
+    "auto parts, European car parts, American vehicle parts, truck parts, premium auto parts, Garrit & Wulf, automotive parts, car accessories";
+  const seoOgImage =
+    (await getSetting("seo_og_image")) || "/images/og-image.jpg";
+  const siteName = (await getSetting("site_name")) || "Garrit & Wulf";
 
   // Fetch favicon settings
-  const faviconIco = await getSetting('favicon_ico');
-  const favicon16 = await getSetting('favicon_16');
-  const favicon32 = await getSetting('favicon_32');
-  const favicon192 = await getSetting('favicon_192');
-  const appleTouchIcon = await getSetting('apple_touch_icon');
+  const faviconIco = await getSetting("favicon_ico");
+  const favicon16 = await getSetting("favicon_16");
+  const favicon32 = await getSetting("favicon_32");
+  const favicon192 = await getSetting("favicon_192");
+  const appleTouchIcon = await getSetting("apple_touch_icon");
 
   // Build icons array
-  const icons: Metadata['icons'] = [];
-  
+  const icons: Metadata["icons"] = [];
+
   if (faviconIco) {
-    icons.push({ rel: 'icon', url: faviconIco });
+    icons.push({ rel: "icon", url: faviconIco });
   }
-  
+
   if (favicon16) {
-    icons.push({ rel: 'icon', type: 'image/png', sizes: '16x16', url: favicon16 });
+    icons.push({
+      rel: "icon",
+      type: "image/png",
+      sizes: "16x16",
+      url: favicon16,
+    });
   }
-  
+
   if (favicon32) {
-    icons.push({ rel: 'icon', type: 'image/png', sizes: '32x32', url: favicon32 });
+    icons.push({
+      rel: "icon",
+      type: "image/png",
+      sizes: "32x32",
+      url: favicon32,
+    });
   }
-  
+
   if (favicon192) {
-    icons.push({ rel: 'icon', type: 'image/png', sizes: '192x192', url: favicon192 });
+    icons.push({
+      rel: "icon",
+      type: "image/png",
+      sizes: "192x192",
+      url: favicon192,
+    });
   }
-  
+
   if (appleTouchIcon) {
-    icons.push({ rel: 'apple-touch-icon', sizes: '180x180', url: appleTouchIcon });
+    icons.push({
+      rel: "apple-touch-icon",
+      sizes: "180x180",
+      url: appleTouchIcon,
+    });
   }
 
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
+    metadataBase: new URL(
+      process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
+    ),
     title: {
       default: seoTitle,
-      template: `%s | ${siteName}`
+      template: `%s | ${siteName}`,
     },
     description: seoDescription,
-    keywords: seoKeywords.split(',').map((k: string) => k.trim()),
+    keywords: seoKeywords.split(",").map((k: string) => k.trim()),
     authors: [{ name: siteName }],
     creator: siteName,
     publisher: siteName,
@@ -90,9 +118,9 @@ export async function generateMetadata(): Promise<Metadata> {
       googleBot: {
         index: true,
         follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
       },
     },
     openGraph: {
@@ -129,9 +157,17 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Initialize application (MinIO bucket, essential data)
+  // This runs once on app startup and is idempotent
+  try {
+    await initializeApplication();
+  } catch (error) {
+    console.error("⚠️  Initialization failed, but app will continue:", error);
+  }
+
   // Fetch analytics IDs from settings
-  const googleAnalyticsId = await getSetting('google_analytics_id');
-  const googleTagManagerId = await getSetting('google_tag_manager_id');
+  const googleAnalyticsId = await getSetting("google_analytics_id");
+  const googleTagManagerId = await getSetting("google_tag_manager_id");
 
   return (
     <ClerkProvider>
@@ -141,9 +177,11 @@ export default async function RootLayout({
         >
           {/* Google Analytics (GA4) */}
           {googleAnalyticsId && <GoogleAnalytics gaId={googleAnalyticsId} />}
-          
+
           {/* Google Tag Manager */}
-          {googleTagManagerId && <GoogleTagManager gtmId={googleTagManagerId} />}
+          {googleTagManagerId && (
+            <GoogleTagManager gtmId={googleTagManagerId} />
+          )}
 
           {/* Web Vitals Performance Monitoring */}
           <WebVitals />

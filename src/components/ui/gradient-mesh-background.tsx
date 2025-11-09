@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { memo, useEffect, useRef, useState } from "react";
 
 /**
  * Flowing Energy Field Background
@@ -106,7 +106,11 @@ const GradientMeshBackground = memo(() => {
     }
   `;
 
-  const loadShader = (gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null => {
+  const loadShader = (
+    gl: WebGLRenderingContext,
+    type: number,
+    source: string,
+  ): WebGLShader | null => {
     const shader = gl.createShader(type);
     if (!shader) return null;
 
@@ -114,7 +118,10 @@ const GradientMeshBackground = memo(() => {
     gl.compileShader(shader);
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      console.error('Flow-field shader compile error:', gl.getShaderInfoLog(shader));
+      console.error(
+        "Flow-field shader compile error:",
+        gl.getShaderInfoLog(shader),
+      );
       gl.deleteShader(shader);
       return null;
     }
@@ -122,7 +129,11 @@ const GradientMeshBackground = memo(() => {
     return shader;
   };
 
-  const initShaderProgram = (gl: WebGLRenderingContext, vSource: string, fSource: string): WebGLProgram | null => {
+  const initShaderProgram = (
+    gl: WebGLRenderingContext,
+    vSource: string,
+    fSource: string,
+  ): WebGLProgram | null => {
     const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vSource);
     const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fSource);
 
@@ -138,7 +149,10 @@ const GradientMeshBackground = memo(() => {
     gl.linkProgram(shaderProgram);
 
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-      console.error('Flow-field shader link error:', gl.getProgramInfoLog(shaderProgram));
+      console.error(
+        "Flow-field shader link error:",
+        gl.getProgramInfoLog(shaderProgram),
+      );
       return null;
     }
 
@@ -151,9 +165,9 @@ const GradientMeshBackground = memo(() => {
       return () => undefined;
     }
 
-    const gl = canvas.getContext('webgl');
+    const gl = canvas.getContext("webgl");
     if (!gl) {
-      console.warn('WebGL not available: falling back to solid background.');
+      console.warn("WebGL not available: falling back to solid background.");
       return () => undefined;
     }
 
@@ -170,17 +184,22 @@ const GradientMeshBackground = memo(() => {
     const programInfo = {
       program: shaderProgram,
       attribLocations: {
-        vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+        vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
       },
       uniformLocations: {
-        resolution: gl.getUniformLocation(shaderProgram, 'iResolution'),
-        time: gl.getUniformLocation(shaderProgram, 'iTime'),
+        resolution: gl.getUniformLocation(shaderProgram, "iResolution"),
+        time: gl.getUniformLocation(shaderProgram, "iTime"),
       },
     };
 
     const detectLowPerf = () => {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const lowCpu = navigator.hardwareConcurrency ? navigator.hardwareConcurrency <= 4 : false;
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        );
+      const lowCpu = navigator.hardwareConcurrency
+        ? navigator.hardwareConcurrency <= 4
+        : false;
       return isMobile || lowCpu;
     };
 
@@ -189,13 +208,13 @@ const GradientMeshBackground = memo(() => {
       const resolutionScale = lowPerf ? 0.55 : 0.85;
       canvas.width = Math.floor(window.innerWidth * resolutionScale);
       canvas.height = Math.floor(window.innerHeight * resolutionScale);
-      canvas.style.width = '100%';
-      canvas.style.height = '100%';
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
       gl.viewport(0, 0, canvas.width, canvas.height);
       setIsLowPerf(lowPerf);
     };
 
-    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener("resize", resizeCanvas);
     resizeCanvas();
 
     const startTime = performance.now();
@@ -217,11 +236,22 @@ const GradientMeshBackground = memo(() => {
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.useProgram(programInfo.program);
 
-      gl.uniform2f(programInfo.uniformLocations.resolution, canvas.width, canvas.height);
+      gl.uniform2f(
+        programInfo.uniformLocations.resolution,
+        canvas.width,
+        canvas.height,
+      );
       gl.uniform1f(programInfo.uniformLocations.time, elapsedSeconds);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-      gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 2, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(
+        programInfo.attribLocations.vertexPosition,
+        2,
+        gl.FLOAT,
+        false,
+        0,
+        0,
+      );
       gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -233,20 +263,29 @@ const GradientMeshBackground = memo(() => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener("resize", resizeCanvas);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Shader sources and initShaderProgram are stable, intentionally omitted
 
   return (
     <div className="absolute inset-0">
-      <canvas ref={canvasRef} className="w-full h-full" role="presentation" aria-hidden="true" />
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full"
+        role="presentation"
+        aria-hidden="true"
+      />
       {isLowPerf && (
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-[#0f1729] to-[#06040f]" aria-hidden="true" />
+        <div
+          className="absolute inset-0 pointer-events-none bg-gradient-to-br from-[#0f1729] to-[#06040f]"
+          aria-hidden="true"
+        />
       )}
     </div>
   );
 });
 
-GradientMeshBackground.displayName = 'GradientMeshBackground';
+GradientMeshBackground.displayName = "GradientMeshBackground";
 
 export default GradientMeshBackground;

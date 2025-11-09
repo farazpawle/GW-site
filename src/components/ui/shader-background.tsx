@@ -1,10 +1,9 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, memo, useState } from 'react';
+import React, { useEffect, useRef, memo } from "react";
 
 const ShaderBackground = memo(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isLowPerf, setIsLowPerf] = useState(false);
 
   // Vertex shader source code
   const vsSource = `
@@ -89,7 +88,11 @@ const ShaderBackground = memo(() => {
   `;
 
   // Helper function to compile shader
-  const loadShader = (gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null => {
+  const loadShader = (
+    gl: WebGLRenderingContext,
+    type: number,
+    source: string,
+  ): WebGLShader | null => {
     const shader = gl.createShader(type);
     if (!shader) return null;
 
@@ -97,7 +100,7 @@ const ShaderBackground = memo(() => {
     gl.compileShader(shader);
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      console.error('Shader compile error: ', gl.getShaderInfoLog(shader));
+      console.error("Shader compile error: ", gl.getShaderInfoLog(shader));
       gl.deleteShader(shader);
       return null;
     }
@@ -106,7 +109,11 @@ const ShaderBackground = memo(() => {
   };
 
   // Initialize shader program
-  const initShaderProgram = (gl: WebGLRenderingContext, vsSource: string, fsSource: string): WebGLProgram | null => {
+  const initShaderProgram = (
+    gl: WebGLRenderingContext,
+    vsSource: string,
+    fsSource: string,
+  ): WebGLProgram | null => {
     const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
     const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
@@ -120,7 +127,10 @@ const ShaderBackground = memo(() => {
     gl.linkProgram(shaderProgram);
 
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-      console.error('Shader program link error: ', gl.getProgramInfoLog(shaderProgram));
+      console.error(
+        "Shader program link error: ",
+        gl.getProgramInfoLog(shaderProgram),
+      );
       return null;
     }
 
@@ -131,9 +141,9 @@ const ShaderBackground = memo(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const gl = canvas.getContext('webgl');
+    const gl = canvas.getContext("webgl");
     if (!gl) {
-      console.warn('WebGL not supported.');
+      console.warn("WebGL not supported.");
       return;
     }
 
@@ -142,46 +152,45 @@ const ShaderBackground = memo(() => {
 
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    const positions = [
-      -1.0, -1.0,
-       1.0, -1.0,
-      -1.0,  1.0,
-       1.0,  1.0,
-    ];
+    const positions = [-1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
     const programInfo = {
       program: shaderProgram,
       attribLocations: {
-        vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+        vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
       },
       uniformLocations: {
-        resolution: gl.getUniformLocation(shaderProgram, 'iResolution'),
-        time: gl.getUniformLocation(shaderProgram, 'iTime'),
+        resolution: gl.getUniformLocation(shaderProgram, "iResolution"),
+        time: gl.getUniformLocation(shaderProgram, "iTime"),
       },
     };
 
     // Detect low-performance devices
     const checkPerformance = () => {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const isLowEnd = navigator.hardwareConcurrency ? navigator.hardwareConcurrency <= 4 : false;
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        );
+      const isLowEnd = navigator.hardwareConcurrency
+        ? navigator.hardwareConcurrency <= 4
+        : false;
       return isMobile || isLowEnd;
     };
 
     const resizeCanvas = () => {
       const isLowPerformance = checkPerformance();
       const scale = isLowPerformance ? 0.5 : 0.75; // Render at lower resolution
-      
+
       canvas.width = window.innerWidth * scale;
       canvas.height = window.innerHeight * scale;
-      canvas.style.width = '100%';
-      canvas.style.height = '100%';
-      
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+
       gl.viewport(0, 0, canvas.width, canvas.height);
-      setIsLowPerf(isLowPerformance);
     };
 
-    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener("resize", resizeCanvas);
     resizeCanvas();
 
     const startTime = Date.now();
@@ -192,13 +201,13 @@ const ShaderBackground = memo(() => {
 
     const render = (currentTimestamp: number) => {
       const elapsed = currentTimestamp - lastFrameTime;
-      
+
       // Throttle to target FPS
       if (elapsed < frameInterval) {
         animationFrameId = requestAnimationFrame(render);
         return;
       }
-      
+
       lastFrameTime = currentTimestamp - (elapsed % frameInterval);
       const currentTime = (Date.now() - startTime) / 1000;
 
@@ -207,7 +216,11 @@ const ShaderBackground = memo(() => {
 
       gl.useProgram(programInfo.program);
 
-      gl.uniform2f(programInfo.uniformLocations.resolution, canvas.width, canvas.height);
+      gl.uniform2f(
+        programInfo.uniformLocations.resolution,
+        canvas.width,
+        canvas.height,
+      );
       gl.uniform1f(programInfo.uniformLocations.time, currentTime);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -217,7 +230,7 @@ const ShaderBackground = memo(() => {
         gl.FLOAT,
         false,
         0,
-        0
+        0,
       );
       gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
 
@@ -228,7 +241,7 @@ const ShaderBackground = memo(() => {
     animationFrameId = requestAnimationFrame(render);
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener("resize", resizeCanvas);
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
@@ -239,27 +252,28 @@ const ShaderBackground = memo(() => {
 
   return (
     <>
-      <canvas 
-        ref={canvasRef} 
-        className="absolute inset-0 w-full h-full" 
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full"
         style={{
-          transform: 'translateZ(0)',
-          backfaceVisibility: 'hidden',
-          imageRendering: 'pixelated',
+          transform: "translateZ(0)",
+          backfaceVisibility: "hidden",
+          imageRendering: "pixelated",
         }}
       />
       {/* CSS Fallback for devices without WebGL */}
-      <div 
+      <div
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{
-          background: 'linear-gradient(135deg, #0a0a14 0%, #1a0a1f 50%, #0f0a1a 100%)',
+          background:
+            "linear-gradient(135deg, #0a0a14 0%, #1a0a1f 50%, #0f0a1a 100%)",
           opacity: 0,
-          transition: 'opacity 0.3s',
+          transition: "opacity 0.3s",
         }}
         onLoad={(e) => {
           // Show fallback if canvas is not rendering
-          if (!canvasRef.current?.getContext('webgl')) {
-            (e.target as HTMLElement).style.opacity = '1';
+          if (!canvasRef.current?.getContext("webgl")) {
+            (e.target as HTMLElement).style.opacity = "1";
           }
         }}
       />
@@ -267,6 +281,6 @@ const ShaderBackground = memo(() => {
   );
 });
 
-ShaderBackground.displayName = 'ShaderBackground';
+ShaderBackground.displayName = "ShaderBackground";
 
 export default ShaderBackground;
