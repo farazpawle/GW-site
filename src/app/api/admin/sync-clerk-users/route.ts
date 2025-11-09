@@ -1,13 +1,21 @@
 import { clerkClient } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { requirePermission } from '@/lib/rbac'
 
 /**
  * Sync Clerk users to local database
  * GET /api/admin/sync-clerk-users
+ * RBAC: Requires 'users.manage' permission
  */
 export async function GET() {
   try {
+    // RBAC: Require users.manage permission
+    const userOrError = await requirePermission('users.manage')
+    if (userOrError instanceof NextResponse) return userOrError
+
+    console.log(`🔐 Sync initiated by admin: ${userOrError.email}`)
+
     const client = await clerkClient()
     const clerkUsers = await client.users.getUserList()
 
