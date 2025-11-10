@@ -6,24 +6,25 @@ import { NextResponse } from "next/server";
 // ============================================================================
 
 const isPublicRoute = createRouteMatcher([
-  '/',
-  '/about',
-  '/contact',
-  '/products',
-  '/products/:path*',
-  '/search',
-  '/search/:path*',
-  '/privacy',
-  '/terms',
-  '/pages/:path*', // Dynamic pages (admin preview route)
-  '/:slug', // Dynamic pages (public clean URLs)
-  '/api/webhooks/clerk', // Clerk webhook must be public
-  '/api/public/:path*', // Public API endpoints
-  '/api/search/:path*', // Search API endpoints must be public
-  '/api/categories', // Categories list for search filters
-  '/api/menu-items', // Menu items for navigation
-  '/sign-in(.*)',
-  '/sign-up(.*)',
+  "/",
+  "/about",
+  "/contact",
+  "/products",
+  "/products/:path*",
+  "/search",
+  "/search/:path*",
+  "/privacy",
+  "/terms",
+  "/pages/:path*", // Dynamic pages (admin preview route)
+  "/:slug", // Dynamic pages (public clean URLs)
+  "/api/webhooks/clerk", // Clerk webhook must be public
+  "/api/public/:path*", // Public API endpoints
+  "/api/search/:path*", // Search API endpoints must be public
+  "/api/categories", // Categories list for search filters
+  "/api/menu-items", // Menu items for navigation
+  "/api/media/url", // Media presigned URL generation (public)
+  "/sign-in(.*)",
+  "/sign-up(.*)",
 ]);
 
 // ============================================================================
@@ -32,51 +33,51 @@ const isPublicRoute = createRouteMatcher([
 
 /**
  * Map admin routes to required permissions
- * 
+ *
  * NOTE: Permission checking is done at the page/API level, not in middleware.
  * This is because middleware runs on Edge Runtime which doesn't support Prisma.
- * 
+ *
  * Implementation:
  * - Admin pages: Use requirePermission() from src/lib/auth.ts
  * - API routes: Use requirePermission() from src/lib/rbac/guards.ts
- * 
+ *
  * This mapping is kept for reference and future use.
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _ADMIN_ROUTE_PERMISSIONS: Record<string, string> = {
   // Dashboard
-  '/admin': 'products.view', // Default permission for admin dashboard
+  "/admin": "products.view", // Default permission for admin dashboard
 
   // Products
-  '/admin/products': 'products.view',
-  '/admin/products/new': 'products.create',
+  "/admin/products": "products.view",
+  "/admin/products/new": "products.create",
 
   // Categories
-  '/admin/categories': 'categories.view',
-  '/admin/categories/new': 'categories.create',
+  "/admin/categories": "categories.view",
+  "/admin/categories/new": "categories.create",
 
   // Pages (CMS)
-  '/admin/pages': 'pages.view',
-  '/admin/pages/new': 'pages.create',
+  "/admin/pages": "pages.view",
+  "/admin/pages/new": "pages.create",
 
   // Menu Management
-  '/admin/menu': 'menu.view',
+  "/admin/menu": "menu.view",
 
   // Media Library
-  '/admin/media': 'media.view',
+  "/admin/media": "media.view",
 
   // User Management
-  '/admin/users': 'users.view',
+  "/admin/users": "users.view",
 
   // Settings
-  '/admin/settings': 'settings.view',
+  "/admin/settings": "settings.view",
 
   // Messages
-  '/admin/messages': 'messages.view',
+  "/admin/messages": "messages.view",
 
   // Collections
-  '/admin/collections': 'collections.view',
-  '/admin/collections/new': 'collections.create',
+  "/admin/collections": "collections.view",
+  "/admin/collections/new": "collections.create",
 };
 
 // ============================================================================
@@ -84,7 +85,6 @@ const _ADMIN_ROUTE_PERMISSIONS: Record<string, string> = {
 // ============================================================================
 
 export default clerkMiddleware(async (auth, request) => {
-
   // Allow public routes
   if (isPublicRoute(request)) {
     return NextResponse.next();
