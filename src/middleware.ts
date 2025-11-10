@@ -23,6 +23,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/categories", // Categories list for search filters
   "/api/menu-items", // Menu items for navigation
   "/api/media/url", // Media presigned URL generation (public)
+  "/api/media/public", // MinIO public streaming proxy
   "/sign-in(.*)",
   "/sign-up(.*)",
 ]);
