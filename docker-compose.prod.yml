@@ -26,6 +26,10 @@ services:
     networks:
       - garrit-network
     restart: unless-stopped
+    # Memory limits to prevent OOM crashes
+    mem_limit: 1g
+    mem_reservation: 512m
+    memswap_limit: 2g
 
   postgres:
     image: postgres:15-alpine
@@ -38,6 +42,10 @@ services:
     networks:
       - garrit-network
     restart: unless-stopped
+    # Memory limits for database
+    mem_limit: 512m
+    mem_reservation: 256m
+    memswap_limit: 1g
 
   redis:
     image: redis:7-alpine
@@ -46,6 +54,10 @@ services:
     networks:
       - garrit-network
     restart: unless-stopped
+    # Memory limits for cache
+    mem_limit: 256m
+    mem_reservation: 128m
+    memswap_limit: 512m
 
   minio:
     image: minio/minio:latest
@@ -58,6 +70,10 @@ services:
     networks:
       - garrit-network
     restart: unless-stopped
+    # Memory limits for object storage
+    mem_limit: 512m
+    mem_reservation: 256m
+    memswap_limit: 1g
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
