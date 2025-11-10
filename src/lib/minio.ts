@@ -140,34 +140,35 @@ export async function getPresignedUrl(
   if (isProduction) {
     // Production: Replace container hostnames with public MinIO subdomain
     // This allows presigned URLs to work from any browser
+    // Use regex with 'gi' flag for case-insensitive replacement
     presignedUrl = presignedUrl.replace(
-      "http://GW-minio:9000",
+      /http:\/\/gw-minio:9000/gi,
       "https://minio.garritwulf.com",
     );
     presignedUrl = presignedUrl.replace(
-      "https://GW-minio:9000",
+      /https:\/\/gw-minio:9000/gi,
       "https://minio.garritwulf.com",
     );
     presignedUrl = presignedUrl.replace(
-      "http://minio:9000",
+      /http:\/\/minio:9000/gi,
       "https://minio.garritwulf.com",
     );
     presignedUrl = presignedUrl.replace(
-      "https://minio:9000",
+      /https:\/\/minio:9000/gi,
       "https://minio.garritwulf.com",
     );
   } else {
     // Development: Replace Docker hostnames with localhost
     presignedUrl = presignedUrl.replace(
-      "http://minio:9000",
+      /http:\/\/minio:9000/gi,
       "http://localhost:9000",
     );
     presignedUrl = presignedUrl.replace(
-      "https://minio:9000",
+      /https:\/\/minio:9000/gi,
       "https://localhost:9000",
     );
     presignedUrl = presignedUrl.replace(
-      "http://GW-minio:9000",
+      /http:\/\/gw-minio:9000/gi,
       "http://localhost:9000",
     );
   }
