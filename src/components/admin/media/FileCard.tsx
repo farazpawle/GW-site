@@ -52,17 +52,11 @@ export default function FileCard({
       {/* Image Preview or File Icon */}
       {file.isImage ? (
         <div className="relative w-full h-full">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={imageUrl}
             alt={getFileName(file.key)}
-            fill
-            className="object-cover"
-            sizes={
-              isCompact
-                ? "(max-width: 640px) 25vw, (max-width: 768px) 12.5vw, (max-width: 1024px) 10vw, (max-width: 1280px) 8vw, 8vw"
-                : "(max-width: 640px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 20vw, (max-width: 1280px) 16vw, 12vw"
-            }
-            unoptimized
+            className="w-full h-full object-cover"
           />
         </div>
       ) : (
