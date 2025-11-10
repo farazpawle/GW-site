@@ -6,6 +6,7 @@
  *
  * Creates (if missing):
  * - Home, About, Contact, Products pages
+ * - Privacy Policy & Terms of Service pages (legal)
  * - Navigation menu items
  * - Homepage sections (hero, brand story, categories, etc.)
  *
@@ -16,6 +17,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { PRIVACY_CONTENT, TERMS_CONTENT } from "./legal-content";
 
 const prisma = new PrismaClient();
 
@@ -72,6 +74,42 @@ const DEFAULT_PAGES = [
     itemsPerPage: 12,
     published: true,
     isPermanent: true,
+  },
+  {
+    slug: "privacy",
+    title: "Privacy Policy",
+    pageType: "static" as const,
+    description:
+      "Privacy Policy for Garrit & Wulf Auto Parts. Learn how we collect, use, and protect your personal information.",
+    metaTitle: "Privacy Policy | Garrit & Wulf",
+    metaDesc:
+      "Privacy Policy for Garrit & Wulf Auto Parts. Learn how we collect, use, and protect your personal information.",
+    content: PRIVACY_CONTENT,
+    published: true,
+    isPermanent: true,
+    groupType: "all" as const,
+    groupValues: {},
+    layout: "grid" as const,
+    sortBy: "name" as const,
+    itemsPerPage: 12,
+  },
+  {
+    slug: "terms",
+    title: "Terms of Service",
+    pageType: "static" as const,
+    description:
+      "Terms of Service for Garrit & Wulf Auto Parts. Read our terms and conditions for using our website and services.",
+    metaTitle: "Terms of Service | Garrit & Wulf",
+    metaDesc:
+      "Terms of Service for Garrit & Wulf Auto Parts. Read our terms and conditions for using our website and services.",
+    content: TERMS_CONTENT,
+    published: true,
+    isPermanent: true,
+    groupType: "all" as const,
+    groupValues: {},
+    layout: "grid" as const,
+    sortBy: "name" as const,
+    itemsPerPage: 12,
   },
 ];
 

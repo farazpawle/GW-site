@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Oswald, Aclonica } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
-import { getSetting } from "@/lib/settings/settings-manager";
+import {
+  getSetting,
+  getMediaSettingUrl,
+} from "@/lib/settings/settings-manager";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import GoogleTagManager from "@/components/analytics/GoogleTagManager";
 import WebVitals from "@/components/analytics/WebVitals";
@@ -49,12 +52,10 @@ export async function generateMetadata(): Promise<Metadata> {
     (await getSetting("seo_og_image")) || "/images/og-image.jpg";
   const siteName = (await getSetting("site_name")) || "Garrit & Wulf";
 
-  // Fetch favicon settings
-  const faviconIco = await getSetting("favicon_ico");
-  const favicon16 = await getSetting("favicon_16");
-  const favicon32 = await getSetting("favicon_32");
-  const favicon192 = await getSetting("favicon_192");
-  const appleTouchIcon = await getSetting("apple_touch_icon");
+  // Fetch favicon settings - use getMediaSettingUrl to get proper URLs
+  const faviconIco = await getMediaSettingUrl("favicon_ico");
+  const favicon16 = await getMediaSettingUrl("favicon_16");
+  const favicon32 = await getMediaSettingUrl("favicon_32");
 
   // Build icons array
   const icons: Metadata["icons"] = [];
@@ -78,23 +79,6 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "image/png",
       sizes: "32x32",
       url: favicon32,
-    });
-  }
-
-  if (favicon192) {
-    icons.push({
-      rel: "icon",
-      type: "image/png",
-      sizes: "192x192",
-      url: favicon192,
-    });
-  }
-
-  if (appleTouchIcon) {
-    icons.push({
-      rel: "apple-touch-icon",
-      sizes: "180x180",
-      url: appleTouchIcon,
     });
   }
 
