@@ -1,13 +1,21 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { PageSection } from '@/types/page-section';
-import { Eye, EyeOff, Edit, Trash2, GripVertical, Loader2, Lock } from 'lucide-react';
-import HeroSectionEditor from './section-editors/HeroSectionEditor';
-import BrandStorySectionEditor from './section-editors/BrandStorySectionEditor';
-import CarouselSectionEditor from './section-editors/CarouselSectionEditor';
-import CategoriesSectionEditor from './section-editors/CategoriesSectionEditor';
-import PrecisionMfgSectionEditor from './section-editors/PrecisionMfgSectionEditor';
+import { useEffect, useState } from "react";
+import { PageSection } from "@/types/page-section";
+import {
+  Eye,
+  EyeOff,
+  Edit,
+  Trash2,
+  GripVertical,
+  Loader2,
+  Lock,
+} from "lucide-react";
+import HeroSectionEditor from "./section-editors/HeroSectionEditor";
+import BrandStorySectionEditor from "./section-editors/BrandStorySectionEditor";
+import CarouselSectionEditor from "./section-editors/CarouselSectionEditor";
+import CategoriesSectionEditor from "./section-editors/CategoriesSectionEditor";
+import PrecisionMfgSectionEditor from "./section-editors/PrecisionMfgSectionEditor";
 import {
   DndContext,
   closestCenter,
@@ -16,27 +24,33 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // Section type labels
 const SECTION_LABELS: Record<string, string> = {
-  hero: 'Hero Section',
-  brandStory: 'Brand Story',
-  carousel: 'Brand Carousel',
-  categories: 'Categories',
-  precisionMfg: 'Precision Manufacturing',
+  hero: "Hero Section",
+  brandStory: "Brand Story",
+  carousel: "Brand Carousel",
+  categories: "Categories",
+  precisionMfg: "Precision Manufacturing",
 };
 
 // Sortable section item component
-function SortableSection({ section, onEdit, onToggleVisibility, onDelete, canEdit }: {
+function SortableSection({
+  section,
+  onEdit,
+  onToggleVisibility,
+  onDelete,
+  canEdit,
+}: {
   section: PageSection;
   onEdit: (section: PageSection) => void;
   onToggleVisibility: (section: PageSection) => void;
@@ -64,7 +78,7 @@ function SortableSection({ section, onEdit, onToggleVisibility, onDelete, canEdi
       style={style}
       className={`
         bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4
-        ${!section.visible ? 'opacity-60' : ''}
+        ${!section.visible ? "opacity-60" : ""}
       `}
     >
       <div className="flex items-center gap-4">
@@ -74,11 +88,11 @@ function SortableSection({ section, onEdit, onToggleVisibility, onDelete, canEdi
           {...(canEdit ? listeners : {})}
           disabled={!canEdit}
           className={`${
-            canEdit 
-              ? 'cursor-grab active:cursor-grabbing text-gray-400 hover:text-white' 
-              : 'cursor-not-allowed text-gray-600 opacity-50'
+            canEdit
+              ? "cursor-grab active:cursor-grabbing text-gray-400 hover:text-white"
+              : "cursor-not-allowed text-gray-600 opacity-50"
           }`}
-          title={!canEdit ? 'No permission to reorder' : 'Drag to reorder'}
+          title={!canEdit ? "No permission to reorder" : "Drag to reorder"}
         >
           {canEdit ? <GripVertical size={20} /> : <Lock size={20} />}
         </button>
@@ -86,7 +100,9 @@ function SortableSection({ section, onEdit, onToggleVisibility, onDelete, canEdi
         {/* Section Info */}
         <div className="flex-1">
           <h3 className="text-white font-semibold">
-            {section.name || SECTION_LABELS[section.sectionType] || section.sectionType}
+            {section.name ||
+              SECTION_LABELS[section.sectionType] ||
+              section.sectionType}
           </h3>
           {section.name && (
             <p className="text-xs text-gray-500 italic">
@@ -94,7 +110,8 @@ function SortableSection({ section, onEdit, onToggleVisibility, onDelete, canEdi
             </p>
           )}
           <p className="text-sm text-gray-400">
-            Position: {section.position} • {section.visible ? 'Visible' : 'Hidden'}
+            Position: {section.position} •{" "}
+            {section.visible ? "Visible" : "Hidden"}
           </p>
         </div>
 
@@ -104,16 +121,26 @@ function SortableSection({ section, onEdit, onToggleVisibility, onDelete, canEdi
           <button
             onClick={() => {
               if (!canEdit) {
-                alert('⛔ Access Denied\n\nYou do not have permission to edit homepage sections.\n\nMissing permission: homepage.edit');
+                alert(
+                  "⛔ Access Denied\n\nYou do not have permission to edit homepage sections.\n\nMissing permission: homepage.edit",
+                );
                 return;
               }
               onToggleVisibility(section);
             }}
             disabled={!canEdit}
             className={`p-2 rounded transition-colors ${
-              canEdit ? 'hover:bg-[#2a2a2a] cursor-pointer' : 'opacity-50 cursor-not-allowed'
+              canEdit
+                ? "hover:bg-[#2a2a2a] cursor-pointer"
+                : "opacity-50 cursor-not-allowed"
             }`}
-            title={!canEdit ? 'No permission to edit' : section.visible ? 'Hide section' : 'Show section'}
+            title={
+              !canEdit
+                ? "No permission to edit"
+                : section.visible
+                  ? "Hide section"
+                  : "Show section"
+            }
           >
             {!canEdit ? (
               <Lock size={18} className="text-gray-500" />
@@ -128,16 +155,20 @@ function SortableSection({ section, onEdit, onToggleVisibility, onDelete, canEdi
           <button
             onClick={() => {
               if (!canEdit) {
-                alert('⛔ Access Denied\n\nYou do not have permission to edit homepage sections.\n\nMissing permission: homepage.edit');
+                alert(
+                  "⛔ Access Denied\n\nYou do not have permission to edit homepage sections.\n\nMissing permission: homepage.edit",
+                );
                 return;
               }
               onEdit(section);
             }}
             disabled={!canEdit}
             className={`p-2 rounded transition-colors ${
-              canEdit ? 'hover:bg-[#2a2a2a] cursor-pointer' : 'opacity-50 cursor-not-allowed'
+              canEdit
+                ? "hover:bg-[#2a2a2a] cursor-pointer"
+                : "opacity-50 cursor-not-allowed"
             }`}
-            title={!canEdit ? 'No permission to edit' : 'Edit section'}
+            title={!canEdit ? "No permission to edit" : "Edit section"}
           >
             {!canEdit ? (
               <Lock size={18} className="text-gray-500" />
@@ -150,16 +181,20 @@ function SortableSection({ section, onEdit, onToggleVisibility, onDelete, canEdi
           <button
             onClick={() => {
               if (!canEdit) {
-                alert('⛔ Access Denied\n\nYou do not have permission to delete homepage sections.\n\nMissing permission: homepage.edit');
+                alert(
+                  "⛔ Access Denied\n\nYou do not have permission to delete homepage sections.\n\nMissing permission: homepage.edit",
+                );
                 return;
               }
               onDelete(section);
             }}
             disabled={!canEdit}
             className={`p-2 rounded transition-colors ${
-              canEdit ? 'hover:bg-[#2a2a2a] cursor-pointer' : 'opacity-50 cursor-not-allowed'
+              canEdit
+                ? "hover:bg-[#2a2a2a] cursor-pointer"
+                : "opacity-50 cursor-not-allowed"
             }`}
-            title={!canEdit ? 'No permission to edit' : 'Delete section'}
+            title={!canEdit ? "No permission to edit" : "Delete section"}
           >
             {!canEdit ? (
               <Lock size={18} className="text-gray-500" />
@@ -179,7 +214,9 @@ export default function HomepageCMSManager() {
   const [pageId, setPageId] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [editingSection, setEditingSection] = useState<PageSection | null>(null);
+  const [editingSection, setEditingSection] = useState<PageSection | null>(
+    null,
+  );
   const [editorType, setEditorType] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);
 
@@ -187,7 +224,7 @@ export default function HomepageCMSManager() {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // Fetch user permissions and homepage sections
@@ -195,22 +232,23 @@ export default function HomepageCMSManager() {
     async function fetchData() {
       try {
         // Fetch user permissions with cache-busting
-        const userRes = await fetch('/api/auth/me?t=' + Date.now(), {
-          cache: 'no-store',
+        const userRes = await fetch("/api/auth/me?t=" + Date.now(), {
+          cache: "no-store",
           headers: {
-            'Cache-Control': 'no-cache',
+            "Cache-Control": "no-cache",
           },
         });
         const userData = await userRes.json();
-        
+
         if (userData.success && userData.data.permissions) {
           // Check if user has homepage.edit permission
-          const hasEditPermission = userData.data.permissions.includes('homepage.edit') || 
-                                    userData.data.permissions.includes('homepage.*');
+          const hasEditPermission =
+            userData.data.permissions.includes("homepage.edit") ||
+            userData.data.permissions.includes("homepage.*");
           setCanEdit(hasEditPermission);
-          
+
           // Log for debugging
-          console.log('[HomepageCMS] User permissions loaded:', {
+          console.log("[HomepageCMS] User permissions loaded:", {
             role: userData.data.role,
             hasEditPermission,
             totalPermissions: userData.data.permissions.length,
@@ -218,23 +256,91 @@ export default function HomepageCMSManager() {
         }
 
         // First, find the homepage
-        const pagesRes = await fetch('/api/admin/pages?search=home&limit=1');
+        console.log("[HomepageCMS] Fetching homepage...");
+        const pagesRes = await fetch("/api/admin/pages?search=home&limit=1");
+
+        if (!pagesRes.ok) {
+          console.error(
+            "[HomepageCMS] Failed to fetch pages:",
+            pagesRes.status,
+            pagesRes.statusText,
+          );
+          return;
+        }
+
         const pagesData = await pagesRes.json();
-        
+        console.log("[HomepageCMS] Pages API response:", {
+          hasPages: !!pagesData.pages,
+          pagesCount: pagesData.pages?.length || 0,
+          firstPage: pagesData.pages?.[0]
+            ? {
+                id: pagesData.pages[0].id,
+                title: pagesData.pages[0].title,
+                slug: pagesData.pages[0].slug,
+              }
+            : null,
+        });
+
         if (pagesData.pages && pagesData.pages.length > 0) {
           const homepage = pagesData.pages[0];
           setPageId(homepage.id);
+          console.log("[HomepageCMS] Homepage found:", homepage.id);
 
           // Fetch sections for this page
-          const sectionsRes = await fetch(`/api/admin/page-sections?pageId=${homepage.id}`);
+          console.log("[HomepageCMS] Fetching sections for page:", homepage.id);
+          const sectionsRes = await fetch(
+            `/api/admin/page-sections?pageId=${homepage.id}`,
+          );
+
+          if (!sectionsRes.ok) {
+            console.error(
+              "[HomepageCMS] Failed to fetch sections:",
+              sectionsRes.status,
+              sectionsRes.statusText,
+            );
+            return;
+          }
+
           const sectionsData = await sectionsRes.json();
-          
+          console.log("[HomepageCMS] Sections API response:", {
+            success: sectionsData.success,
+            sectionsCount: sectionsData.data?.length || 0,
+            sections:
+              sectionsData.data?.map(
+                (s: {
+                  id: string;
+                  sectionType: string;
+                  enabled: boolean;
+                  order: number;
+                  position?: number;
+                }) => ({
+                  id: s.id,
+                  type: s.sectionType,
+                  position: s.position,
+                }),
+              ) || [],
+          });
+
           if (sectionsData.success) {
             setSections(sectionsData.data || []);
+            console.log(
+              "[HomepageCMS] Sections loaded into state:",
+              sectionsData.data?.length || 0,
+            );
+          } else {
+            console.warn(
+              "[HomepageCMS] Sections API returned success=false:",
+              sectionsData,
+            );
           }
+        } else {
+          console.warn(
+            "[HomepageCMS] No homepage found in search results!",
+            pagesData,
+          );
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
@@ -255,16 +361,16 @@ export default function HomepageCMSManager() {
     const newIndex = sections.findIndex((s) => s.id === over.id);
 
     const reorderedSections = arrayMove(sections, oldIndex, newIndex);
-    
+
     // Update local state immediately for smooth UX
     setSections(reorderedSections);
     setHasChanges(true);
 
     // Send reorder request to API
     try {
-      const response = await fetch('/api/admin/page-sections/reorder', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/admin/page-sections/reorder", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pageId,
           sections: reorderedSections.map((s, index) => ({
@@ -275,7 +381,7 @@ export default function HomepageCMSManager() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to reorder sections');
+        throw new Error("Failed to reorder sections");
       }
 
       const data = await response.json();
@@ -283,7 +389,7 @@ export default function HomepageCMSManager() {
         setSections(data.data);
       }
     } catch (error) {
-      console.error('Error reordering sections:', error);
+      console.error("Error reordering sections:", error);
       // Revert on error
       setSections(sections);
       setHasChanges(false);
@@ -294,25 +400,25 @@ export default function HomepageCMSManager() {
   async function handleToggleVisibility(section: PageSection) {
     try {
       const response = await fetch(`/api/admin/page-sections/${section.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           visible: !section.visible,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to toggle visibility');
+        throw new Error("Failed to toggle visibility");
       }
 
       const data = await response.json();
       if (data.success) {
-        setSections(sections.map(s => s.id === section.id ? data.data : s));
+        setSections(sections.map((s) => (s.id === section.id ? data.data : s)));
         setHasChanges(true);
       }
     } catch (error) {
-      console.error('Error toggling visibility:', error);
-      alert('Failed to toggle visibility');
+      console.error("Error toggling visibility:", error);
+      alert("Failed to toggle visibility");
     }
   }
 
@@ -330,34 +436,40 @@ export default function HomepageCMSManager() {
 
   // Handle save from editor
   function handleSaveSection(updatedSection: PageSection) {
-    setSections(sections.map(s => s.id === updatedSection.id ? updatedSection : s));
+    setSections(
+      sections.map((s) => (s.id === updatedSection.id ? updatedSection : s)),
+    );
     setHasChanges(true);
     closeEditor();
   }
 
   // Delete section
   async function handleDelete(section: PageSection) {
-    if (!confirm(`Are you sure you want to delete the ${SECTION_LABELS[section.sectionType]}?`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete the ${SECTION_LABELS[section.sectionType]}?`,
+      )
+    ) {
       return;
     }
 
     try {
       const response = await fetch(`/api/admin/page-sections/${section.id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete section');
+        throw new Error("Failed to delete section");
       }
 
       const data = await response.json();
       if (data.success) {
-        setSections(sections.filter(s => s.id !== section.id));
+        setSections(sections.filter((s) => s.id !== section.id));
         setHasChanges(true);
       }
     } catch (error) {
-      console.error('Error deleting section:', error);
-      alert('Failed to delete section');
+      console.error("Error deleting section:", error);
+      alert("Failed to delete section");
     }
   }
 
@@ -368,23 +480,25 @@ export default function HomepageCMSManager() {
     setPublishing(true);
     try {
       // Call Next.js revalidation API
-      const response = await fetch('/api/revalidate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/revalidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          path: '/',
+          path: "/",
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to publish changes');
+        throw new Error("Failed to publish changes");
       }
 
       setHasChanges(false);
-      alert('✅ Changes published successfully! The homepage has been updated.');
+      alert(
+        "✅ Changes published successfully! The homepage has been updated.",
+      );
     } catch (error) {
-      console.error('Error publishing changes:', error);
-      alert('❌ Failed to publish changes. Please try again.');
+      console.error("Error publishing changes:", error);
+      alert("❌ Failed to publish changes. Please try again.");
     } finally {
       setPublishing(false);
     }
@@ -401,7 +515,10 @@ export default function HomepageCMSManager() {
   if (!pageId) {
     return (
       <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-8 text-center">
-        <p className="text-gray-400">Homepage not found. Please create a page with slug &quot;home&quot; first.</p>
+        <p className="text-gray-400">
+          Homepage not found. Please create a page with slug &quot;home&quot;
+          first.
+        </p>
       </div>
     );
   }
@@ -412,11 +529,13 @@ export default function HomepageCMSManager() {
       <div className="flex items-center justify-between">
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex-1">
           <p className="text-sm text-blue-400">
-            💡 <strong>Tip:</strong> Drag and drop sections to reorder them. Use the eye icon to show/hide sections. 
-            Click the <strong>&quot;Publish Changes&quot;</strong> button to apply changes to the live website.
+            💡 <strong>Tip:</strong> Drag and drop sections to reorder them. Use
+            the eye icon to show/hide sections. Click the{" "}
+            <strong>&quot;Publish Changes&quot;</strong> button to apply changes
+            to the live website.
           </p>
         </div>
-        
+
         {hasChanges && canEdit && (
           <button
             onClick={handlePublish}
@@ -429,21 +548,20 @@ export default function HomepageCMSManager() {
                 Publishing...
               </>
             ) : (
-              <>
-                ✓ Publish Changes
-              </>
+              <>✓ Publish Changes</>
             )}
           </button>
         )}
-        
+
         {/* Show read-only banner if user can't edit */}
         {!canEdit && (
           <div className="ml-4 px-4 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex-shrink-0">
             <p className="text-sm text-yellow-400 flex items-center gap-2">
               <Lock size={16} />
               <span>
-                <strong>Read-only access</strong> - You can view but not edit homepage sections.
-                Missing permission: <code className="text-yellow-300">homepage.edit</code>
+                <strong>Read-only access</strong> - You can view but not edit
+                homepage sections. Missing permission:{" "}
+                <code className="text-yellow-300">homepage.edit</code>
               </span>
             </p>
           </div>
@@ -453,7 +571,9 @@ export default function HomepageCMSManager() {
       {/* Sections List */}
       {sections.length === 0 ? (
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-8 text-center">
-          <p className="text-gray-400">No sections found. Run the seed script to create default sections.</p>
+          <p className="text-gray-400">
+            No sections found. Run the seed script to create default sections.
+          </p>
           <code className="text-xs text-gray-500 mt-2 block">
             npx ts-node scripts/seed-homepage-sections.ts
           </code>
@@ -465,7 +585,7 @@ export default function HomepageCMSManager() {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={sections.map(s => s.id)}
+            items={sections.map((s) => s.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-3">
@@ -485,7 +605,7 @@ export default function HomepageCMSManager() {
       )}
 
       {/* Section Editors - Only render if user has edit permission */}
-      {canEdit && editingSection && editorType === 'hero' && (
+      {canEdit && editingSection && editorType === "hero" && (
         <HeroSectionEditor
           section={editingSection}
           isOpen={true}
@@ -494,7 +614,7 @@ export default function HomepageCMSManager() {
         />
       )}
 
-      {canEdit && editingSection && editorType === 'brandStory' && (
+      {canEdit && editingSection && editorType === "brandStory" && (
         <BrandStorySectionEditor
           section={editingSection}
           isOpen={true}
@@ -503,7 +623,7 @@ export default function HomepageCMSManager() {
         />
       )}
 
-      {canEdit && editingSection && editorType === 'carousel' && (
+      {canEdit && editingSection && editorType === "carousel" && (
         <CarouselSectionEditor
           section={editingSection}
           isOpen={true}
@@ -512,7 +632,7 @@ export default function HomepageCMSManager() {
         />
       )}
 
-      {canEdit && editingSection && editorType === 'categories' && (
+      {canEdit && editingSection && editorType === "categories" && (
         <CategoriesSectionEditor
           section={editingSection}
           isOpen={true}
@@ -521,7 +641,7 @@ export default function HomepageCMSManager() {
         />
       )}
 
-      {canEdit && editingSection && editorType === 'precisionMfg' && (
+      {canEdit && editingSection && editorType === "precisionMfg" && (
         <PrecisionMfgSectionEditor
           section={editingSection}
           isOpen={true}

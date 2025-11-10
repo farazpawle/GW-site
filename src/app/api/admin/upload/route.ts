@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { checkAdmin } from '@/lib/auth';
-import { uploadFile, generateUniqueFilename, FOLDERS } from '@/lib/minio';
-import { applyRateLimit, uploadRateLimiter } from '@/lib/rate-limit';
+import { NextRequest, NextResponse } from "next/server";
+import { checkAdmin } from "@/lib/auth";
+import { uploadFile, generateUniqueFilename, FOLDERS } from "@/lib/minio";
+import { applyRateLimit, uploadRateLimiter } from "@/lib/rate-limit";
 
 // Maximum file size: 5MB
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 // Allowed image types
-const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 /**
  * POST /api/admin/upload
@@ -23,33 +23,33 @@ export async function POST(request: NextRequest) {
     const user = await checkAdmin();
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
       );
     }
 
     // Parse form data
     const formData = await request.formData();
-    const files = formData.getAll('files') as File[];
+    const files = formData.getAll("files") as File[];
 
     // Validate: at least one file
     if (!files || files.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'No files provided' },
-        { status: 400 }
+        { success: false, error: "No files provided" },
+        { status: 400 },
       );
     }
 
     // Validate: maximum 10 files
     if (files.length > 10) {
       return NextResponse.json(
-        { success: false, error: 'Maximum 10 files allowed' },
-        { status: 400 }
+        { success: false, error: "Maximum 10 files allowed" },
+        { status: 400 },
       );
     }
 
     // Validate and upload each file
-    const uploadedUrls: string[] = [];
+    const uploadedKeys: string[] = [];
     const errors: string[] = [];
 
     for (let i = 0; i < files.length; i++) {
@@ -57,13 +57,17 @@ export async function POST(request: NextRequest) {
 
       // Validate file type
       if (!ALLOWED_TYPES.includes(file.type)) {
-        errors.push(`File ${i + 1} (${file.name}): Invalid file type. Only JPG, PNG, and WebP are allowed.`);
+        errors.push(
+          `File ${i + 1} (${file.name}): Invalid file type. Only JPG, PNG, and WebP are allowed.`,
+        );
         continue;
       }
 
       // Validate file size
       if (file.size > MAX_FILE_SIZE) {
-        errors.push(`File ${i + 1} (${file.name}): File size exceeds 5MB limit.`);
+        errors.push(
+          `File ${i + 1} (${file.name}): File size exceeds 5MB limit.`,
+        );
         continue;
       }
 
@@ -76,14 +80,10 @@ export async function POST(request: NextRequest) {
         const uniqueFilename = generateUniqueFilename(file.name);
         const key = `${FOLDERS.PRODUCTS}${uniqueFilename}`;
 
-        // Upload to MinIO single bucket
-        const url = await uploadFile(
-          key,
-          buffer,
-          file.type
-        );
+        // Upload to MinIO single bucket (now returns key, not URL)
+        const uploadedKey = await uploadFile(key, buffer, file.type);
 
-        uploadedUrls.push(url);
+        uploadedKeys.push(uploadedKey);
       } catch (uploadError) {
         console.error(`Error uploading file ${file.name}:`, uploadError);
         errors.push(`File ${i + 1} (${file.name}): Upload failed.`);
@@ -91,38 +91,44 @@ export async function POST(request: NextRequest) {
     }
 
     // If no files were successfully uploaded
-    if (uploadedUrls.length === 0) {
+    if (uploadedKeys.length === 0) {
       return NextResponse.json(
         {
           success: false,
-          error: 'No files were successfully uploaded',
+          error: "No files were successfully uploaded",
           details: errors,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Return success with URLs (and any errors if partial success)
+    // Generate presigned URLs for immediate display in UI
+    const { getPresignedUrl } = await import("@/lib/minio");
+    const presignedUrls = await Promise.all(
+      uploadedKeys.map((key) => getPresignedUrl(key, 3600)),
+    );
+
+    // Return success with both keys (for storage) and presigned URLs (for display)
     return NextResponse.json({
       success: true,
-      urls: uploadedUrls,
+      keys: uploadedKeys, // Store these in database
+      urls: presignedUrls, // Display these in UI
       ...(errors.length > 0 && { warnings: errors }),
     });
-
   } catch (error) {
-    console.error('Upload error:', error);
-    
+    console.error("Upload error:", error);
+
     // Handle authentication errors
-    if (error instanceof Error && error.message.includes('redirect')) {
+    if (error instanceof Error && error.message.includes("redirect")) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
       );
     }
 
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
+      { success: false, error: "Internal server error" },
+      { status: 500 },
     );
   }
 }

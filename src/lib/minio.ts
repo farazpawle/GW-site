@@ -1,41 +1,42 @@
-import { 
-  S3Client, 
-  PutObjectCommand, 
-  DeleteObjectCommand, 
-  GetObjectCommand, 
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
-  type ListObjectsV2CommandOutput 
-} from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+  type ListObjectsV2CommandOutput,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // MinIO S3-compatible storage client
 const s3Client = new S3Client({
-  endpoint: `http://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || '9000'}`,
-  region: process.env.MINIO_REGION || 'us-east-1',
+  endpoint: `http://${process.env.MINIO_ENDPOINT || "localhost"}:${process.env.MINIO_PORT || "9000"}`,
+  region: process.env.MINIO_REGION || "us-east-1",
   credentials: {
-    accessKeyId: process.env.MINIO_ACCESS_KEY || 'garritwulf_minio',
-    secretAccessKey: process.env.MINIO_SECRET_KEY || 'garritwulf_minio_secure_2025',
+    accessKeyId: process.env.MINIO_ACCESS_KEY || "garritwulf_minio",
+    secretAccessKey:
+      process.env.MINIO_SECRET_KEY || "garritwulf_minio_secure_2025",
   },
   forcePathStyle: true, // Required for MinIO
 });
 
 // Single bucket with folder structure
-export const BUCKET_NAME = 'garritwulf-media';
+export const BUCKET_NAME = "garritwulf-media";
 
 // Folder prefixes within the bucket
 export const FOLDERS = {
-  PRODUCTS: 'products/',
-  CATEGORIES: 'categories/',
-  GENERAL: 'general/',
-  ICONS: 'icons/', // For favicons and app icons
+  PRODUCTS: "products/",
+  CATEGORIES: "categories/",
+  GENERAL: "general/",
+  ICONS: "icons/", // For favicons and app icons
 } as const;
 
 // Legacy - for backward compatibility (DEPRECATED)
 export const BUCKETS = {
-  PRODUCT_IMAGES: 'product-images',
-  CATEGORY_IMAGES: 'category-images',
-  USER_UPLOADS: 'user-uploads',
+  PRODUCT_IMAGES: "product-images",
+  CATEGORY_IMAGES: "category-images",
+  USER_UPLOADS: "user-uploads",
 } as const;
 
 /**
@@ -43,12 +44,12 @@ export const BUCKETS = {
  * @param key - File path with folder prefix (e.g., 'products/brake-123.jpg')
  * @param file - File buffer or stream
  * @param contentType - MIME type (e.g., 'image/jpeg')
- * @returns Promise<string> - Public URL to access the file
+ * @returns Promise<string> - FILE KEY (not URL) - store this in database
  */
 export async function uploadFile(
   key: string,
   file: Buffer | Uint8Array | ReadableStream,
-  contentType: string
+  contentType: string,
 ): Promise<string> {
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,
@@ -59,8 +60,9 @@ export async function uploadFile(
 
   await s3Client.send(command);
 
-  // Return public URL
-  return `http://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || '9000'}/${BUCKET_NAME}/${key}`;
+  // ✅ RETURN ONLY THE KEY - Never return environment-specific URLs
+  // The key can be used to generate presigned URLs on-demand
+  return key;
 }
 
 /**
@@ -71,7 +73,7 @@ export async function uploadFileWithBucket(
   bucket: string,
   key: string,
   file: Buffer | Uint8Array | ReadableStream,
-  contentType: string
+  contentType: string,
 ): Promise<string> {
   const command = new PutObjectCommand({
     Bucket: bucket,
@@ -82,7 +84,8 @@ export async function uploadFileWithBucket(
 
   await s3Client.send(command);
 
-  return `http://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || '9000'}/${bucket}/${key}`;
+  // ✅ RETURN ONLY THE KEY for consistency with uploadFile()
+  return key;
 }
 
 /**
@@ -102,7 +105,10 @@ export async function deleteFile(key: string): Promise<void> {
  * Delete a file from MinIO (Legacy - with bucket parameter)
  * @deprecated Use deleteFile(key) instead
  */
-export async function deleteFileWithBucket(bucket: string, key: string): Promise<void> {
+export async function deleteFileWithBucket(
+  bucket: string,
+  key: string,
+): Promise<void> {
   const command = new DeleteObjectCommand({
     Bucket: bucket,
     Key: key,
@@ -115,11 +121,11 @@ export async function deleteFileWithBucket(bucket: string, key: string): Promise
  * Get a presigned URL for accessing a file (read-only)
  * @param key - File path with folder prefix
  * @param expiresIn - Expiration time in seconds (default: 3600 = 1 hour)
- * @returns Promise<string> - Presigned URL
+ * @returns Promise<string> - Presigned URL that works in browser (both dev and production)
  */
 export async function getPresignedUrl(
   key: string,
-  expiresIn: number = 3600
+  expiresIn: number = 3600,
 ): Promise<string> {
   const command = new GetObjectCommand({
     Bucket: BUCKET_NAME,
@@ -127,13 +133,65 @@ export async function getPresignedUrl(
   });
 
   let presignedUrl = await getSignedUrl(s3Client, command, { expiresIn });
-  
-  // ALWAYS replace 'minio' hostname with 'localhost' for browser access
-  // Docker internal hostnames don't work in browsers
-  presignedUrl = presignedUrl.replace('http://minio:9000', 'http://localhost:9000');
-  presignedUrl = presignedUrl.replace('https://minio:9000', 'https://localhost:9000');
-  
+
+  // ✅ Environment-aware URL transformation
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (isProduction) {
+    // Production: Replace any MinIO hostname with localhost for browser access
+    // The nginx proxy will handle routing to the correct container
+    presignedUrl = presignedUrl.replace(
+      "http://GW-minio:9000",
+      "http://localhost:9000",
+    );
+    presignedUrl = presignedUrl.replace(
+      "https://GW-minio:9000",
+      "https://localhost:9000",
+    );
+    presignedUrl = presignedUrl.replace(
+      "http://minio:9000",
+      "http://localhost:9000",
+    );
+    presignedUrl = presignedUrl.replace(
+      "https://minio:9000",
+      "https://localhost:9000",
+    );
+  } else {
+    // Development: Replace Docker hostnames with localhost
+    presignedUrl = presignedUrl.replace(
+      "http://minio:9000",
+      "http://localhost:9000",
+    );
+    presignedUrl = presignedUrl.replace(
+      "https://minio:9000",
+      "https://localhost:9000",
+    );
+    presignedUrl = presignedUrl.replace(
+      "http://GW-minio:9000",
+      "http://localhost:9000",
+    );
+  }
+
   return presignedUrl;
+}
+
+/**
+ * Get a browser-accessible URL for a file (accepts key or old URL format)
+ * @param keyOrUrl - Either a key (products/file.jpg) or full URL
+ * @returns Promise<string> - Presigned URL that works in browser
+ */
+export async function getPublicUrl(keyOrUrl: string): Promise<string> {
+  // If it's already a URL, extract the key
+  let key = keyOrUrl;
+  if (keyOrUrl.startsWith("http")) {
+    key = extractKeyFromUrl(keyOrUrl);
+    if (!key) {
+      throw new Error("Could not extract key from URL");
+    }
+  }
+
+  // Generate presigned URL
+  return await getPresignedUrl(key, 3600);
 }
 
 /**
@@ -162,11 +220,11 @@ export async function fileExists(key: string): Promise<boolean> {
 export function extractKeyFromUrl(url: string): string {
   try {
     const urlObj = new URL(url);
-    const pathParts = urlObj.pathname.split('/');
+    const pathParts = urlObj.pathname.split("/");
     // Remove bucket name (first part) and get the rest
-    return pathParts.slice(2).join('/');
+    return pathParts.slice(2).join("/");
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -186,8 +244,10 @@ export function getBucketFromUrl(): string {
  */
 export async function listObjects(
   prefix?: string,
-  maxKeys: number = 1000
-): Promise<Array<{ key: string; size: number; lastModified: Date; etag?: string }>> {
+  maxKeys: number = 1000,
+): Promise<
+  Array<{ key: string; size: number; lastModified: Date; etag?: string }>
+> {
   const command = new ListObjectsV2Command({
     Bucket: BUCKET_NAME,
     Prefix: prefix,
@@ -201,7 +261,7 @@ export async function listObjects(
   }
 
   return response.Contents.map((obj) => ({
-    key: obj.Key || '',
+    key: obj.Key || "",
     size: obj.Size || 0,
     lastModified: obj.LastModified || new Date(),
     etag: obj.ETag,
@@ -215,8 +275,10 @@ export async function listObjects(
 export async function listObjectsInBucket(
   bucket: string,
   prefix?: string,
-  maxKeys: number = 1000
-): Promise<Array<{ key: string; size: number; lastModified: Date; etag?: string }>> {
+  maxKeys: number = 1000,
+): Promise<
+  Array<{ key: string; size: number; lastModified: Date; etag?: string }>
+> {
   const command = new ListObjectsV2Command({
     Bucket: bucket,
     Prefix: prefix,
@@ -230,7 +292,7 @@ export async function listObjectsInBucket(
   }
 
   return response.Contents.map((obj) => ({
-    key: obj.Key || '',
+    key: obj.Key || "",
     size: obj.Size || 0,
     lastModified: obj.LastModified || new Date(),
     etag: obj.ETag,
@@ -243,7 +305,7 @@ export async function listObjectsInBucket(
  * @returns Promise<Object> - Object metadata
  */
 export async function getObjectMetadata(
-  key: string
+  key: string,
 ): Promise<{ size: number; contentType: string; lastModified: Date }> {
   const command = new HeadObjectCommand({
     Bucket: BUCKET_NAME,
@@ -254,7 +316,7 @@ export async function getObjectMetadata(
 
   return {
     size: response.ContentLength || 0,
-    contentType: response.ContentType || 'application/octet-stream',
+    contentType: response.ContentType || "application/octet-stream",
     lastModified: response.LastModified || new Date(),
   };
 }
@@ -266,8 +328,11 @@ export async function getObjectMetadata(
  */
 export function generateUniqueFilename(originalName: string): string {
   const timestamp = Date.now();
-  const ext = originalName.split('.').pop();
-  const nameWithoutExt = originalName.replace(`.${ext}`, '').toLowerCase().replace(/\s+/g, '-');
+  const ext = originalName.split(".").pop();
+  const nameWithoutExt = originalName
+    .replace(`.${ext}`, "")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
   return `${nameWithoutExt}-${timestamp}.${ext}`;
 }
 
@@ -278,15 +343,15 @@ export function generateUniqueFilename(originalName: string): string {
  * @returns string - Formatted string (e.g., "1.5 MB")
  */
 export function formatBytes(bytes: number, decimals: number = 2): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
 
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
 
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 }
 
 /**
@@ -295,7 +360,7 @@ export function formatBytes(bytes: number, decimals: number = 2): string {
  * @returns boolean - True if image
  */
 export function isImageFile(contentType: string): boolean {
-  return contentType.startsWith('image/');
+  return contentType.startsWith("image/");
 }
 
 export { s3Client };

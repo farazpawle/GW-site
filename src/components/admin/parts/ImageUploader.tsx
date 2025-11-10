@@ -1,16 +1,53 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { Upload, X, Loader2, FolderOpen } from 'lucide-react';
-import Image from 'next/image';
-import MediaPickerModal from '../media/MediaPickerModal';
-import type { MediaFile } from '@/types/media';
+import { useState, useRef, useEffect } from "react";
+import { Upload, X, Loader2, FolderOpen } from "lucide-react";
+import Image from "next/image";
+import MediaPickerModal from "../media/MediaPickerModal";
+import type { MediaFile } from "@/types/media";
 
 interface ImageUploaderProps {
-  value: string[]; // Array of image URLs
+  value: string[]; // Array of image keys or URLs
   onChange: (urls: string[]) => void;
   maxImages?: number;
   maxSizeMB?: number;
+}
+
+/**
+ * Helper function to check if a string is a MinIO key (not a full URL)
+ */
+function isMinIOKey(str: string): boolean {
+  return (
+    !str.startsWith("http://") &&
+    !str.startsWith("https://") &&
+    !str.startsWith("data:")
+  );
+}
+
+/**
+ * Helper function to convert keys to presigned URLs
+ */
+async function convertKeyToUrl(keyOrUrl: string): Promise<string> {
+  // If it's already a URL, return as is
+  if (!isMinIOKey(keyOrUrl)) {
+    return keyOrUrl;
+  }
+
+  // Convert key to presigned URL
+  try {
+    const response = await fetch(
+      `/api/media/url?key=${encodeURIComponent(keyOrUrl)}`,
+    );
+    const data = await response.json();
+    if (data.success && data.url) {
+      return data.url;
+    }
+  } catch (error) {
+    console.error("Failed to convert key to URL:", error);
+  }
+
+  // Fallback: return the key as is
+  return keyOrUrl;
 }
 
 export default function ImageUploader({
@@ -21,28 +58,50 @@ export default function ImageUploader({
 }: ImageUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
+  const [displayUrls, setDisplayUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_SIZE_BYTES = maxSizeMB * 1024 * 1024;
-  const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+  // Convert keys to presigned URLs for display
+  useEffect(() => {
+    const loadUrls = async () => {
+      if (value.length === 0) {
+        setDisplayUrls([]);
+        return;
+      }
+
+      const urls = await Promise.all(value.map(convertKeyToUrl));
+      setDisplayUrls(urls);
+    };
+
+    loadUrls();
+  }, [value]);
 
   // Validate files
-  const validateFiles = (files: File[]): { valid: File[]; errors: string[] } => {
+  const validateFiles = (
+    files: File[],
+  ): { valid: File[]; errors: string[] } => {
     const errors: string[] = [];
     const valid: File[] = [];
 
     // Check total count
     if (value.length + files.length > maxImages) {
-      errors.push(`Maximum ${maxImages} images allowed. You can upload ${maxImages - value.length} more.`);
+      errors.push(
+        `Maximum ${maxImages} images allowed. You can upload ${maxImages - value.length} more.`,
+      );
       return { valid, errors };
     }
 
     files.forEach((file) => {
       // Check file type
       if (!ALLOWED_TYPES.includes(file.type)) {
-        errors.push(`${file.name}: Invalid file type. Only JPG, PNG, and WebP are allowed.`);
+        errors.push(
+          `${file.name}: Invalid file type. Only JPG, PNG, and WebP are allowed.`,
+        );
         return;
       }
 
@@ -61,36 +120,38 @@ export default function ImageUploader({
   // Upload files to server
   const uploadFiles = async (files: File[]) => {
     setIsUploading(true);
-    setError('');
+    setError("");
 
     try {
       const formData = new FormData();
       files.forEach((file) => {
-        formData.append('files', file);
+        formData.append("files", file);
       });
 
-      const response = await fetch('/api/admin/upload', {
-        method: 'POST',
+      const response = await fetch("/api/admin/upload", {
+        method: "POST",
         body: formData,
       });
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Upload failed');
+        throw new Error(data.error || "Upload failed");
       }
 
-      // Add new URLs to existing ones
-      const newUrls = [...value, ...data.urls];
+      // ✅ Store keys (not URLs) in the database
+      // The API now returns both keys (for storage) and urls (for display)
+      const newKeys = data.keys || data.urls; // Fallback to urls for backward compatibility
+      const newUrls = [...value, ...newKeys];
       onChange(newUrls);
 
       // Show warnings if any
       if (data.warnings && data.warnings.length > 0) {
-        setError(data.warnings.join(' '));
+        setError(data.warnings.join(" "));
       }
     } catch (err) {
-      console.error('Upload error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to upload images');
+      console.error("Upload error:", err);
+      setError(err instanceof Error ? err.message : "Failed to upload images");
     } finally {
       setIsUploading(false);
     }
@@ -104,7 +165,7 @@ export default function ImageUploader({
     const { valid, errors } = validateFiles(fileArray);
 
     if (errors.length > 0) {
-      setError(errors.join(' '));
+      setError(errors.join(" "));
       return;
     }
 
@@ -147,7 +208,7 @@ export default function ImageUploader({
       setError(`Maximum ${maxImages} images allowed`);
       return;
     }
-    
+
     const newUrls = [...value, file.url];
     onChange(newUrls);
     setIsMediaPickerOpen(false);
@@ -165,9 +226,10 @@ export default function ImageUploader({
           className={`
             flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl
             border-2 border-dashed font-medium transition-all
-            ${isUploading || value.length >= maxImages
-              ? 'border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed'
-              : 'border-[#2a2a2a] bg-[#1a1a1a] text-white hover:border-brand-maroon hover:bg-brand-maroon/5'
+            ${
+              isUploading || value.length >= maxImages
+                ? "border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed"
+                : "border-[#2a2a2a] bg-[#1a1a1a] text-white hover:border-brand-maroon hover:bg-brand-maroon/5"
             }
           `}
         >
@@ -192,9 +254,10 @@ export default function ImageUploader({
           className={`
             flex-1 flex items-center justify-center gap-3 px-6 py-4 rounded-xl
             border-2 font-medium transition-all
-            ${isUploading || value.length >= maxImages
-              ? 'border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed'
-              : 'border-brand-maroon/50 bg-brand-maroon/10 text-brand-maroon hover:bg-brand-maroon/20 hover:border-brand-maroon'
+            ${
+              isUploading || value.length >= maxImages
+                ? "border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed"
+                : "border-brand-maroon/50 bg-brand-maroon/10 text-brand-maroon hover:bg-brand-maroon/20 hover:border-brand-maroon"
             }
           `}
         >
@@ -211,11 +274,12 @@ export default function ImageUploader({
         className={`
           relative border-2 border-dashed rounded-xl p-6 text-center
           transition-all
-          ${isDragging 
-            ? 'border-brand-maroon bg-brand-maroon/10' 
-            : 'border-[#2a2a2a] bg-[#0a0a0a]'
+          ${
+            isDragging
+              ? "border-brand-maroon bg-brand-maroon/10"
+              : "border-[#2a2a2a] bg-[#0a0a0a]"
           }
-          ${isUploading || value.length >= maxImages ? 'pointer-events-none opacity-40' : ''}
+          ${isUploading || value.length >= maxImages ? "pointer-events-none opacity-40" : ""}
         `}
       >
         <input
@@ -235,8 +299,7 @@ export default function ImageUploader({
             <p className="text-gray-400 text-sm mb-1">
               {value.length >= maxImages
                 ? `Maximum ${maxImages} images reached`
-                : 'Or drag and drop files here'
-              }
+                : "Or drag and drop files here"}
             </p>
             <p className="text-xs text-gray-500">
               JPG, PNG, or WebP (max {maxSizeMB}MB each)
@@ -259,9 +322,9 @@ export default function ImageUploader({
       )}
 
       {/* Image Preview Grid */}
-      {value.length > 0 && (
+      {displayUrls.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {value.map((url, index) => (
+          {displayUrls.map((url, index) => (
             <div
               key={index}
               className="relative group aspect-square rounded-lg overflow-hidden border border-[#2a2a2a] bg-[#1a1a1a]"
@@ -272,6 +335,7 @@ export default function ImageUploader({
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                unoptimized={url.includes("X-Amz-")} // Skip optimization for presigned URLs
               />
 
               {/* Remove Button */}
