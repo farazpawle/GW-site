@@ -67,8 +67,8 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Install ONLY production dependencies and Prisma CLI for migrations
-RUN npm ci --only=production && \
+# Install ONLY production dependencies and Prisma CLI for migrations (skip husky)
+RUN npm ci --only=production --ignore-scripts && \
     npx prisma generate && \
     npm cache clean --force
 
