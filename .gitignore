@@ -35,6 +35,7 @@ yarn-error.log*
 .env.*
 !.env.example
 !.env.local.example
+!.env.production
 
 # vercel
 .vercel
@@ -50,15 +51,18 @@ next-env.d.ts
 /.clerk/
 
 # Documentation and AI context (not needed in production)
-/docs/
+/docs/*
+!/docs/06-Deployment/
 /memory-bank/
 /.github/Prompt/
 /.github/copilot-instructions.md
 /.github/prompts/
 
-# Development/Testing Scripts (keep only setup scripts)
+# Development/Testing Scripts (keep deployment scripts)
 /scripts/*
 !/scripts/setup/
+!/scripts/deploy-simple.sh
+# NOTE: setup-vps-env.sh contains production secrets - only exists on VPS
 
 # Editor/IDE temporary files
 .cursor/

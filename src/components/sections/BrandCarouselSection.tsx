@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import AutoScroll from "embla-carousel-auto-scroll";
 
@@ -9,117 +9,213 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import { CarouselSectionConfig } from '@/types/page-section';
-import { applyTextStyles } from '@/lib/utils/typography';
+import { CarouselSectionConfig } from "@/types/page-section";
+import { applyTextStyles } from "@/lib/utils/typography";
 
 interface BrandCarouselSectionProps {
   config: CarouselSectionConfig;
   className?: string;
 }
 
-const BrandCarouselSection = ({
-  config,
-}: BrandCarouselSectionProps) => {
+interface LogoWithUrl {
+  id: string;
+  image: string;
+  url: string; // Presigned URL
+  order: number;
+  altText: string;
+  isActive: boolean;
+  description: string;
+}
+
+const BrandCarouselSection = ({ config }: BrandCarouselSectionProps) => {
   const carouselRef = useRef(null);
-  
+  const [logosWithUrls, setLogosWithUrls] = useState<LogoWithUrl[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   // Filter only active logos and sort by order
   const activeLogos = config.logos
-    .filter(logo => logo.isActive !== false)
+    .filter((logo) => logo.isActive !== false)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
-  
+
+  // Fetch presigned URLs for MinIO keys
+  useEffect(() => {
+    const fetchPresignedUrls = async () => {
+      try {
+        // Extract keys from logo images
+        const keys = activeLogos
+          .map((logo) => {
+            // If it's already a full URL (external), return as-is
+            if (
+              logo.image.startsWith("http://") ||
+              logo.image.startsWith("https://")
+            ) {
+              return null;
+            }
+            return logo.image; // It's a MinIO key
+          })
+          .filter(Boolean) as string[];
+
+        if (keys.length === 0) {
+          // All logos are external URLs
+          setLogosWithUrls(
+            activeLogos.map((logo) => ({ ...logo, url: logo.image })),
+          );
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch presigned URLs
+        const response = await fetch("/api/media/url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keys }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch presigned URLs");
+        }
+
+        const { urls } = await response.json();
+
+        // Map URLs back to logos
+        let urlIndex = 0;
+        const logosWithPresignedUrls = activeLogos.map((logo) => {
+          if (
+            logo.image.startsWith("http://") ||
+            logo.image.startsWith("https://")
+          ) {
+            return { ...logo, url: logo.image };
+          }
+          return { ...logo, url: urls[urlIndex++] };
+        });
+
+        setLogosWithUrls(logosWithPresignedUrls);
+      } catch (error) {
+        console.error("Error fetching presigned URLs for carousel:", error);
+        // Fallback: use original image values
+        setLogosWithUrls(
+          activeLogos.map((logo) => ({ ...logo, url: logo.image })),
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPresignedUrls();
+  }, [config.logos]);
+
   // Duplicate logos for seamless infinite loop
-  const duplicatedLogos = [...activeLogos, ...activeLogos, ...activeLogos];
+  const duplicatedLogos = [
+    ...logosWithUrls,
+    ...logosWithUrls,
+    ...logosWithUrls,
+  ];
+
+  if (isLoading) {
+    return (
+      <section className="relative py-20 md:py-28 bg-[#0d0d0d] overflow-hidden">
+        <div className="container max-w-7xl mx-auto px-4 text-center">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-800 rounded w-64 mx-auto mb-4"></div>
+            <div className="h-4 bg-gray-800 rounded w-96 mx-auto"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative py-20 md:py-28 bg-[#0d0d0d] overflow-hidden">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(circle at 2px 2px, rgb(59, 130, 246) 1px, transparent 0)',
-          backgroundSize: '40px 40px'
-        }}></div>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 2px 2px, rgb(59, 130, 246) 1px, transparent 0)",
+            backgroundSize: "40px 40px",
+          }}
+        ></div>
       </div>
-      
+
       {/* Content */}
       <div className="relative z-10 container max-w-7xl mx-auto px-4">
         {/* Header Section */}
         <div className="text-center mb-16">
           {/* Main Heading */}
-          <h2 
+          <h2
             className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 leading-tight px-4"
             style={applyTextStyles(config.headingStyle)}
           >
             {config.heading}
           </h2>
-          
+
           {/* Description */}
-          <p 
+          <p
             className="text-gray-400 text-base md:text-lg lg:text-xl max-w-3xl mx-auto leading-relaxed px-4"
             style={applyTextStyles(config.descriptionStyle)}
           >
-            {config.description || 'Collaborating with world-class organizations to deliver excellence in precision manufacturing'}
+            {config.description ||
+              "Collaborating with world-class organizations to deliver excellence in precision manufacturing"}
           </p>
         </div>
 
         {/* Carousel Section */}
         <div className="relative mt-12">
-          <div 
-            ref={carouselRef}
-            className="relative"
-          >
+          <div ref={carouselRef} className="relative">
             <Carousel
-              opts={{ 
+              opts={{
                 loop: true,
                 align: "start",
                 dragFree: true,
               }}
-              plugins={[AutoScroll({ 
-                playOnInit: true, 
-                speed: config.speed || 0.5, 
-                stopOnInteraction: false,
-                stopOnMouseEnter: true,
-                stopOnFocusIn: false
-              })]}
+              plugins={[
+                AutoScroll({
+                  playOnInit: true,
+                  speed: config.speed || 0.5,
+                  stopOnInteraction: false,
+                  stopOnMouseEnter: true,
+                  stopOnFocusIn: false,
+                }),
+              ]}
             >
               <CarouselContent className="-ml-4 md:-ml-6">
                 {duplicatedLogos.map((logo, idx) => {
                   return (
-                  <CarouselItem
-                    key={`${logo.id}-${idx}`}
-                    className="pl-4 md:pl-6 basis-1/2 md:basis-1/3 lg:basis-1/5"
-                  >
-                    <div 
-                      className="group relative h-32 flex items-center justify-center overflow-hidden rounded-2xl"
+                    <CarouselItem
+                      key={`${logo.id}-${idx}`}
+                      className="pl-4 md:pl-6 basis-1/2 md:basis-1/3 lg:basis-1/5"
                     >
-                      {/* Card Background */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-gray-900/50 to-gray-900/30 backdrop-blur-sm"></div>
-                      
-                      {/* Hover Glow Effect */}
-                      <div className="absolute inset-0 bg-brand-blue/0 group-hover:bg-brand-blue/5 blur-xl transition-all duration-500"></div>
-                      
-                      {/* Content Container - Full Size */}
-                      <div className="relative z-10 w-full h-full flex items-center justify-center">
-                        <Image
-                          src={logo.image}
-                          alt={logo.altText || logo.description}
-                          fill
-                          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                          className="object-cover transition-all duration-500 group-hover:scale-105"
-                          unoptimized
-                        />
+                      <div className="group relative h-32 flex items-center justify-center overflow-hidden rounded-2xl">
+                        {/* Card Background */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/50 to-gray-900/30 backdrop-blur-sm"></div>
+
+                        {/* Hover Glow Effect */}
+                        <div className="absolute inset-0 bg-brand-blue/0 group-hover:bg-brand-blue/5 blur-xl transition-all duration-500"></div>
+
+                        {/* Content Container - Full Size */}
+                        <div className="relative z-10 w-full h-full flex items-center justify-center">
+                          <Image
+                            src={logo.url}
+                            alt={logo.altText || logo.description}
+                            fill
+                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                            className="object-cover transition-all duration-500 group-hover:scale-105"
+                            unoptimized
+                          />
+                        </div>
+
+                        {/* Subtle shine effect on hover */}
+                        <div className="absolute inset-0 overflow-hidden">
+                          <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+                        </div>
                       </div>
-                      
-                      {/* Subtle shine effect on hover */}
-                      <div className="absolute inset-0 overflow-hidden">
-                        <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-                      </div>
-                    </div>
-                  </CarouselItem>
+                    </CarouselItem>
                   );
                 })}
               </CarouselContent>
             </Carousel>
-            
+
             {/* Gradient Fade Overlays */}
             <div className="absolute inset-y-0 left-0 w-20 md:w-32 bg-gradient-to-r from-[#0d0d0d] to-transparent pointer-events-none z-20"></div>
             <div className="absolute inset-y-0 right-0 w-20 md:w-32 bg-gradient-to-l from-[#0d0d0d] to-transparent pointer-events-none z-20"></div>
