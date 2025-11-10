@@ -40,6 +40,20 @@ export interface InitializationResult {
  * @returns Promise<InitializationResult>
  */
 export async function initializeApplication(): Promise<InitializationResult> {
+  // Skip initialization during build/CI
+  if (process.env.CI === "true") {
+    console.log("⚠️  CI environment detected - skipping initialization");
+    return {
+      success: true,
+      timestamp: new Date(),
+      results: {
+        minio: { success: true, message: "Skipped in CI" },
+        essentialData: { success: true, message: "Skipped in CI" },
+      },
+      errors: [],
+    };
+  }
+
   // Prevent concurrent initialization
   if (isInitializing) {
     console.log("⏳ Initialization already in progress, skipping...");
