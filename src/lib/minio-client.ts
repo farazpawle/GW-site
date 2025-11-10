@@ -4,6 +4,37 @@ const MINIO_INTERNAL_HOSTS = ["minio", "gw-minio", "localhost", "127.0.0.1"];
 
 const MINIO_HOST_KEYWORDS = ["minio"];
 
+export const MINIO_PUBLIC_FOLDERS = [
+  "products/",
+  "categories/",
+  "general/",
+  "icons/",
+] as const;
+
+const PUBLIC_FILENAME_PATTERN = /^[A-Za-z0-9._-]+$/;
+
+export function isAllowedPublicKey(key: string): boolean {
+  const sanitized = key.trim();
+
+  if (!sanitized || sanitized.startsWith("/")) {
+    return false;
+  }
+
+  if (sanitized.includes("..")) {
+    return false;
+  }
+
+  if (sanitized.includes("/")) {
+    return MINIO_PUBLIC_FOLDERS.some((prefix) => sanitized.startsWith(prefix));
+  }
+
+  return PUBLIC_FILENAME_PATTERN.test(sanitized);
+}
+
+export function buildPublicMediaUrl(key: string): string {
+  return `/api/media/public?key=${encodeURIComponent(key.trim())}`;
+}
+
 export interface MinioSourceResolution {
   key: string | null;
   url: string;

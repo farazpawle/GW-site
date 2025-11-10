@@ -5,6 +5,7 @@ import { Upload, X, Loader2, FolderOpen } from "lucide-react";
 import Image from "next/image";
 import MediaPickerModal from "../media/MediaPickerModal";
 import type { MediaFile } from "@/types/media";
+import { buildPublicMediaUrl } from "@/lib/minio-client";
 
 interface ImageUploaderProps {
   value: string[]; // Array of image keys or URLs
@@ -33,21 +34,7 @@ async function convertKeyToUrl(keyOrUrl: string): Promise<string> {
     return keyOrUrl;
   }
 
-  // Convert key to presigned URL
-  try {
-    const response = await fetch(
-      `/api/media/url?key=${encodeURIComponent(keyOrUrl)}`,
-    );
-    const data = await response.json();
-    if (data.success && data.url) {
-      return data.url;
-    }
-  } catch (error) {
-    console.error("Failed to convert key to URL:", error);
-  }
-
-  // Fallback: return the key as is
-  return keyOrUrl;
+  return buildPublicMediaUrl(keyOrUrl);
 }
 
 export default function ImageUploader({

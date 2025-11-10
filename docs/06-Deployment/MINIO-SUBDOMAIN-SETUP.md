@@ -63,9 +63,8 @@ nslookup minio.garritwulf.com
 
 3. **SSL Tab:**
    - **SSL Certificate:** Request a new SSL Certificate
-   - **Force SSL:** ✅
+     MinIO needs a public subdomain (`minio.garritwulf.com`) so the Next.js media proxy can reach objects and render carousel images in user browsers.
    - **HTTP/2 Support:** ✅
-   - **HSTS Enabled:** ✅
    - **Email:** `farazpawle@gmail.com`
    - **Agree to Let's Encrypt Terms:** ✅
 
@@ -81,28 +80,23 @@ nslookup minio.garritwulf.com
 
 ### Step 3: Test MinIO Access
 
+# Test Media Proxy Endpoint:
+
 **From VPS:**
 
-```bash
-# Test HTTPS access (should return 403 - bucket is private, which is correct)
-curl -I https://minio.garritwulf.com
+# Stream a file through the public media route
 
-# Should see:
-# HTTP/2 403
-# server: openresty
-```
+curl -I "http://localhost:3000/api/media/public?key=icons/favicon-1762781849354.ico"
+
+````
+# Response should be HTTP/1.1 200 with Cache-Control: public, max-age=31536000, immutable
 
 **Test Presigned URL:**
-
 ```bash
 # Generate a presigned URL from Next.js container
 docker exec GW-nextjs node -e "
 const { getPresignedUrl } = require('./src/lib/minio.ts');
 getPresignedUrl('icons/favicon-1762781849354.ico', 3600).then(console.log);
-"
-
-# Copy the URL and test in browser - should download the file
-```
 
 ---
 
@@ -132,7 +126,7 @@ if (isProduction) {
     "https://minio.garritwulf.com",
   );
 }
-```
+````
 
 **No code changes needed** - this is already in the codebase.
 

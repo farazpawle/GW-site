@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useMemo } from "react";
+import { useRef, useMemo } from "react";
 import Image from "next/image";
 import AutoScroll from "embla-carousel-auto-scroll";
 
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/carousel";
 import { CarouselSectionConfig } from "@/types/page-section";
 import { applyTextStyles } from "@/lib/utils/typography";
-import { resolveMinioSource } from "@/lib/minio-client";
+import { buildPublicMediaUrl, resolveMinioSource } from "@/lib/minio-client";
 
 interface BrandCarouselSectionProps {
   config: CarouselSectionConfig;
@@ -37,8 +37,6 @@ interface NormalizedLogo extends CarouselLogo {
 
 const BrandCarouselSection = ({ config }: BrandCarouselSectionProps) => {
   const carouselRef = useRef(null);
-  const [logosWithUrls, setLogosWithUrls] = useState<LogoWithUrl[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Filter only active logos and sort by order
   const activeLogos = useMemo(() => {
@@ -66,128 +64,27 @@ const BrandCarouselSection = ({ config }: BrandCarouselSectionProps) => {
     });
   }, [activeLogos]);
 
-  // Fetch presigned URLs for MinIO keys
-  useEffect(() => {
-    const fetchPresignedUrls = async () => {
-      setIsLoading(true);
-
-      try {
-        const keys = normalizedLogos
-          .map((logo) => logo.storageKey)
-          .filter(Boolean) as string[];
-
-        if (keys.length === 0) {
-          setLogosWithUrls(
-            normalizedLogos.map((logo) => {
-              const {
-                storageKey: ignoredStorageKey,
-                fallbackUrl,
-                ...logoWithoutMeta
-              } = logo;
-              void ignoredStorageKey;
-
-              return {
-                ...logoWithoutMeta,
-                url: fallbackUrl,
-              };
-            }),
-          );
-          return;
-        }
-
-        const response = await fetch("/api/media/url", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keys }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch presigned URLs");
-        }
-
-        const payload = await response.json();
-        const urls: string[] = Array.isArray(payload.urls) ? payload.urls : [];
-
-        if (urls.length < keys.length) {
-          console.warn(
-            `[BrandCarousel] Received ${urls.length} presigned URLs for ${keys.length} keys`,
-          );
-        }
-
-        let urlIndex = 0;
-        const logosWithPresignedUrls = normalizedLogos.map(
-          ({ storageKey, fallbackUrl, ...logo }) => {
-            if (!storageKey) {
-              return {
-                ...logo,
-                url: fallbackUrl,
-              };
-            }
-
-            const nextUrl = urls[urlIndex++];
-            if (!nextUrl) {
-              console.warn(
-                "[BrandCarousel] Missing presigned URL for key",
-                storageKey,
-              );
-              return {
-                ...logo,
-                url: fallbackUrl,
-              };
-            }
-
-            return {
-              ...logo,
-              url: nextUrl,
-            };
-          },
-        );
-
-        setLogosWithUrls(logosWithPresignedUrls);
-      } catch (error) {
-        console.error("Error fetching presigned URLs for carousel:", error);
-        setLogosWithUrls(
-          normalizedLogos.map((logo) => {
-            const {
-              storageKey: ignoredStorageKey,
-              fallbackUrl,
-              ...logoWithoutMeta
-            } = logo;
-            void ignoredStorageKey;
-
-            return {
-              ...logoWithoutMeta,
-              url: fallbackUrl,
-            };
-          }),
-        );
-      } finally {
-        setIsLoading(false);
+  const logosWithUrls = useMemo<LogoWithUrl[]>(() => {
+    return normalizedLogos.map(({ storageKey, fallbackUrl, ...logo }) => {
+      if (!storageKey) {
+        return {
+          ...logo,
+          url: fallbackUrl,
+        };
       }
-    };
 
-    fetchPresignedUrls();
+      return {
+        ...logo,
+        url: buildPublicMediaUrl(storageKey),
+      };
+    });
   }, [normalizedLogos]);
 
   // Duplicate logos for seamless infinite loop
-  const duplicatedLogos = [
-    ...logosWithUrls,
-    ...logosWithUrls,
-    ...logosWithUrls,
-  ];
-
-  if (isLoading) {
-    return (
-      <section className="relative py-20 md:py-28 bg-[#0d0d0d] overflow-hidden">
-        <div className="container max-w-7xl mx-auto px-4 text-center">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-800 rounded w-64 mx-auto mb-4"></div>
-            <div className="h-4 bg-gray-800 rounded w-96 mx-auto"></div>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  const duplicatedLogos = useMemo(
+    () => [...logosWithUrls, ...logosWithUrls, ...logosWithUrls],
+    [logosWithUrls],
+  );
 
   return (
     <section className="relative py-20 md:py-28 bg-[#0d0d0d] overflow-hidden">
