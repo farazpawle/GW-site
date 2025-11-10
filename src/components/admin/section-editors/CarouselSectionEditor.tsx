@@ -8,6 +8,7 @@ import { Loader2, Plus, Trash2, Image as ImageIcon } from "lucide-react";
 import MediaPickerModal from "@/components/admin/media/MediaPickerModal";
 import type { MediaFile } from "@/types/media";
 import TypographyControls from "@/components/admin/shared/TypographyControls";
+import { normalizeMinioValue } from "@/lib/minio-client";
 
 interface CarouselSectionEditorProps {
   section: PageSection;
@@ -75,14 +76,29 @@ export default function CarouselSectionEditor({
           tablet: 3,
           desktop: 5,
         },
-        logos: config.logos.map((logo, index) => ({
-          id: logo.id,
-          description: logo.description,
-          altText: logo.altText || logo.description,
-          image: logo.image,
-          isActive: logo.isActive !== undefined ? logo.isActive : true,
-          order: logo.order !== undefined ? logo.order : index,
-        })),
+        logos: config.logos.map((logo, index) => {
+          const normalizedImage = normalizeMinioValue(logo.image);
+
+          if (normalizedImage !== logo.image) {
+            console.warn(
+              "[CarouselSectionEditor] Normalized logo image before save",
+              {
+                logoId: logo.id,
+                original: logo.image,
+                normalized: normalizedImage,
+              },
+            );
+          }
+
+          return {
+            id: logo.id,
+            description: logo.description,
+            altText: logo.altText || logo.description,
+            image: normalizedImage,
+            isActive: logo.isActive !== undefined ? logo.isActive : true,
+            order: logo.order !== undefined ? logo.order : index,
+          };
+        }),
       };
 
       const response = await fetch(`/api/admin/page-sections/${section.id}`, {

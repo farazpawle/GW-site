@@ -24,7 +24,7 @@ interface GeneralSettingsProps {
 }
 
 // Common timezones organized by region
-const TIMEZONES = [
+export const TIMEZONES = [
   { value: "Asia/Dubai", label: "Dubai (Asia/Dubai) - GMT+4" },
   { value: "Asia/Riyadh", label: "Riyadh (Asia/Riyadh) - GMT+3" },
   { value: "Asia/Kuwait", label: "Kuwait (Asia/Kuwait) - GMT+3" },
@@ -43,7 +43,7 @@ const TIMEZONES = [
 ];
 
 // Common currencies
-const CURRENCIES = [
+export const CURRENCIES = [
   { code: "AED", name: "UAE Dirham", symbol: "د.إ" },
   { code: "USD", name: "US Dollar", symbol: "$" },
   { code: "EUR", name: "Euro", symbol: "€" },

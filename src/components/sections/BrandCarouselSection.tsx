@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import AutoScroll from "embla-carousel-auto-scroll";
 
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/carousel";
 import { CarouselSectionConfig } from "@/types/page-section";
 import { applyTextStyles } from "@/lib/utils/typography";
+import { resolveMinioSource } from "@/lib/minio-client";
 
 interface BrandCarouselSectionProps {
   config: CarouselSectionConfig;
@@ -27,44 +28,73 @@ interface LogoWithUrl {
   description: string;
 }
 
+type CarouselLogo = CarouselSectionConfig["logos"][number];
+
+interface NormalizedLogo extends CarouselLogo {
+  storageKey: string | null;
+  fallbackUrl: string;
+}
+
 const BrandCarouselSection = ({ config }: BrandCarouselSectionProps) => {
   const carouselRef = useRef(null);
   const [logosWithUrls, setLogosWithUrls] = useState<LogoWithUrl[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filter only active logos and sort by order
-  const activeLogos = config.logos
-    .filter((logo) => logo.isActive !== false)
-    .sort((a, b) => (a.order || 0) - (b.order || 0));
+  const activeLogos = useMemo(() => {
+    const filtered = config.logos.filter((logo) => logo.isActive !== false);
+    return [...filtered].sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [config.logos]);
+
+  const normalizedLogos = useMemo<NormalizedLogo[]>(() => {
+    return activeLogos.map((logo) => {
+      const resolution = resolveMinioSource(logo.image);
+      const fallbackUrl = resolution.url || logo.image;
+
+      if (!resolution.key && !resolution.isExternal) {
+        console.warn(
+          "[BrandCarousel] Missing MinIO key for logo, falling back to raw value",
+          logo.id,
+        );
+      }
+
+      return {
+        ...logo,
+        storageKey: resolution.key,
+        fallbackUrl,
+      };
+    });
+  }, [activeLogos]);
 
   // Fetch presigned URLs for MinIO keys
   useEffect(() => {
     const fetchPresignedUrls = async () => {
+      setIsLoading(true);
+
       try {
-        // Extract keys from logo images
-        const keys = activeLogos
-          .map((logo) => {
-            // If it's already a full URL (external), return as-is
-            if (
-              logo.image.startsWith("http://") ||
-              logo.image.startsWith("https://")
-            ) {
-              return null;
-            }
-            return logo.image; // It's a MinIO key
-          })
+        const keys = normalizedLogos
+          .map((logo) => logo.storageKey)
           .filter(Boolean) as string[];
 
         if (keys.length === 0) {
-          // All logos are external URLs
           setLogosWithUrls(
-            activeLogos.map((logo) => ({ ...logo, url: logo.image })),
+            normalizedLogos.map((logo) => {
+              const {
+                storageKey: ignoredStorageKey,
+                fallbackUrl,
+                ...logoWithoutMeta
+              } = logo;
+              void ignoredStorageKey;
+
+              return {
+                ...logoWithoutMeta,
+                url: fallbackUrl,
+              };
+            }),
           );
-          setIsLoading(false);
           return;
         }
 
-        // Fetch presigned URLs
         const response = await fetch("/api/media/url", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -75,26 +105,61 @@ const BrandCarouselSection = ({ config }: BrandCarouselSectionProps) => {
           throw new Error("Failed to fetch presigned URLs");
         }
 
-        const { urls } = await response.json();
+        const payload = await response.json();
+        const urls: string[] = Array.isArray(payload.urls) ? payload.urls : [];
 
-        // Map URLs back to logos
+        if (urls.length < keys.length) {
+          console.warn(
+            `[BrandCarousel] Received ${urls.length} presigned URLs for ${keys.length} keys`,
+          );
+        }
+
         let urlIndex = 0;
-        const logosWithPresignedUrls = activeLogos.map((logo) => {
-          if (
-            logo.image.startsWith("http://") ||
-            logo.image.startsWith("https://")
-          ) {
-            return { ...logo, url: logo.image };
-          }
-          return { ...logo, url: urls[urlIndex++] };
-        });
+        const logosWithPresignedUrls = normalizedLogos.map(
+          ({ storageKey, fallbackUrl, ...logo }) => {
+            if (!storageKey) {
+              return {
+                ...logo,
+                url: fallbackUrl,
+              };
+            }
+
+            const nextUrl = urls[urlIndex++];
+            if (!nextUrl) {
+              console.warn(
+                "[BrandCarousel] Missing presigned URL for key",
+                storageKey,
+              );
+              return {
+                ...logo,
+                url: fallbackUrl,
+              };
+            }
+
+            return {
+              ...logo,
+              url: nextUrl,
+            };
+          },
+        );
 
         setLogosWithUrls(logosWithPresignedUrls);
       } catch (error) {
         console.error("Error fetching presigned URLs for carousel:", error);
-        // Fallback: use original image values
         setLogosWithUrls(
-          activeLogos.map((logo) => ({ ...logo, url: logo.image })),
+          normalizedLogos.map((logo) => {
+            const {
+              storageKey: ignoredStorageKey,
+              fallbackUrl,
+              ...logoWithoutMeta
+            } = logo;
+            void ignoredStorageKey;
+
+            return {
+              ...logoWithoutMeta,
+              url: fallbackUrl,
+            };
+          }),
         );
       } finally {
         setIsLoading(false);
@@ -102,7 +167,7 @@ const BrandCarouselSection = ({ config }: BrandCarouselSectionProps) => {
     };
 
     fetchPresignedUrls();
-  }, [config.logos]);
+  }, [normalizedLogos]);
 
   // Duplicate logos for seamless infinite loop
   const duplicatedLogos = [

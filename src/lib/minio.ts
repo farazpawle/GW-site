@@ -8,6 +8,9 @@ import {
   type ListObjectsV2CommandOutput,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { MINIO_BUCKET_NAME, extractKeyFromUrl } from "./minio-client";
+
+export { extractKeyFromUrl } from "./minio-client";
 
 // MinIO S3-compatible storage client
 const s3Client = new S3Client({
@@ -22,7 +25,7 @@ const s3Client = new S3Client({
 });
 
 // Single bucket with folder structure
-export const BUCKET_NAME = "garritwulf-media";
+export const BUCKET_NAME = MINIO_BUCKET_NAME;
 
 // Folder prefixes within the bucket
 export const FOLDERS = {
@@ -182,8 +185,8 @@ export async function getPresignedUrl(
  * @returns Promise<string> - Presigned URL that works in browser
  */
 export async function getPublicUrl(keyOrUrl: string): Promise<string> {
-  // If it's already a URL, extract the key
   let key = keyOrUrl;
+
   if (keyOrUrl.startsWith("http")) {
     key = extractKeyFromUrl(keyOrUrl);
     if (!key) {
@@ -210,22 +213,6 @@ export async function fileExists(key: string): Promise<boolean> {
     return true;
   } catch {
     return false;
-  }
-}
-
-/**
- * Extract folder and filename from full MinIO URL
- * @param url - Full MinIO URL
- * @returns string - Just the key (folder/filename)
- */
-export function extractKeyFromUrl(url: string): string {
-  try {
-    const urlObj = new URL(url);
-    const pathParts = urlObj.pathname.split("/");
-    // Remove bucket name (first part) and get the rest
-    return pathParts.slice(2).join("/");
-  } catch {
-    return "";
   }
 }
 
