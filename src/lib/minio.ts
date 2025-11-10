@@ -138,23 +138,23 @@ export async function getPresignedUrl(
   const isProduction = process.env.NODE_ENV === "production";
 
   if (isProduction) {
-    // Production: Replace any MinIO hostname with localhost for browser access
-    // The nginx proxy will handle routing to the correct container
+    // Production: Replace container hostnames with public MinIO subdomain
+    // This allows presigned URLs to work from any browser
     presignedUrl = presignedUrl.replace(
       "http://GW-minio:9000",
-      "http://localhost:9000",
+      "https://minio.garritwulf.com",
     );
     presignedUrl = presignedUrl.replace(
       "https://GW-minio:9000",
-      "https://localhost:9000",
+      "https://minio.garritwulf.com",
     );
     presignedUrl = presignedUrl.replace(
       "http://minio:9000",
-      "http://localhost:9000",
+      "https://minio.garritwulf.com",
     );
     presignedUrl = presignedUrl.replace(
       "https://minio:9000",
-      "https://localhost:9000",
+      "https://minio.garritwulf.com",
     );
   } else {
     // Development: Replace Docker hostnames with localhost
