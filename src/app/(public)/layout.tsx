@@ -36,10 +36,20 @@ export default async function PublicLayout({
   const contactEmail = contactSettings.contact_email || "sales@garritwulf.com";
   const businessHours =
     contactSettings.business_hours || "Mon - Sat: 8:00 AM - 6:00 PM";
-  const socialFacebook = contactSettings.social_facebook || "";
-  const socialTwitter = contactSettings.social_twitter || "";
-  const socialInstagram = contactSettings.social_instagram || "";
-  const socialLinkedin = contactSettings.social_linkedin || "";
+
+  // Social media URLs - provide fallback values during build to ensure icons render
+  const socialFacebook = isBuildTime
+    ? "https://facebook.com/garritwulf"
+    : contactSettings.social_facebook || "";
+  const socialTwitter = isBuildTime
+    ? "https://twitter.com/garritwulf"
+    : contactSettings.social_twitter || "";
+  const socialInstagram = isBuildTime
+    ? "https://instagram.com/garritwulf"
+    : contactSettings.social_instagram || "";
+  const socialLinkedin = isBuildTime
+    ? "https://linkedin.com/company/garritwulf"
+    : contactSettings.social_linkedin || "";
 
   return (
     <>
