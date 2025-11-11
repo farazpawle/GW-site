@@ -41,7 +41,11 @@ RUN npx prisma generate
 COPY . .
 
 # Build the application
+# Accept Clerk key as build arg (needed for static page generation)
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsuZ2Fycml0d3VsZi5jb20k
+ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV CI=true
 RUN npm run build
 
 # Production stage - Minimal runtime image
