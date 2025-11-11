@@ -13,8 +13,15 @@ import { MINIO_BUCKET_NAME, extractKeyFromUrl } from "./minio-client";
 export { extractKeyFromUrl } from "./minio-client";
 
 // MinIO S3-compatible storage client
+// ✅ In production, use public HTTPS endpoint so presigned URLs work correctly
+// The endpoint determines what hostname appears in AWS signatures
+const isProduction = process.env.NODE_ENV === "production";
+const minioEndpoint = isProduction
+  ? "https://minio.garritwulf.com" // Production: Public HTTPS endpoint
+  : `http://${process.env.MINIO_ENDPOINT || "localhost"}:${process.env.MINIO_PORT || "9000"}`; // Development: Docker/localhost
+
 const s3Client = new S3Client({
-  endpoint: `http://${process.env.MINIO_ENDPOINT || "localhost"}:${process.env.MINIO_PORT || "9000"}`,
+  endpoint: minioEndpoint,
   region: process.env.MINIO_REGION || "us-east-1",
   credentials: {
     accessKeyId: process.env.MINIO_ACCESS_KEY || "garritwulf_minio",
@@ -139,46 +146,11 @@ export async function getPresignedUrl(
     Key: key,
   });
 
-  let presignedUrl = await getSignedUrl(s3Client, command, { expiresIn });
-
-  // ✅ Environment-aware URL transformation
-  const isProduction = process.env.NODE_ENV === "production";
-
-  if (isProduction) {
-    // Production: Replace container hostnames with public MinIO subdomain
-    // This allows presigned URLs to work from any browser
-    // Use regex with 'gi' flag for case-insensitive replacement
-    presignedUrl = presignedUrl.replace(
-      /http:\/\/gw-minio:9000/gi,
-      "https://minio.garritwulf.com",
-    );
-    presignedUrl = presignedUrl.replace(
-      /https:\/\/gw-minio:9000/gi,
-      "https://minio.garritwulf.com",
-    );
-    presignedUrl = presignedUrl.replace(
-      /http:\/\/minio:9000/gi,
-      "https://minio.garritwulf.com",
-    );
-    presignedUrl = presignedUrl.replace(
-      /https:\/\/minio:9000/gi,
-      "https://minio.garritwulf.com",
-    );
-  } else {
-    // Development: Replace Docker hostnames with localhost
-    presignedUrl = presignedUrl.replace(
-      /http:\/\/minio:9000/gi,
-      "http://localhost:9000",
-    );
-    presignedUrl = presignedUrl.replace(
-      /https:\/\/minio:9000/gi,
-      "https://localhost:9000",
-    );
-    presignedUrl = presignedUrl.replace(
-      /http:\/\/gw-minio:9000/gi,
-      "http://localhost:9000",
-    );
-  }
+  // ✅ No URL replacement needed - endpoint is already configured correctly
+  // Production uses https://minio.garritwulf.com
+  // Development uses http://localhost:9000
+  // AWS signatures will be valid because they're generated with the correct endpoint
+  const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn });
 
   return presignedUrl;
 }
