@@ -24,6 +24,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/menu-items", // Menu items for navigation
   "/api/media/url", // Media presigned URL generation (public)
   "/api/media/public", // MinIO public streaming proxy
+  "/api/admin/media/proxy(.*)", // Media admin proxy handles auth internally
   "/sign-in(.*)",
   "/sign-up(.*)",
 ]);

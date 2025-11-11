@@ -41,37 +41,6 @@ export interface MinioSourceResolution {
   isExternal: boolean;
 }
 
-const PUBLIC_MEDIA_PATH = "/api/media/public";
-
-function extractPublicMediaKey(raw: string): string | null {
-  try {
-    const base = raw.startsWith("http") ? undefined : "http://localhost";
-    const url = new URL(raw, base);
-
-    if (!url.pathname || !url.pathname.startsWith(PUBLIC_MEDIA_PATH)) {
-      return null;
-    }
-
-    const keyParam = url.searchParams.get("key");
-    if (!keyParam) {
-      return null;
-    }
-
-    const decoded = decodeURIComponent(keyParam).trim();
-    return decoded || null;
-  } catch (error) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn(
-        "[minio-client] Failed to extract key from public media url",
-        raw,
-        error,
-      );
-    }
-
-    return null;
-  }
-}
-
 function isHttpUrl(value: string): boolean {
   return value.startsWith("http://") || value.startsWith("https://");
 }
@@ -109,15 +78,6 @@ export function resolveMinioSource(
     return { key: null, url: "", isExternal: false };
   }
 
-  const proxyKey = extractPublicMediaKey(raw);
-  if (proxyKey) {
-    return {
-      key: proxyKey,
-      url: buildPublicMediaUrl(proxyKey),
-      isExternal: false,
-    };
-  }
-
   if (!isHttpUrl(raw)) {
     if (raw.startsWith(`${MINIO_BUCKET_NAME}/`)) {
       return {
@@ -133,15 +93,6 @@ export function resolveMinioSource(
   try {
     const parsedUrl = new URL(raw);
     const host = parsedUrl.hostname;
-    const proxyKeyFromAbsolute = extractPublicMediaKey(raw);
-    if (proxyKeyFromAbsolute) {
-      return {
-        key: proxyKeyFromAbsolute,
-        url: buildPublicMediaUrl(proxyKeyFromAbsolute),
-        isExternal: false,
-      };
-    }
-
     const isMinio = isLikelyMinioHost(host);
 
     if (isMinio) {
