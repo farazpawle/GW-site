@@ -14,15 +14,24 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Fetch logo settings on the server side
-  const logoUrl =
-    (await getMediaSettingUrl("logo_url")) || "/images/GW_LOGO-removebg.png";
-  const mobileLogoUrl =
-    (await getMediaSettingUrl("logo_mobile_url")) || undefined;
-  const siteName = (await getSetting("site_name")) || "Garrit & Wulf";
+  // Skip database queries during build
+  const isBuildTime =
+    process.env.CI === "true" ||
+    process.env.NEXT_PHASE === "phase-production-build";
 
-  // Fetch contact settings for AnnouncementBar
-  const contactSettings = await getSettings("CONTACT");
+  // Fetch logo settings on the server side (skip during build)
+  const logoUrl = isBuildTime
+    ? "/images/GW_LOGO-removebg.png"
+    : (await getMediaSettingUrl("logo_url")) || "/images/GW_LOGO-removebg.png";
+  const mobileLogoUrl = isBuildTime
+    ? undefined
+    : (await getMediaSettingUrl("logo_mobile_url")) || undefined;
+  const siteName = isBuildTime
+    ? "Garrit & Wulf"
+    : (await getSetting("site_name")) || "Garrit & Wulf";
+
+  // Fetch contact settings for AnnouncementBar (skip during build)
+  const contactSettings = isBuildTime ? {} : await getSettings("CONTACT");
   const contactPhone = contactSettings.contact_phone || "+971 4 224 38 51";
   const contactEmail = contactSettings.contact_email || "sales@garritwulf.com";
   const businessHours =

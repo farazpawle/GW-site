@@ -1,43 +1,54 @@
-import { MetadataRoute } from 'next';
-import { prisma } from '@/lib/prisma';
+import { MetadataRoute } from "next";
+import { prisma } from "@/lib/prisma";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 export const revalidate = 3600; // Revalidate every hour
 
 /**
  * Enhanced sitemap generation
  * Includes: static pages, products, categories, collections, dynamic pages
+ *
+ * Note: During build phase (CI=true), returns minimal static sitemap.
+ * Full sitemap is generated at runtime when database is accessible.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://garritwulf.com';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://garritwulf.com";
 
   // Static pages
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: new Date(),
-      changeFrequency: 'daily',
+      changeFrequency: "daily",
       priority: 1,
     },
     {
       url: `${baseUrl}/products`,
       lastModified: new Date(),
-      changeFrequency: 'daily',
+      changeFrequency: "daily",
       priority: 0.9,
     },
     {
       url: `${baseUrl}/about`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: "monthly",
       priority: 0.7,
     },
     {
       url: `${baseUrl}/contact`,
       lastModified: new Date(),
-      changeFrequency: 'monthly',
+      changeFrequency: "monthly",
       priority: 0.7,
     },
   ];
+
+  // During build phase, return static routes only (no database access)
+  if (
+    process.env.CI === "true" ||
+    process.env.NEXT_PHASE === "phase-production-build"
+  ) {
+    return staticRoutes;
+  }
 
   try {
     // Fetch all published products
@@ -51,7 +62,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         updatedAt: true,
       },
       orderBy: {
-        publishedAt: 'desc',
+        publishedAt: "desc",
       },
     });
 
@@ -59,7 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const pages = await prisma.page.findMany({
       where: {
         published: true,
-        pageType: 'dynamic',
+        pageType: "dynamic",
       },
       select: {
         slug: true,
@@ -94,7 +105,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const staticPages = await prisma.page.findMany({
       where: {
         published: true,
-        pageType: 'static',
+        pageType: "static",
       },
       select: {
         slug: true,
@@ -106,7 +117,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
       url: `${baseUrl}/products/${product.slug}`,
       lastModified: product.publishedAt || product.updatedAt,
-      changeFrequency: 'weekly' as const,
+      changeFrequency: "weekly" as const,
       priority: 0.8,
     }));
 
@@ -114,31 +125,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const pageRoutes: MetadataRoute.Sitemap = pages.map((page) => ({
       url: `${baseUrl}/${page.slug}`,
       lastModified: page.updatedAt,
-      changeFrequency: 'weekly' as const,
+      changeFrequency: "weekly" as const,
       priority: 0.7,
     }));
 
     // Generate category routes
-    const categoryRoutes: MetadataRoute.Sitemap = categories.map((category) => ({
-      url: `${baseUrl}/category/${category.slug}`,
-      lastModified: category.updatedAt,
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    }));
+    const categoryRoutes: MetadataRoute.Sitemap = categories.map(
+      (category) => ({
+        url: `${baseUrl}/category/${category.slug}`,
+        lastModified: category.updatedAt,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      }),
+    );
 
     // Generate collection routes
-    const collectionRoutes: MetadataRoute.Sitemap = collections.map((collection) => ({
-      url: `${baseUrl}/collection/${collection.slug}`,
-      lastModified: collection.updatedAt,
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    }));
+    const collectionRoutes: MetadataRoute.Sitemap = collections.map(
+      (collection) => ({
+        url: `${baseUrl}/collection/${collection.slug}`,
+        lastModified: collection.updatedAt,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      }),
+    );
 
     // Generate static page routes (privacy, terms)
     const staticPageRoutes: MetadataRoute.Sitemap = staticPages.map((page) => ({
       url: `${baseUrl}/${page.slug}`,
       lastModified: page.updatedAt,
-      changeFrequency: 'monthly' as const,
+      changeFrequency: "monthly" as const,
       priority: 0.5,
     }));
 
@@ -151,7 +166,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...staticPageRoutes,
     ];
   } catch (error) {
-    console.error('Error generating sitemap:', error);
+    console.error("Error generating sitemap:", error);
     // Return static routes if database query fails
     return staticRoutes;
   }
