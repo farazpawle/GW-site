@@ -1,7 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { checkPermission } from '@/lib/auth';
-import { listObjects, formatBytes, isImageFile, getPresignedUrl, FOLDERS } from '@/lib/minio';
-import type { ListFilesResponse, MediaFile } from '@/types/media';
+import { NextRequest, NextResponse } from "next/server";
+import { checkPermission } from "@/lib/auth";
+import {
+  listObjects,
+  formatBytes,
+  isImageFile,
+  getPresignedUrl,
+  getObjectMetadata,
+  FOLDERS,
+} from "@/lib/minio";
+import type { ListFilesResponse, MediaFile } from "@/types/media";
 
 /**
  * GET /api/admin/media/files?folder=products&page=1&limit=50&search=brake
@@ -10,41 +17,44 @@ import type { ListFilesResponse, MediaFile } from '@/types/media';
 export async function GET(request: NextRequest) {
   try {
     // Verify admin authentication
-    const user = await checkPermission('media.view');
+    const user = await checkPermission("media.view");
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
       );
     }
 
     const { searchParams } = request.nextUrl;
-    const folder = searchParams.get('folder') || searchParams.get('bucket'); // Support legacy 'bucket' param
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const search = searchParams.get('search') || '';
+    const folder = searchParams.get("folder") || searchParams.get("bucket"); // Support legacy 'bucket' param
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "50");
+    const search = searchParams.get("search") || "";
 
     // Validate pagination parameters
     if (page < 1 || limit < 1 || limit > 100) {
       return NextResponse.json(
-        { success: false, error: 'Invalid pagination parameters' } as ListFilesResponse,
-        { status: 400 }
+        {
+          success: false,
+          error: "Invalid pagination parameters",
+        } as ListFilesResponse,
+        { status: 400 },
       );
     }
 
     try {
       // Determine folder prefix - if no folder specified, list all
-      let folderPrefix = '';
+      let folderPrefix = "";
       if (folder) {
         // Map folder name to prefix (e.g., 'products' -> 'products/')
         const folderMap: Record<string, string> = {
-          'products': FOLDERS.PRODUCTS,
-          'categories': FOLDERS.CATEGORIES,
-          'general': FOLDERS.GENERAL,
+          products: FOLDERS.PRODUCTS,
+          categories: FOLDERS.CATEGORIES,
+          general: FOLDERS.GENERAL,
           // Legacy bucket names
-          'product-images': FOLDERS.PRODUCTS,
-          'category-images': FOLDERS.CATEGORIES,
-          'user-uploads': FOLDERS.GENERAL,
+          "product-images": FOLDERS.PRODUCTS,
+          "category-images": FOLDERS.CATEGORIES,
+          "user-uploads": FOLDERS.GENERAL,
         };
         folderPrefix = folderMap[folder] || `${folder}/`;
       }
@@ -56,8 +66,8 @@ export async function GET(request: NextRequest) {
       let filteredObjects = objects;
       if (search) {
         const searchLower = search.toLowerCase();
-        filteredObjects = objects.filter(obj =>
-          obj.key.toLowerCase().includes(searchLower)
+        filteredObjects = objects.filter((obj) =>
+          obj.key.toLowerCase().includes(searchLower),
         );
       }
 
@@ -73,18 +83,29 @@ export async function GET(request: NextRequest) {
         paginatedObjects.map(async (obj) => {
           // Generate presigned URL (valid for 1 hour)
           const url = await getPresignedUrl(obj.key, 3600);
-          
-          // Determine content type from extension
-          const ext = obj.key.split('.').pop()?.toLowerCase() || '';
-          const contentTypeMap: Record<string, string> = {
-            jpg: 'image/jpeg',
-            jpeg: 'image/jpeg',
-            png: 'image/png',
-            gif: 'image/gif',
-            webp: 'image/webp',
-            svg: 'image/svg+xml',
-          };
-          const contentType = contentTypeMap[ext] || 'application/octet-stream';
+
+          // Try to get actual content type from MinIO metadata
+          let contentType = "application/octet-stream";
+          try {
+            const metadata = await getObjectMetadata(obj.key);
+            contentType = metadata.contentType;
+          } catch (error) {
+            // Fallback: Determine content type from extension if metadata unavailable
+            const ext = obj.key.split(".").pop()?.toLowerCase() || "";
+            const contentTypeMap: Record<string, string> = {
+              jpg: "image/jpeg",
+              jpeg: "image/jpeg",
+              png: "image/png",
+              gif: "image/gif",
+              webp: "image/webp",
+              svg: "image/svg+xml",
+              ico: "image/x-icon",
+            };
+            contentType = contentTypeMap[ext] || "application/octet-stream";
+            console.warn(
+              `Could not fetch metadata for ${obj.key}, using extension-based type: ${contentType}`,
+            );
+          }
 
           return {
             key: obj.key,
@@ -95,12 +116,12 @@ export async function GET(request: NextRequest) {
             contentType,
             isImage: isImageFile(contentType),
           };
-        })
+        }),
       );
 
       const response: ListFilesResponse = {
         success: true,
-        bucket: folder || 'all', // Keep 'bucket' for UI compatibility
+        bucket: folder || "all", // Keep 'bucket' for UI compatibility
         files,
         pagination: {
           total,
@@ -111,29 +132,30 @@ export async function GET(request: NextRequest) {
       };
 
       return NextResponse.json(response);
-
     } catch (folderError) {
       console.error(`Error accessing folder ${folder}:`, folderError);
       return NextResponse.json(
-        { success: false, error: `Folder "${folder}" not found or inaccessible` } as ListFilesResponse,
-        { status: 404 }
+        {
+          success: false,
+          error: `Folder "${folder}" not found or inaccessible`,
+        } as ListFilesResponse,
+        { status: 404 },
       );
     }
-
   } catch (error) {
-    console.error('List files error:', error);
-    
+    console.error("List files error:", error);
+
     // Handle authentication errors
-    if (error instanceof Error && error.message.includes('redirect')) {
+    if (error instanceof Error && error.message.includes("redirect")) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' } as ListFilesResponse,
-        { status: 401 }
+        { success: false, error: "Unauthorized" } as ListFilesResponse,
+        { status: 401 },
       );
     }
 
     return NextResponse.json(
-      { success: false, error: 'Failed to list files' } as ListFilesResponse,
-      { status: 500 }
+      { success: false, error: "Failed to list files" } as ListFilesResponse,
+      { status: 500 },
     );
   }
 }

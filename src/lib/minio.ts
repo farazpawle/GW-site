@@ -59,6 +59,8 @@ export async function uploadFile(
     Key: key,
     Body: file,
     ContentType: contentType,
+    CacheControl: "public, max-age=31536000, immutable",
+    ContentDisposition: "inline",
   });
 
   await s3Client.send(command);
@@ -83,6 +85,8 @@ export async function uploadFileWithBucket(
     Key: key,
     Body: file,
     ContentType: contentType,
+    CacheControl: "public, max-age=31536000, immutable",
+    ContentDisposition: "inline",
   });
 
   await s3Client.send(command);

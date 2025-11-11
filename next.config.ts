@@ -2,27 +2,27 @@ import type { NextConfig } from "next";
 
 const securityHeaders = [
   {
-    key: 'X-Frame-Options',
-    value: 'DENY'
+    key: "X-Frame-Options",
+    value: "DENY",
   },
   {
-    key: 'X-Content-Type-Options',
-    value: 'nosniff'
+    key: "X-Content-Type-Options",
+    value: "nosniff",
   },
   {
-    key: 'Referrer-Policy',
-    value: 'strict-origin-when-cross-origin'
+    key: "Referrer-Policy",
+    value: "strict-origin-when-cross-origin",
   },
   {
-    key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=()'
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=()",
   },
   {
-    key: 'X-XSS-Protection',
-    value: '1; mode=block'
+    key: "X-XSS-Protection",
+    value: "1; mode=block",
   },
   {
-    key: 'Content-Security-Policy',
+    key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com https://*.clerk.accounts.dev https://clerk.garritwulf.com https://*.clerk.com",
@@ -35,41 +35,41 @@ const securityHeaders = [
       "base-uri 'self'",
       "form-action 'self'",
       "frame-ancestors 'none'",
-      "upgrade-insecure-requests"
-    ].join('; ')
-  }
+      "upgrade-insecure-requests",
+    ].join("; "),
+  },
 ];
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  output: "standalone",
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**',
+        protocol: "https",
+        hostname: "**",
       },
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '9000',
-        pathname: '/**',
+        protocol: "http",
+        hostname: "localhost",
+        port: "9000",
+        pathname: "/**",
       },
       {
-        protocol: 'http',
-        hostname: 'minio',
-        port: '9000',
-        pathname: '/**',
+        protocol: "http",
+        hostname: "minio",
+        port: "9000",
+        pathname: "/**",
       },
     ],
     // Allow MinIO presigned URLs with query parameters
     dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
+    contentDispositionType: "inline",
   },
-  serverExternalPackages: ['@prisma/client', 'prisma'],
+  serverExternalPackages: ["@prisma/client", "prisma"],
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: "/:path*",
         headers: securityHeaders,
       },
     ];
@@ -77,13 +77,13 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: '/parts',
-        destination: '/products',
+        source: "/parts",
+        destination: "/products",
         permanent: true,
       },
       {
-        source: '/parts/:path*',
-        destination: '/products/:path*',
+        source: "/parts/:path*",
+        destination: "/products/:path*",
         permanent: true,
       },
     ];
