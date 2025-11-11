@@ -44,8 +44,8 @@ export default function FileCard({
 }: FileCardProps) {
   const isCompact = size === "compact";
 
-  // Always use proxy endpoint for reliable image loading (uses file.key directly)
-  const imageUrl = `/api/admin/media/proxy?key=${encodeURIComponent(file.key)}`;
+  // Use MinIO public URL directly since files are in a public bucket
+  const imageUrl = file.url;
 
   return (
     <div className="group relative aspect-square rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden hover:border-[#6e0000]/50 hover:shadow-lg hover:shadow-[#6e0000]/20 transition-all hover:scale-[1.02]">
