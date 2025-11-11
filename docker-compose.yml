@@ -76,6 +76,24 @@ services:
       timeout: 20s
       retries: 3
 
+  prisma-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    command: npx prisma studio --port 5555 --hostname 0.0.0.0
+    ports:
+      - "5555:5555"
+    environment:
+      - DATABASE_URL=postgresql://garritwulf_user:garritwulf_secure_pass_2025@postgres:5432/garritwulf_db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    networks:
+      - garrit-network
+
 volumes:
   postgres_data:
   redis_data:

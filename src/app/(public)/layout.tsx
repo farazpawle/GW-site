@@ -37,19 +37,16 @@ export default async function PublicLayout({
   const businessHours =
     contactSettings.business_hours || "Mon - Sat: 8:00 AM - 6:00 PM";
 
-  // Social media URLs - provide fallback values during build to ensure icons render
-  const socialFacebook = isBuildTime
-    ? "https://facebook.com/garritwulf"
-    : contactSettings.social_facebook || "";
-  const socialTwitter = isBuildTime
-    ? "https://twitter.com/garritwulf"
-    : contactSettings.social_twitter || "";
-  const socialInstagram = isBuildTime
-    ? "https://instagram.com/garritwulf"
-    : contactSettings.social_instagram || "";
-  const socialLinkedin = isBuildTime
-    ? "https://linkedin.com/company/garritwulf"
-    : contactSettings.social_linkedin || "";
+  // Social media URLs - use fallback URLs both during build AND when DB values are empty
+  const socialFacebook =
+    contactSettings.social_facebook || "https://facebook.com/garritwulf";
+  const socialTwitter =
+    contactSettings.social_twitter || "https://twitter.com/garritwulf";
+  const socialInstagram =
+    contactSettings.social_instagram || "https://instagram.com/garritwulf";
+  const socialLinkedin =
+    contactSettings.social_linkedin ||
+    "https://linkedin.com/company/garritwulf";
 
   return (
     <>
