@@ -9,6 +9,7 @@ import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import GoogleTagManager from "@/components/analytics/GoogleTagManager";
 import WebVitals from "@/components/analytics/WebVitals";
 import { initializeApplication } from "@/lib/initialization";
+import BackToTopButton from "@/components/BackToTopButton";
 import "@/lib/env"; // Validate environment variables at startup
 import "./globals.css";
 
@@ -199,6 +200,7 @@ export default async function RootLayout({
 
           {/* <SplashCursor /> */}
           {children}
+          <BackToTopButton />
         </body>
       </html>
     </ClerkProvider>

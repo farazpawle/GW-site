@@ -4,51 +4,77 @@ import { z } from "zod";
 export const pageGroupValuesSchema = z.object({
   // Filter by categories
   categoryIds: z.array(z.string()).optional(),
-  
+
   // Filter by tags
   tags: z.array(z.string()).optional(),
-  
+
   // Filter by collection
   collectionId: z.string().optional(),
-  
+
   // Show all products
   showAll: z.boolean().optional(),
-  
+
   // Additional filters
   brands: z.array(z.string()).optional(),
   origins: z.array(z.string()).optional(),
   minPrice: z.number().min(0).optional(),
   maxPrice: z.number().min(0).optional(),
   inStock: z.boolean().optional(),
+  featuredOnly: z.boolean().optional(),
 });
 
 // Static Page Schema (for content pages like About Us, Contact, etc.)
 export const staticPageSchema = z.object({
-  title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(100, "Title must be less than 100 characters"),
   slug: z
     .string()
     .min(1, "Slug is required")
     .max(100, "Slug must be less than 100 characters")
-    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens only"),
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug must be lowercase alphanumeric with hyphens only",
+    ),
   description: z.string().optional(),
   pageType: z.literal("static"),
   content: z.string().min(1, "Content is required for static pages"),
-  metaTitle: z.string().max(60, "Meta title must be 60 characters or less").optional(),
-  metaDesc: z.string().max(160, "Meta description must be 160 characters or less").optional(),
+  metaTitle: z
+    .string()
+    .max(60, "Meta title must be 60 characters or less")
+    .optional(),
+  metaDesc: z
+    .string()
+    .max(160, "Meta description must be 160 characters or less")
+    .optional(),
   published: z.boolean().optional(),
 });
 
 // Dynamic Page Schema (for product listing pages)
 export const dynamicPageSchema = z.object({
-  title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(100, "Title must be less than 100 characters"),
   slug: z
     .string()
     .min(1, "Slug is required")
     .max(100, "Slug must be less than 100 characters")
-    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens only"),
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug must be lowercase alphanumeric with hyphens only",
+    ),
   description: z.string().optional(),
   pageType: z.literal("dynamic"),
-  groupType: z.enum(["category", "tag", "collection", "brand", "origin", "all"]),
+  groupType: z.enum([
+    "category",
+    "tag",
+    "collection",
+    "brand",
+    "origin",
+    "all",
+  ]),
   groupValues: pageGroupValuesSchema,
   layout: z.enum(["grid", "list"]),
   sortBy: z.enum(["name", "price", "newest"]),
@@ -56,8 +82,14 @@ export const dynamicPageSchema = z.object({
     .number()
     .min(4, "Items per page must be at least 4")
     .max(100, "Items per page must be at most 100"),
-  metaTitle: z.string().max(60, "Meta title must be 60 characters or less").optional(),
-  metaDesc: z.string().max(160, "Meta description must be 160 characters or less").optional(),
+  metaTitle: z
+    .string()
+    .max(60, "Meta title must be 60 characters or less")
+    .optional(),
+  metaDesc: z
+    .string()
+    .max(160, "Meta description must be 160 characters or less")
+    .optional(),
   published: z.boolean().optional(),
 });
 

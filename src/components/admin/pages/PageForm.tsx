@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { staticPageSchema, dynamicPageSchema } from '@/lib/validations/page';
-import { Loader2, Save, FileText, Package } from 'lucide-react';
-import type { z } from 'zod';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { staticPageSchema, dynamicPageSchema } from "@/lib/validations/page";
+import { Loader2, Save, FileText, Package } from "lucide-react";
+import type { z } from "zod";
 
 type StaticPageFormValues = z.infer<typeof staticPageSchema>;
 type DynamicPageFormValues = z.infer<typeof dynamicPageSchema>;
@@ -31,15 +31,17 @@ interface FilterOptions {
 }
 
 interface PageFormProps {
-  initialData?: Partial<PageFormValues & { id: string; pageType: 'static' | 'dynamic' }>;
+  initialData?: Partial<
+    PageFormValues & { id: string; pageType: "static" | "dynamic" }
+  >;
   pageId?: string;
 }
 
 export default function PageForm({ initialData, pageId }: PageFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pageType, setPageType] = useState<'static' | 'dynamic'>(
-    initialData?.pageType || 'static'
+  const [pageType, setPageType] = useState<"static" | "dynamic">(
+    initialData?.pageType || "static",
   );
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     categories: [],
@@ -48,75 +50,89 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
     brands: [],
     origins: [],
   });
-  
+
   // State for selected filter values
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedOrigins, setSelectedOrigins] = useState<string[]>([]);
+  const [featuredOnly, setFeaturedOnly] = useState(false);
 
   // Separate forms for each page type
   const staticForm = useForm<StaticPageFormValues>({
     resolver: zodResolver(staticPageSchema),
-    defaultValues: pageType === 'static' && initialData ? {
-      title: initialData.title || '',
-      slug: initialData.slug || '',
-      description: initialData.description || '',
-      pageType: 'static' as const,
-      content: (initialData as StaticPageFormValues).content || '',
-      metaTitle: initialData.metaTitle || '',
-      metaDesc: initialData.metaDesc || '',
-      published: initialData.published || false,
-    } : {
-      title: '',
-      slug: '',
-      description: '',
-      pageType: 'static' as const,
-      content: '',
-      metaTitle: '',
-      metaDesc: '',
-      published: false,
-    },
+    defaultValues:
+      pageType === "static" && initialData
+        ? {
+            title: initialData.title || "",
+            slug: initialData.slug || "",
+            description: initialData.description || "",
+            pageType: "static" as const,
+            content: (initialData as StaticPageFormValues).content || "",
+            metaTitle: initialData.metaTitle || "",
+            metaDesc: initialData.metaDesc || "",
+            published: initialData.published || false,
+          }
+        : {
+            title: "",
+            slug: "",
+            description: "",
+            pageType: "static" as const,
+            content: "",
+            metaTitle: "",
+            metaDesc: "",
+            published: false,
+          },
   });
 
   const dynamicForm = useForm<DynamicPageFormValues>({
     resolver: zodResolver(dynamicPageSchema),
-    defaultValues: pageType === 'dynamic' && initialData ? {
-      title: initialData.title || '',
-      slug: initialData.slug || '',
-      description: initialData.description || '',
-      pageType: 'dynamic' as const,
-      groupType: (initialData as DynamicPageFormValues).groupType || 'all',
-      groupValues: (initialData as DynamicPageFormValues).groupValues || {},
-      layout: (initialData as DynamicPageFormValues).layout || 'grid',
-      sortBy: (initialData as DynamicPageFormValues).sortBy || 'name',
-      itemsPerPage: (initialData as DynamicPageFormValues).itemsPerPage || 12,
-      metaTitle: initialData.metaTitle || '',
-      metaDesc: initialData.metaDesc || '',
-      published: initialData.published || false,
-    } : {
-      title: '',
-      slug: '',
-      description: '',
-      pageType: 'dynamic' as const,
-      groupType: 'all' as const,
-      groupValues: {},
-      layout: 'grid' as const,
-      sortBy: 'name' as const,
-      itemsPerPage: 12,
-      metaTitle: '',
-      metaDesc: '',
-      published: false,
-    },
+    defaultValues:
+      pageType === "dynamic" && initialData
+        ? {
+            title: initialData.title || "",
+            slug: initialData.slug || "",
+            description: initialData.description || "",
+            pageType: "dynamic" as const,
+            groupType:
+              (initialData as DynamicPageFormValues).groupType || "all",
+            groupValues:
+              (initialData as DynamicPageFormValues).groupValues || {},
+            layout: (initialData as DynamicPageFormValues).layout || "grid",
+            sortBy: (initialData as DynamicPageFormValues).sortBy || "name",
+            itemsPerPage:
+              (initialData as DynamicPageFormValues).itemsPerPage || 12,
+            metaTitle: initialData.metaTitle || "",
+            metaDesc: initialData.metaDesc || "",
+            published: initialData.published || false,
+          }
+        : {
+            title: "",
+            slug: "",
+            description: "",
+            pageType: "dynamic" as const,
+            groupType: "all" as const,
+            groupValues: {},
+            layout: "grid" as const,
+            sortBy: "name" as const,
+            itemsPerPage: 12,
+            metaTitle: "",
+            metaDesc: "",
+            published: false,
+          },
   });
 
-  const slug = pageType === 'static' ? staticForm.watch('slug') : dynamicForm.watch('slug');
-  const currentGroupType = pageType === 'dynamic' ? dynamicForm.watch('groupType') : null;
-  
+  const slug =
+    pageType === "static"
+      ? staticForm.watch("slug")
+      : dynamicForm.watch("slug");
+  const currentGroupType =
+    pageType === "dynamic" ? dynamicForm.watch("groupType") : null;
+
   // Clear selected values when groupType changes
   useEffect(() => {
-    if (pageType === 'dynamic' && currentGroupType) {
+    if (pageType === "dynamic" && currentGroupType) {
       setSelectedCategories([]);
       setSelectedCollections([]);
       setSelectedTags([]);
@@ -124,21 +140,23 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
       setSelectedOrigins([]);
     }
   }, [currentGroupType, pageType]);
-  
+
   // URLs for the page
-  const publicUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}/${slug || 'your-slug-here'}`
-    : `/${slug || 'your-slug-here'}`;
-  
-  const previewUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}/pages/${slug || 'your-slug-here'}`
-    : `/pages/${slug || 'your-slug-here'}`;
+  const publicUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/${slug || "your-slug-here"}`
+      : `/${slug || "your-slug-here"}`;
+
+  const previewUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/pages/${slug || "your-slug-here"}`
+      : `/pages/${slug || "your-slug-here"}`;
 
   useEffect(() => {
     // Fetch all filter options from the new API
-    fetch('/api/admin/pages/filter-options')
-      .then(r => r.json())
-      .then(data => {
+    fetch("/api/admin/pages/filter-options")
+      .then((r) => r.json())
+      .then((data) => {
         setFilterOptions({
           categories: data.categories || [],
           collections: data.collections || [],
@@ -147,15 +165,17 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
           origins: data.origins || [],
         });
       })
-      .catch(err => console.error('Failed to load filter options:', err));
-    
+      .catch((err) => console.error("Failed to load filter options:", err));
+
     // Initialize selected values from initialData if editing
-    if (initialData && pageType === 'dynamic') {
-      const groupVals = (initialData as DynamicPageFormValues).groupValues || {};
+    if (initialData && pageType === "dynamic") {
+      const groupVals =
+        (initialData as DynamicPageFormValues).groupValues || {};
       setSelectedCategories(groupVals.categoryIds || []);
       setSelectedTags(groupVals.tags || []);
       setSelectedBrands(groupVals.brands || []);
       setSelectedOrigins(groupVals.origins || []);
+      setFeaturedOnly(groupVals.featuredOnly ?? false);
       if (groupVals.collectionId) {
         setSelectedCollections([groupVals.collectionId]);
       }
@@ -167,66 +187,74 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
   const onSubmit = async (data: PageFormValues) => {
     try {
       setIsSubmitting(true);
-      
+
       // For dynamic pages, build groupValues from selected checkboxes
-      if (data.pageType === 'dynamic') {
+      if (data.pageType === "dynamic") {
         const dynamicData = data as DynamicPageFormValues;
         const groupValues: Record<string, unknown> = {};
-        
+
         switch (dynamicData.groupType) {
-          case 'category':
+          case "category":
             groupValues.categoryIds = selectedCategories;
             break;
-          case 'tag':
+          case "tag":
             groupValues.tags = selectedTags;
             break;
-          case 'collection':
+          case "collection":
             groupValues.collectionId = selectedCollections[0] || null;
             break;
-          case 'brand':
+          case "brand":
             groupValues.brands = selectedBrands;
             break;
-          case 'origin':
+          case "origin":
             groupValues.origins = selectedOrigins;
             break;
-          case 'all':
+          case "all":
           default:
             // No specific filters for "all"
             break;
         }
-        
+
+        groupValues.featuredOnly = featuredOnly;
+
         dynamicData.groupValues = groupValues;
       }
-      
-      const url = pageId ? `/api/admin/pages/${pageId}` : '/api/admin/pages';
-      const method = pageId ? 'PUT' : 'POST';
+
+      const url = pageId ? `/api/admin/pages/${pageId}` : "/api/admin/pages";
+      const method = pageId ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to save page');
+        throw new Error(error.error || "Failed to save page");
       }
 
       await response.json();
-      
-      const pageUrl = typeof window !== 'undefined' 
-        ? `${window.location.origin}/pages/${data.slug}`
-        : `/pages/${data.slug}`;
-        
+
+      const pageUrl =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/pages/${data.slug}`
+          : `/pages/${data.slug}`;
+
       if (data.published) {
-        alert(`✅ ${data.pageType === 'static' ? 'Static' : 'Product'} page ${pageId ? 'updated' : 'created'} successfully!\n\n📍 Your page is now live at:\n${pageUrl}\n\n🔗 You can also add it to your navigation menu.`);
+        alert(
+          `✅ ${data.pageType === "static" ? "Static" : "Product"} page ${pageId ? "updated" : "created"} successfully!\n\n📍 Your page is now live at:\n${pageUrl}\n\n🔗 You can also add it to your navigation menu.`,
+        );
       } else {
-        alert(`✅ Page ${pageId ? 'updated' : 'created'} as draft!\n\n📍 Once published, it will be available at:\n${pageUrl}`);
+        alert(
+          `✅ Page ${pageId ? "updated" : "created"} as draft!\n\n📍 Once published, it will be available at:\n${pageUrl}`,
+        );
       }
 
-      router.push('/admin/pages');
+      router.push("/admin/pages");
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to save page';
+      const message =
+        error instanceof Error ? error.message : "Failed to save page";
       alert(message);
     } finally {
       setIsSubmitting(false);
@@ -237,32 +265,45 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
   const handleDynamicSubmit = dynamicForm.handleSubmit(onSubmit);
 
   return (
-    <form onSubmit={pageType === 'static' ? handleStaticSubmit : handleDynamicSubmit} className="space-y-6">
+    <form
+      onSubmit={
+        pageType === "static" ? handleStaticSubmit : handleDynamicSubmit
+      }
+      className="space-y-6"
+    >
       {/* Page Type Selector */}
       <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 border-l-4 border-blue-500 p-6 rounded-lg">
-        <h3 className="font-semibold text-blue-300 mb-3 text-lg">📄 Select Page Type</h3>
+        <h3 className="font-semibold text-blue-300 mb-3 text-lg">
+          📄 Select Page Type
+        </h3>
         <div className="grid grid-cols-2 gap-4">
           <button
             type="button"
-            onClick={() => !pageId && setPageType('static')}
+            onClick={() => !pageId && setPageType("static")}
             disabled={!!pageId}
             className={`
               p-4 rounded-lg border-2 transition-all text-left
-              ${pageType === 'static'
-                ? 'border-blue-500 bg-blue-900/40 shadow-lg shadow-blue-500/20'
-                : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+              ${
+                pageType === "static"
+                  ? "border-blue-500 bg-blue-900/40 shadow-lg shadow-blue-500/20"
+                  : "border-gray-700 bg-gray-800 hover:border-gray-600"
               }
-              ${pageId ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              ${pageId ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
             `}
           >
             <div className="flex items-start gap-3">
-              <FileText className={`w-6 h-6 flex-shrink-0 ${pageType === 'static' ? 'text-blue-400' : 'text-gray-400'}`} />
+              <FileText
+                className={`w-6 h-6 flex-shrink-0 ${pageType === "static" ? "text-blue-400" : "text-gray-400"}`}
+              />
               <div>
-                <h4 className={`font-semibold mb-1 ${pageType === 'static' ? 'text-blue-300' : 'text-gray-300'}`}>
+                <h4
+                  className={`font-semibold mb-1 ${pageType === "static" ? "text-blue-300" : "text-gray-300"}`}
+                >
                   Static Content Page
                 </h4>
                 <p className="text-sm text-gray-400">
-                  For pages with custom HTML/CSS/JS content (About Us, Contact, Terms, etc.)
+                  For pages with custom HTML/CSS/JS content (About Us, Contact,
+                  Terms, etc.)
                 </p>
               </div>
             </div>
@@ -270,25 +311,31 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
 
           <button
             type="button"
-            onClick={() => !pageId && setPageType('dynamic')}
+            onClick={() => !pageId && setPageType("dynamic")}
             disabled={!!pageId}
             className={`
               p-4 rounded-lg border-2 transition-all text-left
-              ${pageType === 'dynamic'
-                ? 'border-purple-500 bg-purple-900/40 shadow-lg shadow-purple-500/20'
-                : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+              ${
+                pageType === "dynamic"
+                  ? "border-purple-500 bg-purple-900/40 shadow-lg shadow-purple-500/20"
+                  : "border-gray-700 bg-gray-800 hover:border-gray-600"
               }
-              ${pageId ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              ${pageId ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
             `}
           >
             <div className="flex items-start gap-3">
-              <Package className={`w-6 h-6 flex-shrink-0 ${pageType === 'dynamic' ? 'text-purple-400' : 'text-gray-400'}`} />
+              <Package
+                className={`w-6 h-6 flex-shrink-0 ${pageType === "dynamic" ? "text-purple-400" : "text-gray-400"}`}
+              />
               <div>
-                <h4 className={`font-semibold mb-1 ${pageType === 'dynamic' ? 'text-purple-300' : 'text-gray-300'}`}>
+                <h4
+                  className={`font-semibold mb-1 ${pageType === "dynamic" ? "text-purple-300" : "text-gray-300"}`}
+                >
                   Dynamic Product Page
                 </h4>
                 <p className="text-sm text-gray-400">
-                  For pages that display filtered products (categories, collections, tags)
+                  For pages that display filtered products (categories,
+                  collections, tags)
                 </p>
               </div>
             </div>
@@ -304,7 +351,9 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
       {/* Basic Info */}
       <div className="bg-gray-900 p-6 rounded-lg border border-gray-800 shadow-lg space-y-5">
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-xl font-bold text-gray-100">📝 Basic Information</h3>
+          <h3 className="text-xl font-bold text-gray-100">
+            📝 Basic Information
+          </h3>
         </div>
 
         <div>
@@ -312,13 +361,23 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
             Page Title <span className="text-red-400">*</span>
           </label>
           <input
-            {...(pageType === 'static' ? staticForm.register('title') : dynamicForm.register('title'))}
+            {...(pageType === "static"
+              ? staticForm.register("title")
+              : dynamicForm.register("title"))}
             className="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500"
             placeholder="e.g., About Us, Engine Parts, Contact"
           />
-          {(pageType === 'static' ? staticForm.formState.errors.title : dynamicForm.formState.errors.title) && (
+          {(pageType === "static"
+            ? staticForm.formState.errors.title
+            : dynamicForm.formState.errors.title) && (
             <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
-              ⚠️ {(pageType === 'static' ? staticForm.formState.errors.title : dynamicForm.formState.errors.title)?.message}
+              ⚠️{" "}
+              {
+                (pageType === "static"
+                  ? staticForm.formState.errors.title
+                  : dynamicForm.formState.errors.title
+                )?.message
+              }
             </p>
           )}
         </div>
@@ -330,24 +389,36 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
           <div className="flex items-center gap-2">
             <span className="text-gray-500 text-sm">/pages/</span>
             <input
-              {...(pageType === 'static' ? staticForm.register('slug') : dynamicForm.register('slug'))}
+              {...(pageType === "static"
+                ? staticForm.register("slug")
+                : dynamicForm.register("slug"))}
               className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 font-mono"
               placeholder="about-us"
             />
           </div>
-          {(pageType === 'static' ? staticForm.formState.errors.slug : dynamicForm.formState.errors.slug) && (
+          {(pageType === "static"
+            ? staticForm.formState.errors.slug
+            : dynamicForm.formState.errors.slug) && (
             <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
-              ⚠️ {(pageType === 'static' ? staticForm.formState.errors.slug : dynamicForm.formState.errors.slug)?.message}
+              ⚠️{" "}
+              {
+                (pageType === "static"
+                  ? staticForm.formState.errors.slug
+                  : dynamicForm.formState.errors.slug
+                )?.message
+              }
             </p>
           )}
-          
+
           {slug && (
             <div className="mt-3 space-y-2">
               <div className="p-3 bg-blue-900/20 border border-blue-700/50 rounded-lg">
                 <div className="flex items-start gap-2">
                   <span className="text-blue-400 text-lg">🌐</span>
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-blue-300 mb-1">Public URL (via menu):</p>
+                    <p className="text-xs font-semibold text-blue-300 mb-1">
+                      Public URL (via menu):
+                    </p>
                     <code className="text-sm text-blue-200 break-all block bg-blue-950/50 px-2 py-1 rounded">
                       {publicUrl}
                     </code>
@@ -358,7 +429,9 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
                 <div className="flex items-start gap-2">
                   <span className="text-purple-400 text-lg">�</span>
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-purple-300 mb-1">Direct Access URL (admin preview):</p>
+                    <p className="text-xs font-semibold text-purple-300 mb-1">
+                      Direct Access URL (admin preview):
+                    </p>
                     <code className="text-sm text-purple-200 break-all block bg-purple-950/50 px-2 py-1 rounded">
                       {previewUrl}
                     </code>
@@ -374,7 +447,9 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
             Page Description (Optional)
           </label>
           <textarea
-            {...(pageType === 'static' ? staticForm.register('description') : dynamicForm.register('description'))}
+            {...(pageType === "static"
+              ? staticForm.register("description")
+              : dynamicForm.register("description"))}
             className="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500"
             rows={3}
             placeholder="Brief description..."
@@ -383,18 +458,20 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
       </div>
 
       {/* STATIC PAGE: Content Editor */}
-      {pageType === 'static' && (
+      {pageType === "static" && (
         <div className="bg-blue-900/20 p-6 rounded-lg border-2 border-blue-800 shadow-lg space-y-5">
           <div className="flex items-center gap-2 mb-4">
-            <h3 className="text-xl font-bold text-blue-300">✍️ Page Content (HTML/CSS/JS)</h3>
+            <h3 className="text-xl font-bold text-blue-300">
+              ✍️ Page Content (HTML/CSS/JS)
+            </h3>
           </div>
-          
+
           <div>
             <label className="block text-sm font-semibold text-blue-300 mb-2">
               Content <span className="text-red-400">*</span>
             </label>
             <textarea
-              {...staticForm.register('content')}
+              {...staticForm.register("content")}
               className="w-full px-4 py-3 bg-gray-900 border border-blue-700 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 font-mono text-sm"
               rows={20}
               placeholder="<h1>Welcome to Our Company</h1>
@@ -414,25 +491,29 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
               </p>
             )}
             <p className="text-xs text-blue-400 mt-2">
-              💡 You can use HTML, CSS, and JavaScript. Content will be rendered safely on the public page.
+              💡 You can use HTML, CSS, and JavaScript. Content will be rendered
+              safely on the public page.
             </p>
           </div>
         </div>
       )}
 
       {/* DYNAMIC PAGE: Product Group Selection */}
-      {pageType === 'dynamic' && (
+      {pageType === "dynamic" && (
         <div className="bg-purple-900/20 p-6 rounded-lg border-2 border-purple-800 shadow-lg space-y-5">
           <div className="flex items-center gap-2 mb-4">
-            <h3 className="text-xl font-bold text-purple-300">🎯 Product Group Selection</h3>
+            <h3 className="text-xl font-bold text-purple-300">
+              🎯 Product Group Selection
+            </h3>
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-purple-300 mb-3">
-              What products should this page show? <span className="text-red-400">*</span>
+              What products should this page show?{" "}
+              <span className="text-red-400">*</span>
             </label>
-            <select 
-              {...dynamicForm.register('groupType')} 
+            <select
+              {...dynamicForm.register("groupType")}
               className="w-full px-4 py-3 bg-gray-900 border border-purple-700 text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               <option value="all">🌐 All Products (Show entire catalog)</option>
@@ -444,24 +525,32 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
             </select>
           </div>
 
-          {dynamicForm.watch('groupType') === 'category' && (
+          {dynamicForm.watch("groupType") === "category" && (
             <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
               <label className="block text-sm font-semibold text-gray-200 mb-3">
                 📂 Select Categories
               </label>
               {filterOptions.categories.length > 0 ? (
                 <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 bg-gray-900 rounded border border-gray-700">
-                  {filterOptions.categories.map(cat => (
-                    <label key={cat.id} className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-750 rounded cursor-pointer border border-gray-700 hover:border-blue-600 transition-all">
+                  {filterOptions.categories.map((cat) => (
+                    <label
+                      key={cat.id}
+                      className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-750 rounded cursor-pointer border border-gray-700 hover:border-blue-600 transition-all"
+                    >
                       <input
                         type="checkbox"
                         value={cat.id}
                         checked={selectedCategories.includes(cat.id)}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setSelectedCategories([...selectedCategories, cat.id]);
+                            setSelectedCategories([
+                              ...selectedCategories,
+                              cat.id,
+                            ]);
                           } else {
-                            setSelectedCategories(selectedCategories.filter(id => id !== cat.id));
+                            setSelectedCategories(
+                              selectedCategories.filter((id) => id !== cat.id),
+                            );
                           }
                         }}
                         className="w-4 h-4 text-blue-600 border-gray-600 rounded focus:ring-2 focus:ring-blue-500 bg-gray-800"
@@ -471,20 +560,26 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm py-3">No categories found. Create categories first in Admin → Categories.</p>
+                <p className="text-gray-500 text-sm py-3">
+                  No categories found. Create categories first in Admin →
+                  Categories.
+                </p>
               )}
             </div>
           )}
 
-          {dynamicForm.watch('groupType') === 'collection' && (
+          {dynamicForm.watch("groupType") === "collection" && (
             <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
               <label className="block text-sm font-semibold text-gray-200 mb-3">
                 📦 Select Collections
               </label>
               {filterOptions.collections.length > 0 ? (
                 <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 bg-gray-900 rounded border border-gray-700">
-                  {filterOptions.collections.map(col => (
-                    <label key={col.id} className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-750 rounded cursor-pointer border border-gray-700 hover:border-purple-600 transition-all">
+                  {filterOptions.collections.map((col) => (
+                    <label
+                      key={col.id}
+                      className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-750 rounded cursor-pointer border border-gray-700 hover:border-purple-600 transition-all"
+                    >
                       <input
                         type="checkbox"
                         value={col.id}
@@ -504,20 +599,26 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm py-3">No collections found. Create collections first in Admin → Collections.</p>
+                <p className="text-gray-500 text-sm py-3">
+                  No collections found. Create collections first in Admin →
+                  Collections.
+                </p>
               )}
             </div>
           )}
 
-          {dynamicForm.watch('groupType') === 'tag' && (
+          {dynamicForm.watch("groupType") === "tag" && (
             <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
               <label className="block text-sm font-semibold text-gray-200 mb-3">
                 🏷️ Select Tags
               </label>
               {filterOptions.tags.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 bg-gray-900 rounded border border-gray-700">
-                  {filterOptions.tags.map(tag => (
-                    <label key={tag} className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-750 rounded cursor-pointer border border-gray-700 hover:border-green-600 transition-all">
+                  {filterOptions.tags.map((tag) => (
+                    <label
+                      key={tag}
+                      className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-750 rounded cursor-pointer border border-gray-700 hover:border-green-600 transition-all"
+                    >
                       <input
                         type="checkbox"
                         value={tag}
@@ -526,7 +627,9 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
                           if (e.target.checked) {
                             setSelectedTags([...selectedTags, tag]);
                           } else {
-                            setSelectedTags(selectedTags.filter(t => t !== tag));
+                            setSelectedTags(
+                              selectedTags.filter((t) => t !== tag),
+                            );
                           }
                         }}
                         className="w-4 h-4 text-green-600 border-gray-600 rounded focus:ring-2 focus:ring-green-500 bg-gray-800"
@@ -536,20 +639,25 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm py-3">No tags found. Add tags to your products first.</p>
+                <p className="text-gray-500 text-sm py-3">
+                  No tags found. Add tags to your products first.
+                </p>
               )}
             </div>
           )}
 
-          {dynamicForm.watch('groupType') === 'brand' && (
+          {dynamicForm.watch("groupType") === "brand" && (
             <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
               <label className="block text-sm font-semibold text-gray-200 mb-3">
                 🏭 Select Brands
               </label>
               {filterOptions.brands.length > 0 ? (
                 <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 bg-gray-900 rounded border border-gray-700">
-                  {filterOptions.brands.map(brand => (
-                    <label key={brand} className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-750 rounded cursor-pointer border border-gray-700 hover:border-orange-600 transition-all">
+                  {filterOptions.brands.map((brand) => (
+                    <label
+                      key={brand}
+                      className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-750 rounded cursor-pointer border border-gray-700 hover:border-orange-600 transition-all"
+                    >
                       <input
                         type="checkbox"
                         value={brand}
@@ -558,7 +666,9 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
                           if (e.target.checked) {
                             setSelectedBrands([...selectedBrands, brand]);
                           } else {
-                            setSelectedBrands(selectedBrands.filter(b => b !== brand));
+                            setSelectedBrands(
+                              selectedBrands.filter((b) => b !== brand),
+                            );
                           }
                         }}
                         className="w-4 h-4 text-orange-600 border-gray-600 rounded focus:ring-2 focus:ring-orange-500 bg-gray-800"
@@ -568,20 +678,25 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm py-3">No brands found. Add brands to your products first.</p>
+                <p className="text-gray-500 text-sm py-3">
+                  No brands found. Add brands to your products first.
+                </p>
               )}
             </div>
           )}
 
-          {dynamicForm.watch('groupType') === 'origin' && (
+          {dynamicForm.watch("groupType") === "origin" && (
             <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
               <label className="block text-sm font-semibold text-gray-200 mb-3">
                 🌍 Select Origins/Countries
               </label>
               {filterOptions.origins.length > 0 ? (
                 <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 bg-gray-900 rounded border border-gray-700">
-                  {filterOptions.origins.map(origin => (
-                    <label key={origin} className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-750 rounded cursor-pointer border border-gray-700 hover:border-cyan-600 transition-all">
+                  {filterOptions.origins.map((origin) => (
+                    <label
+                      key={origin}
+                      className="flex items-center gap-2 p-3 bg-gray-800 hover:bg-gray-750 rounded cursor-pointer border border-gray-700 hover:border-cyan-600 transition-all"
+                    >
                       <input
                         type="checkbox"
                         value={origin}
@@ -590,7 +705,9 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
                           if (e.target.checked) {
                             setSelectedOrigins([...selectedOrigins, origin]);
                           } else {
-                            setSelectedOrigins(selectedOrigins.filter(o => o !== origin));
+                            setSelectedOrigins(
+                              selectedOrigins.filter((o) => o !== origin),
+                            );
                           }
                         }}
                         className="w-4 h-4 text-cyan-600 border-gray-600 rounded focus:ring-2 focus:ring-cyan-500 bg-gray-800"
@@ -600,17 +717,42 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm py-3">No origins found. Add origin/country to your products first.</p>
+                <p className="text-gray-500 text-sm py-3">
+                  No origins found. Add origin/country to your products first.
+                </p>
               )}
             </div>
           )}
 
+          <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={featuredOnly}
+                onChange={(event) => setFeaturedOnly(event.target.checked)}
+                className="w-5 h-5 mt-0.5 text-yellow-500 border-gray-600 rounded focus:ring-2 focus:ring-yellow-500 bg-gray-800"
+              />
+              <div>
+                <span className="text-sm font-semibold text-gray-200 group-hover:text-gray-100">
+                  ⭐ Show only featured products
+                </span>
+                <p className="text-xs text-gray-500 mt-1">
+                  When enabled, this page will only list products marked as
+                  featured in the catalog, in addition to any other filters
+                  above.
+                </p>
+              </div>
+            </label>
+          </div>
+
           {/* Display Options for Dynamic Pages */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-purple-800">
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-2">📐 Layout</label>
-              <select 
-                {...dynamicForm.register('layout')} 
+              <label className="block text-sm font-semibold text-gray-200 mb-2">
+                📐 Layout
+              </label>
+              <select
+                {...dynamicForm.register("layout")}
                 className="w-full px-4 py-3 bg-gray-900 border border-gray-700 text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500"
               >
                 <option value="grid">Grid View</option>
@@ -619,9 +761,11 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-2">🔄 Sort By</label>
-              <select 
-                {...dynamicForm.register('sortBy')} 
+              <label className="block text-sm font-semibold text-gray-200 mb-2">
+                🔄 Sort By
+              </label>
+              <select
+                {...dynamicForm.register("sortBy")}
                 className="w-full px-4 py-3 bg-gray-900 border border-gray-700 text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500"
               >
                 <option value="name">Name (A-Z)</option>
@@ -631,10 +775,14 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-2">📊 Items Per Page</label>
+              <label className="block text-sm font-semibold text-gray-200 mb-2">
+                📊 Items Per Page
+              </label>
               <input
                 type="number"
-                {...dynamicForm.register('itemsPerPage', { valueAsNumber: true })}
+                {...dynamicForm.register("itemsPerPage", {
+                  valueAsNumber: true,
+                })}
                 className="w-full px-4 py-3 bg-gray-900 border border-gray-700 text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500"
                 min="4"
                 max="100"
@@ -647,14 +795,20 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
       {/* SEO & Publishing */}
       <div className="bg-gray-900 p-6 rounded-lg border border-gray-800 shadow-lg space-y-5">
         <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-xl font-bold text-gray-100">🔍 SEO & Publishing</h3>
+          <h3 className="text-xl font-bold text-gray-100">
+            🔍 SEO & Publishing
+          </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-200 mb-2">Meta Title</label>
+            <label className="block text-sm font-semibold text-gray-200 mb-2">
+              Meta Title
+            </label>
             <input
-              {...(pageType === 'static' ? staticForm.register('metaTitle') : dynamicForm.register('metaTitle'))}
+              {...(pageType === "static"
+                ? staticForm.register("metaTitle")
+                : dynamicForm.register("metaTitle"))}
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500"
               placeholder="SEO title (max 60 chars)"
               maxLength={60}
@@ -662,9 +816,13 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-200 mb-2">Meta Description</label>
+            <label className="block text-sm font-semibold text-gray-200 mb-2">
+              Meta Description
+            </label>
             <input
-              {...(pageType === 'static' ? staticForm.register('metaDesc') : dynamicForm.register('metaDesc'))}
+              {...(pageType === "static"
+                ? staticForm.register("metaDesc")
+                : dynamicForm.register("metaDesc"))}
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500"
               placeholder="SEO description (max 160 chars)"
               maxLength={160}
@@ -676,7 +834,9 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
           <label className="flex items-start gap-3 cursor-pointer group">
             <input
               type="checkbox"
-              {...(pageType === 'static' ? staticForm.register('published') : dynamicForm.register('published'))}
+              {...(pageType === "static"
+                ? staticForm.register("published")
+                : dynamicForm.register("published"))}
               className="w-5 h-5 mt-0.5 text-green-600 border-gray-600 rounded focus:ring-2 focus:ring-green-500 bg-gray-800"
             />
             <div>
@@ -709,12 +869,12 @@ export default function PageForm({ initialData, pageId }: PageFormProps) {
           {isSubmitting ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              {pageId ? 'Updating...' : 'Creating...'}
+              {pageId ? "Updating..." : "Creating..."}
             </>
           ) : (
             <>
               <Save className="w-5 h-5" />
-              {pageId ? 'Update Page' : 'Create Page'}
+              {pageId ? "Update Page" : "Create Page"}
             </>
           )}
         </button>

@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/prisma";
 
 /**
  * GET /api/admin/pages/[id]/preview
@@ -8,16 +8,13 @@ import { prisma } from '@/lib/prisma';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Authenticate admin user
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get page ID from params
@@ -25,53 +22,51 @@ export async function GET(
 
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '12');
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "12");
 
     // Fetch page
     const pageData = await prisma.page.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!pageData) {
-      return NextResponse.json(
-        { error: 'Page not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
     // Parse groupValues
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const groupValues = pageData.groupValues as any;
-    
+    const featuredOnly = groupValues?.featuredOnly === true;
+
     // Build Prisma where clause based on groupType
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { published: true };
 
     switch (pageData.groupType) {
-      case 'category':
+      case "category":
         if (groupValues.categoryIds && groupValues.categoryIds.length > 0) {
           where.categoryId = { in: groupValues.categoryIds };
         }
         break;
 
-      case 'tag':
+      case "tag":
         if (groupValues.tags && groupValues.tags.length > 0) {
           where.tags = { hasSome: groupValues.tags };
         }
         break;
 
-      case 'collection':
+      case "collection":
         if (groupValues.collectionId) {
           // Fetch collection and apply its filters
           const collection = await prisma.collection.findUnique({
-            where: { id: groupValues.collectionId }
+            where: { id: groupValues.collectionId },
           });
 
           if (collection) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const filterRules = collection.filterRules as any;
-            
+
             // Apply collection filters
             if (filterRules.categoryIds?.length) {
               where.categoryId = { in: filterRules.categoryIds };
@@ -101,14 +96,14 @@ export async function GET(
         }
         break;
 
-      case 'all':
+      case "all":
         // No additional filters - show all published products
         break;
 
       default:
         return NextResponse.json(
-          { error: 'Invalid group type' },
-          { status: 400 }
+          { error: "Invalid group type" },
+          { status: 400 },
         );
     }
 
@@ -128,22 +123,25 @@ export async function GET(
     if (groupValues.inStock) {
       where.stockQuantity = { gt: 0 };
     }
+    if (featuredOnly) {
+      where.featured = true;
+    }
 
     // Determine sort order
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let orderBy: any = { name: 'asc' };
+    let orderBy: any = { name: "asc" };
     switch (pageData.sortBy) {
-      case 'name':
-        orderBy = { name: 'asc' };
+      case "name":
+        orderBy = { name: "asc" };
         break;
-      case 'price':
-        orderBy = { price: 'asc' };
+      case "price":
+        orderBy = { price: "asc" };
         break;
-      case 'createdAt':
-        orderBy = { createdAt: 'desc' };
+      case "createdAt":
+        orderBy = { createdAt: "desc" };
         break;
-      case 'featured':
-        orderBy = [{ featured: 'desc' }, { createdAt: 'desc' }];
+      case "featured":
+        orderBy = [{ featured: "desc" }, { createdAt: "desc" }];
         break;
     }
 
@@ -159,12 +157,12 @@ export async function GET(
             select: {
               id: true,
               name: true,
-              slug: true
-            }
-          }
-        }
+              slug: true,
+            },
+          },
+        },
       }),
-      prisma.part.count({ where })
+      prisma.part.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -174,14 +172,14 @@ export async function GET(
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
-    console.error('Error previewing page products:', error);
+    console.error("Error previewing page products:", error);
     return NextResponse.json(
-      { error: 'Failed to preview page products' },
-      { status: 500 }
+      { error: "Failed to preview page products" },
+      { status: 500 },
     );
   }
 }

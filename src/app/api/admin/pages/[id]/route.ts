@@ -1,9 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { checkPermission } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { pageSchema } from '@/lib/validations/page';
-import { ZodError } from 'zod';
-import { Prisma } from '@prisma/client';
+import { NextRequest, NextResponse } from "next/server";
+import { checkPermission } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { pageSchema, PageGroupValues } from "@/lib/validations/page";
+import { ZodError } from "zod";
+import { Prisma } from "@prisma/client";
+
+const normalizeGroupValues = (groupValues?: PageGroupValues) => {
+  if (!groupValues) {
+    return { featuredOnly: false } satisfies PageGroupValues;
+  }
+
+  return {
+    ...groupValues,
+    featuredOnly: groupValues.featuredOnly ?? false,
+  } satisfies PageGroupValues;
+};
 
 /**
  * GET /api/admin/pages/[id]
@@ -11,15 +22,15 @@ import { Prisma } from '@prisma/client';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Check permission
-    const user = await checkPermission('pages.view');
+    const user = await checkPermission("pages.view");
     if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized - Missing permission: pages.view' },
-        { status: 403 }
+        { error: "Unauthorized - Missing permission: pages.view" },
+        { status: 403 },
       );
     }
 
@@ -34,25 +45,22 @@ export async function GET(
           select: {
             id: true,
             label: true,
-            position: true
-          }
-        }
-      }
+            position: true,
+          },
+        },
+      },
     });
 
     if (!page) {
-      return NextResponse.json(
-        { error: 'Page not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
     return NextResponse.json(page);
   } catch (error) {
-    console.error('Error fetching page:', error);
+    console.error("Error fetching page:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch page' },
-      { status: 500 }
+      { error: "Failed to fetch page" },
+      { status: 500 },
     );
   }
 }
@@ -63,15 +71,15 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Check permission
-    const user = await checkPermission('pages.edit');
+    const user = await checkPermission("pages.edit");
     if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized - Missing permission: pages.edit' },
-        { status: 403 }
+        { error: "Unauthorized - Missing permission: pages.edit" },
+        { status: 403 },
       );
     }
 
@@ -84,40 +92,37 @@ export async function PUT(
 
     // Check if page exists
     const existingPage = await prisma.page.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!existingPage) {
-      return NextResponse.json(
-        { error: 'Page not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
     // Check for duplicate slug (if slug changed)
     if (validatedData.slug !== existingPage.slug) {
       const duplicateSlug = await prisma.page.findUnique({
-        where: { slug: validatedData.slug }
+        where: { slug: validatedData.slug },
       });
 
       if (duplicateSlug) {
         return NextResponse.json(
-          { error: 'A page with this slug already exists' },
-          { status: 409 }
+          { error: "A page with this slug already exists" },
+          { status: 409 },
         );
       }
     }
 
     // Update page (handle both static and dynamic types)
     let updatedPage;
-    if (validatedData.pageType === 'static') {
+    if (validatedData.pageType === "static") {
       updatedPage = await prisma.page.update({
         where: { id },
         data: {
           title: validatedData.title,
           slug: validatedData.slug,
           description: validatedData.description,
-          pageType: 'static',
+          pageType: "static",
           content: validatedData.content,
           // Clear dynamic page fields
           groupType: null,
@@ -125,21 +130,23 @@ export async function PUT(
           metaTitle: validatedData.metaTitle,
           metaDesc: validatedData.metaDesc,
           published: validatedData.published,
-          publishedAt: validatedData.published && !existingPage.published 
-            ? new Date() 
-            : existingPage.publishedAt,
-        }
+          publishedAt:
+            validatedData.published && !existingPage.published
+              ? new Date()
+              : existingPage.publishedAt,
+        },
       });
     } else {
+      const groupValues = normalizeGroupValues(validatedData.groupValues);
       updatedPage = await prisma.page.update({
         where: { id },
         data: {
           title: validatedData.title,
           slug: validatedData.slug,
           description: validatedData.description,
-          pageType: 'dynamic',
+          pageType: "dynamic",
           groupType: validatedData.groupType,
-          groupValues: validatedData.groupValues,
+          groupValues,
           layout: validatedData.layout,
           sortBy: validatedData.sortBy,
           itemsPerPage: validatedData.itemsPerPage,
@@ -148,10 +155,11 @@ export async function PUT(
           metaTitle: validatedData.metaTitle,
           metaDesc: validatedData.metaDesc,
           published: validatedData.published,
-          publishedAt: validatedData.published && !existingPage.published 
-            ? new Date() 
-            : existingPage.publishedAt,
-        }
+          publishedAt:
+            validatedData.published && !existingPage.published
+              ? new Date()
+              : existingPage.publishedAt,
+        },
       });
     }
 
@@ -159,15 +167,15 @@ export async function PUT(
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.issues },
-        { status: 400 }
+        { error: "Validation error", details: error.issues },
+        { status: 400 },
       );
     }
 
-    console.error('Error updating page:', error);
+    console.error("Error updating page:", error);
     return NextResponse.json(
-      { error: 'Failed to update page' },
-      { status: 500 }
+      { error: "Failed to update page" },
+      { status: 500 },
     );
   }
 }
@@ -178,15 +186,15 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Check permission
-    const user = await checkPermission('pages.delete');
+    const user = await checkPermission("pages.delete");
     if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized - Missing permission: pages.delete' },
-        { status: 403 }
+        { error: "Unauthorized - Missing permission: pages.delete" },
+        { status: 403 },
       );
     }
 
@@ -198,54 +206,51 @@ export async function DELETE(
       where: { id },
       include: {
         _count: {
-          select: { menuItems: true }
-        }
-      }
+          select: { menuItems: true },
+        },
+      },
     });
 
     if (!existingPage) {
-      return NextResponse.json(
-        { error: 'Page not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
     // Check if page is permanent (cannot be deleted)
     if (existingPage.isPermanent) {
       return NextResponse.json(
-        { 
-          error: 'Cannot delete permanent page',
-          details: `The "${existingPage.title}" page is a system page and cannot be deleted.`
+        {
+          error: "Cannot delete permanent page",
+          details: `The "${existingPage.title}" page is a system page and cannot be deleted.`,
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     // Check if page is linked to menu items
     if (existingPage._count.menuItems > 0) {
       return NextResponse.json(
-        { 
-          error: 'Cannot delete page that is linked to menu items',
-          details: `This page is linked to ${existingPage._count.menuItems} menu item(s). Please remove or update the menu items first.`
+        {
+          error: "Cannot delete page that is linked to menu items",
+          details: `This page is linked to ${existingPage._count.menuItems} menu item(s). Please remove or update the menu items first.`,
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
     // Delete page
     await prisma.page.delete({
-      where: { id }
+      where: { id },
     });
 
     return NextResponse.json(
-      { message: 'Page deleted successfully' },
-      { status: 200 }
+      { message: "Page deleted successfully" },
+      { status: 200 },
     );
   } catch (error) {
-    console.error('Error deleting page:', error);
+    console.error("Error deleting page:", error);
     return NextResponse.json(
-      { error: 'Failed to delete page' },
-      { status: 500 }
+      { error: "Failed to delete page" },
+      { status: 500 },
     );
   }
 }

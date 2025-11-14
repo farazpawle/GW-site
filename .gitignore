@@ -54,8 +54,11 @@ next-env.d.ts
 /docs/*
 !/docs/06-Deployment/
 /memory-bank/
+# Ignore entire .github except workflows and key config
+/.github/
+!/.github/workflows/
+!/.github/copilot-instructions.md
 /.github/Prompt/
-/.github/copilot-instructions.md
 /.github/prompts/
 
 # Development/Testing Scripts (keep deployment scripts)
