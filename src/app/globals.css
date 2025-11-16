@@ -30,7 +30,8 @@ body {
 }
 
 /* Performance optimizations for animations */
-canvas, svg {
+canvas,
+svg {
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
@@ -141,6 +142,316 @@ canvas, svg {
 .precision-card:hover {
   transform: scale(1.05);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Ion storm hero background - Dynamic version */
+.ion-storm-root {
+  --pointer-x: 0;
+  --pointer-y: 0;
+  background: radial-gradient(circle at 40% 60%, #0a0208, #030103);
+}
+
+.ion-storm-base-gradient {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(circle at 30% 70%, rgba(110, 0, 0, 0.7), transparent 50%),
+    radial-gradient(circle at 70% 30%, rgba(147, 32, 32, 0.5), transparent 60%),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 153, 153, 0.15),
+      transparent 70%
+    );
+  filter: blur(60px);
+  animation: ionBaseShift 20s ease-in-out infinite;
+}
+
+.ion-storm-color-shift {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    45deg,
+    rgba(110, 0, 0, 0.3),
+    rgba(147, 32, 32, 0.2),
+    rgba(255, 153, 153, 0.15),
+    rgba(110, 0, 0, 0.3)
+  );
+  background-size: 400% 400%;
+  mix-blend-mode: screen;
+  animation: ionColorFlow 15s ease infinite;
+}
+
+.ion-storm-wave {
+  position: absolute;
+  inset: -30%;
+  border-radius: 45% 55% 60% 40% / 50% 60% 40% 50%;
+  border: 2px solid rgba(255, 153, 153, 0.3);
+  filter: blur(3px);
+  box-shadow:
+    inset 0 0 40px rgba(110, 0, 0, 0.4),
+    0 0 60px rgba(255, 153, 153, 0.3);
+  animation: ionWaveFlow 12s ease-in-out infinite;
+}
+
+.ion-storm-morph {
+  position: absolute;
+  inset: 20%;
+  border-radius: 30% 70% 70% 30% / 40% 60% 40% 60%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 153, 153, 0.2),
+    transparent 70%
+  );
+  filter: blur(25px);
+  mix-blend-mode: screen;
+  animation: ionMorph 18s ease-in-out infinite;
+}
+
+.ion-storm-vortex {
+  position: absolute;
+  inset: 25%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(110, 0, 0, 0.6),
+    rgba(255, 153, 153, 0.4),
+    rgba(147, 32, 32, 0.5),
+    rgba(110, 0, 0, 0.6)
+  );
+  filter: blur(40px);
+  animation: ionVortexSpin 25s linear infinite;
+}
+
+.ion-storm-energy-field {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 80px,
+      rgba(255, 153, 153, 0.08) 80px,
+      rgba(255, 153, 153, 0.08) 82px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 80px,
+      rgba(110, 0, 0, 0.08) 80px,
+      rgba(110, 0, 0, 0.08) 82px
+    );
+  animation: ionFieldDrift 30s linear infinite;
+  mix-blend-mode: screen;
+}
+
+.ion-storm-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.9),
+    rgba(255, 153, 153, 0.6)
+  );
+  box-shadow: 0 0 20px rgba(255, 153, 153, 0.8);
+  animation: ionParticleFloat 8s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+.ion-storm-pulse-ring {
+  position: absolute;
+  inset: 30%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 153, 153, 0.4);
+  animation: ionPulseExpand 8s ease-out infinite;
+}
+
+.ion-storm-pulse-ring--2 {
+  animation-delay: 2.5s;
+  border-color: rgba(147, 32, 32, 0.35);
+}
+
+.ion-storm-pulse-ring--3 {
+  animation-delay: 5s;
+  border-color: rgba(110, 0, 0, 0.3);
+}
+
+.ion-storm-glow-orb {
+  position: absolute;
+  inset: 40%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 153, 153, 0.3) 40%,
+    transparent 70%
+  );
+  filter: blur(30px);
+  animation: ionOrbPulse 10s ease-in-out infinite;
+}
+
+.ion-storm-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 60%,
+    transparent 100%
+  );
+  background-size: 200% 200%;
+  animation: ionShimmerSweep 12s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+@keyframes ionBaseShift {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.9;
+  }
+  33% {
+    transform: scale(1.1) rotate(5deg);
+    opacity: 1;
+  }
+  66% {
+    transform: scale(0.95) rotate(-5deg);
+    opacity: 0.85;
+  }
+}
+
+@keyframes ionColorFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes ionWaveFlow {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg) translate(0, 0);
+    border-radius: 45% 55% 60% 40% / 50% 60% 40% 50%;
+    opacity: 0.6;
+  }
+  25% {
+    transform: scale(1.05) rotate(90deg)
+      translate(calc(var(--pointer-x) * 10px), calc(var(--pointer-y) * 10px));
+    border-radius: 55% 45% 40% 60% / 60% 40% 60% 40%;
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(0.95) rotate(180deg) translate(0, 0);
+    border-radius: 40% 60% 55% 45% / 45% 55% 45% 55%;
+    opacity: 0.7;
+  }
+  75% {
+    transform: scale(1.02) rotate(270deg)
+      translate(calc(var(--pointer-x) * -10px), calc(var(--pointer-y) * -10px));
+    border-radius: 60% 40% 45% 55% / 55% 45% 55% 45%;
+    opacity: 0.9;
+  }
+}
+
+@keyframes ionMorph {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    border-radius: 30% 70% 70% 30% / 40% 60% 40% 60%;
+  }
+  33% {
+    transform: scale(1.15) rotate(120deg);
+    border-radius: 70% 30% 30% 70% / 60% 40% 60% 40%;
+  }
+  66% {
+    transform: scale(0.9) rotate(240deg);
+    border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%;
+  }
+}
+
+@keyframes ionVortexSpin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes ionFieldDrift {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate(-20px, -20px) rotate(10deg);
+  }
+}
+
+@keyframes ionParticleFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate3d(calc(var(--pointer-x) * 30px + 40px), -100px, 0)
+      scale(1.3);
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate3d(calc(var(--pointer-x) * 50px + 80px), -200px, 0)
+      scale(0.5);
+  }
+}
+
+@keyframes ionPulseExpand {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes ionOrbPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes ionShimmerSweep {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* Custom animations for product page */

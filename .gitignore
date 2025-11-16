@@ -51,15 +51,12 @@ next-env.d.ts
 /.clerk/
 
 # Documentation and AI context (not needed in production)
-/docs/*
-!/docs/06-Deployment/
+/docs/
 /memory-bank/
-# Ignore entire .github except workflows and key config
-/.github/
-!/.github/workflows/
-!/.github/copilot-instructions.md
-/.github/Prompt/
-/.github/prompts/
+
+# Ignore all .github content everywhere, except workflows
+**/.github/**
+!**/.github/workflows/**
 
 # Development/Testing Scripts (keep deployment scripts)
 /scripts/*
