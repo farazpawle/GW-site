@@ -85,6 +85,8 @@ export default function HeroSectionEditor({
           value: 0,
           suffix: "+",
           label: `Metric ${idx + 1}`,
+          valueStyle: undefined,
+          labelStyle: undefined,
         });
       }
 
