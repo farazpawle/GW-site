@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { PageSection, PrecisionMfgSectionConfig } from '@/types/page-section';
-import Modal from '@/components/ui/Modal';
-import { Loader2, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
-import MediaPickerModal from '@/components/admin/media/MediaPickerModal';
-import { MediaFile } from '@/types/media';
-import TypographyControls from '@/components/admin/shared/TypographyControls';
+import { useState, useEffect } from "react";
+import { PageSection, PrecisionMfgSectionConfig } from "@/types/page-section";
+import Modal from "@/components/ui/Modal";
+import { Loader2, Plus, Trash2, Image as ImageIcon } from "lucide-react";
+import MediaPickerModal from "@/components/admin/media/MediaPickerModal";
+import { MediaFile } from "@/types/media";
+import TypographyControls from "@/components/admin/shared/TypographyControls";
 
 interface PrecisionMfgSectionEditorProps {
   section: PageSection;
@@ -16,24 +16,31 @@ interface PrecisionMfgSectionEditorProps {
   onSave: (updatedSection: PageSection) => void;
 }
 
-export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, onSave }: PrecisionMfgSectionEditorProps) {
+export default function PrecisionMfgSectionEditor({
+  section,
+  isOpen,
+  onClose,
+  onSave,
+}: PrecisionMfgSectionEditorProps) {
   const [saving, setSaving] = useState(false);
-  const [sectionName, setSectionName] = useState(section.name || '');
+  const [sectionName, setSectionName] = useState(section.name || "");
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
-  const [selectedServiceIndex, setSelectedServiceIndex] = useState<number | null>(null);
+  const [selectedServiceIndex, setSelectedServiceIndex] = useState<
+    number | null
+  >(null);
 
   // Migration function
   const migrateConfig = (oldConfig: any): PrecisionMfgSectionConfig => {
     return {
-      title: oldConfig.title || '',
-      description: oldConfig.description || '',
+      title: oldConfig.title || "",
+      description: oldConfig.description || "",
       show: oldConfig.show !== undefined ? oldConfig.show : true,
-      accentColor: oldConfig.accentColor || '#6e0000',
+      accentColor: oldConfig.accentColor || "#6e0000",
       gridColumns: oldConfig.gridColumns || 4,
-      cardStyle: oldConfig.cardStyle || 'standard',
-      ctaStyle: oldConfig.ctaStyle || 'solid',
-      badge: oldConfig.badge || { show: true, position: 'top-right' },
+      cardStyle: oldConfig.cardStyle || "standard",
+      ctaStyle: oldConfig.ctaStyle || "solid",
+      badge: oldConfig.badge || { show: true, position: "top-right" },
       services: (oldConfig.services || []).map((svc: any, index: number) => ({
         title: svc.title,
         description: svc.description,
@@ -42,16 +49,18 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
         badgeText: svc.badgeText,
         isActive: svc.isActive !== undefined ? svc.isActive : true,
         order: svc.order !== undefined ? svc.order : index,
-        cta: svc.cta || { show: true, text: 'LEARN MORE', link: '#' }
-      }))
+        cta: svc.cta || { show: true, text: "LEARN MORE", link: "#" },
+      })),
     };
   };
 
-  const [config, setConfig] = useState<PrecisionMfgSectionConfig>(migrateConfig(section.config));
+  const [config, setConfig] = useState<PrecisionMfgSectionConfig>(
+    migrateConfig(section.config),
+  );
 
   useEffect(() => {
     setConfig(migrateConfig(section.config));
-    setSectionName(section.name || '');
+    setSectionName(section.name || "");
   }, [section]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,38 +71,42 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
       // Clean config to ensure all fields are present
       const cleanedConfig: PrecisionMfgSectionConfig = {
         title: config.title,
+        titleStyle: config.titleStyle,
         description: config.description,
+        descriptionStyle: config.descriptionStyle,
         show: config.show !== undefined ? config.show : true,
-        accentColor: config.accentColor || '#6e0000',
+        accentColor: config.accentColor || "#6e0000",
         gridColumns: config.gridColumns || 4,
-        cardStyle: config.cardStyle || 'standard',
-        ctaStyle: config.ctaStyle || 'solid',
-        badge: config.badge || { show: true, position: 'top-right' },
+        cardStyle: config.cardStyle || "standard",
+        ctaStyle: config.ctaStyle || "solid",
+        badge: config.badge || { show: true, position: "top-right" },
         services: config.services.map((svc, index) => ({
           title: svc.title,
+          titleStyle: svc.titleStyle,
           description: svc.description,
+          descriptionStyle: svc.descriptionStyle,
           image: svc.image,
           altText: svc.altText,
           badgeText: svc.badgeText,
           isActive: svc.isActive !== undefined ? svc.isActive : true,
           order: svc.order !== undefined ? svc.order : index,
-          cta: svc.cta || { show: true, text: 'LEARN MORE', link: '#' }
-        }))
+          cta: svc.cta || { show: true, text: "LEARN MORE", link: "#" },
+        })),
       };
 
       const response = await fetch(`/api/admin/page-sections/${section.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           config: cleanedConfig,
-          name: sectionName.trim() || null
+          name: sectionName.trim() || null,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('API Error Response:', errorData);
-        throw new Error(errorData.error || 'Failed to update section');
+        console.error("API Error Response:", errorData);
+        throw new Error(errorData.error || "Failed to update section");
       }
 
       const data = await response.json();
@@ -102,8 +115,10 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
         onClose();
       }
     } catch (error) {
-      console.error('Error updating section:', error);
-      alert(`Failed to update section: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Error updating section:", error);
+      alert(
+        `Failed to update section: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     } finally {
       setSaving(false);
     }
@@ -113,23 +128,26 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
     const newOrder = config.services.length;
     setConfig({
       ...config,
-      services: [...config.services, { 
-        title: 'New Service', 
-        description: 'Description', 
-        image: '',
-        altText: '',
-        badgeText: 'Premium',
-        isActive: true,
-        order: newOrder,
-        cta: { show: true, text: 'LEARN MORE', link: '#' }
-      }]
+      services: [
+        ...config.services,
+        {
+          title: "New Service",
+          description: "Description",
+          image: "",
+          altText: "",
+          badgeText: "Premium",
+          isActive: true,
+          order: newOrder,
+          cta: { show: true, text: "LEARN MORE", link: "#" },
+        },
+      ],
     });
   };
 
   const removeService = (index: number) => {
     setConfig({
       ...config,
-      services: config.services.filter((_, i) => i !== index)
+      services: config.services.filter((_, i) => i !== index),
     });
   };
 
@@ -142,7 +160,7 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
@@ -157,7 +175,7 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
     // Update order values
     const reorderedServices = newServices.map((svc, idx) => ({
       ...svc,
-      order: idx
+      order: idx,
     }));
 
     setConfig({ ...config, services: reorderedServices });
@@ -185,7 +203,12 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Precision Manufacturing Section" size="xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Edit Precision Manufacturing Section"
+      size="xl"
+    >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Section Name */}
         <div className="space-y-4 p-4 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a]">
@@ -202,16 +225,21 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
               maxLength={100}
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon focus:border-transparent"
             />
-            <p className="text-xs text-gray-500 mt-1">Leave empty to use default name: &quot;Precision Manufacturing&quot;</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Leave empty to use default name: &quot;Precision
+              Manufacturing&quot;
+            </p>
           </div>
         </div>
 
         {/* Header */}
         <div className="space-y-4 p-4 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a]">
           <h3 className="text-lg font-semibold text-white">Section Header</h3>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Title
+            </label>
             <input
               type="text"
               value={config.title}
@@ -227,25 +255,33 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Description (Optional)</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Description (Optional)
+            </label>
             <textarea
-              value={config.description || ''}
-              onChange={(e) => setConfig({ ...config, description: e.target.value })}
+              value={config.description || ""}
+              onChange={(e) =>
+                setConfig({ ...config, description: e.target.value })
+              }
               rows={2}
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon resize-none"
             />
             <TypographyControls
               label="Description Typography"
               value={config.descriptionStyle}
-              onChange={(descriptionStyle) => setConfig({ ...config, descriptionStyle })}
+              onChange={(descriptionStyle) =>
+                setConfig({ ...config, descriptionStyle })
+              }
             />
           </div>
         </div>
 
         {/* Section Display Settings */}
         <div className="space-y-4 p-4 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a]">
-          <h3 className="text-lg font-semibold text-white">Section Display Settings</h3>
-          
+          <h3 className="text-lg font-semibold text-white">
+            Section Display Settings
+          </h3>
+
           {/* Show Section */}
           <div className="flex items-center gap-3">
             <input
@@ -255,7 +291,10 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
               onChange={(e) => setConfig({ ...config, show: e.target.checked })}
               className="w-4 h-4 rounded bg-[#1a1a1a] border-[#2a2a2a] text-brand-maroon focus:ring-brand-maroon"
             />
-            <label htmlFor="show-section" className="text-sm font-medium text-gray-300">
+            <label
+              htmlFor="show-section"
+              className="text-sm font-medium text-gray-300"
+            >
               Show Section
             </label>
           </div>
@@ -263,19 +302,26 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
           {/* Accent Color */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Accent Color <span className="text-gray-500">(Badges, divider, CTA buttons)</span>
+              Accent Color{" "}
+              <span className="text-gray-500">
+                (Badges, divider, CTA buttons)
+              </span>
             </label>
             <div className="flex gap-3">
               <input
                 type="color"
-                value={config.accentColor || '#6e0000'}
-                onChange={(e) => setConfig({ ...config, accentColor: e.target.value })}
+                value={config.accentColor || "#6e0000"}
+                onChange={(e) =>
+                  setConfig({ ...config, accentColor: e.target.value })
+                }
                 className="w-16 h-10 rounded border border-[#2a2a2a] bg-[#1a1a1a] cursor-pointer"
               />
               <input
                 type="text"
-                value={config.accentColor || '#6e0000'}
-                onChange={(e) => setConfig({ ...config, accentColor: e.target.value })}
+                value={config.accentColor || "#6e0000"}
+                onChange={(e) =>
+                  setConfig({ ...config, accentColor: e.target.value })
+                }
                 className="flex-1 px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
               />
             </div>
@@ -283,10 +329,17 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
 
           {/* Grid Columns */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Grid Columns (Desktop)</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Grid Columns (Desktop)
+            </label>
             <select
               value={config.gridColumns || 4}
-              onChange={(e) => setConfig({ ...config, gridColumns: parseInt(e.target.value) as 2 | 3 | 4 })}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  gridColumns: parseInt(e.target.value) as 2 | 3 | 4,
+                })
+              }
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
             >
               <option value={2}>2 Columns</option>
@@ -297,25 +350,49 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
 
           {/* Card Style */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Card Style</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Card Style
+            </label>
             <select
-              value={config.cardStyle || 'standard'}
-              onChange={(e) => setConfig({ ...config, cardStyle: e.target.value as 'standard' | 'minimal' | 'image-heavy' | 'side-by-side' })}
+              value={config.cardStyle || "standard"}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  cardStyle: e.target.value as
+                    | "standard"
+                    | "minimal"
+                    | "image-heavy"
+                    | "side-by-side",
+                })
+              }
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
             >
-              <option value="standard">Standard - Image top, content below</option>
+              <option value="standard">
+                Standard - Image top, content below
+              </option>
               <option value="minimal">Minimal - Clean with border only</option>
-              <option value="image-heavy">Image Heavy - Larger image area</option>
-              <option value="side-by-side">Side by Side - Image left, content right</option>
+              <option value="image-heavy">
+                Image Heavy - Larger image area
+              </option>
+              <option value="side-by-side">
+                Side by Side - Image left, content right
+              </option>
             </select>
           </div>
 
           {/* CTA Style */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">CTA Button Style</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              CTA Button Style
+            </label>
             <select
-              value={config.ctaStyle || 'solid'}
-              onChange={(e) => setConfig({ ...config, ctaStyle: e.target.value as 'solid' | 'outline' | 'ghost' })}
+              value={config.ctaStyle || "solid"}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  ctaStyle: e.target.value as "solid" | "outline" | "ghost",
+                })
+              }
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
             >
               <option value="solid">Solid - Filled background</option>
@@ -330,21 +407,49 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
               <input
                 type="checkbox"
                 id="badge-show"
-                checked={config.badge?.show !== undefined ? config.badge.show : true}
-                onChange={(e) => setConfig({ ...config, badge: { ...config.badge, show: e.target.checked, position: config.badge?.position || 'top-right' } })}
+                checked={
+                  config.badge?.show !== undefined ? config.badge.show : true
+                }
+                onChange={(e) =>
+                  setConfig({
+                    ...config,
+                    badge: {
+                      ...config.badge,
+                      show: e.target.checked,
+                      position: config.badge?.position || "top-right",
+                    },
+                  })
+                }
                 className="w-4 h-4 rounded bg-[#1a1a1a] border-[#2a2a2a] text-brand-maroon focus:ring-brand-maroon"
               />
-              <label htmlFor="badge-show" className="text-sm font-medium text-gray-300">
+              <label
+                htmlFor="badge-show"
+                className="text-sm font-medium text-gray-300"
+              >
                 Show Badges on Cards
               </label>
             </div>
-            
-            {(config.badge?.show !== false) && (
+
+            {config.badge?.show !== false && (
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">Badge Position</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1">
+                  Badge Position
+                </label>
                 <select
-                  value={config.badge?.position || 'top-right'}
-                  onChange={(e) => setConfig({ ...config, badge: { show: true, position: e.target.value as 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' } })}
+                  value={config.badge?.position || "top-right"}
+                  onChange={(e) =>
+                    setConfig({
+                      ...config,
+                      badge: {
+                        show: true,
+                        position: e.target.value as
+                          | "top-left"
+                          | "top-right"
+                          | "bottom-left"
+                          | "bottom-right",
+                      },
+                    })
+                  }
                   className="w-full px-3 py-1.5 bg-[#0a0a0a] border border-[#2a2a2a] rounded text-white text-sm focus:ring-2 focus:ring-brand-maroon"
                 >
                   <option value="top-left">Top Left</option>
@@ -373,31 +478,42 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
 
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
             <p className="text-sm text-blue-400">
-              💡 <strong>Tip:</strong> Use local images from /images/ folder or external URLs. Local images should be in the public/images directory.
+              💡 <strong>Tip:</strong> Use local images from /images/ folder or
+              external URLs. Local images should be in the public/images
+              directory.
             </p>
           </div>
 
           {config.services.map((service, index) => (
-            <div 
+            <div
               key={index}
               draggable
               onDragStart={(e) => handleDragStart(e, index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
               className={`p-4 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] space-y-3 transition-all ${
-                draggedIndex === index ? 'opacity-50' : ''
-              } ${service.isActive === false ? 'opacity-60' : ''}`}
+                draggedIndex === index ? "opacity-50" : ""
+              } ${service.isActive === false ? "opacity-60" : ""}`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="cursor-move text-gray-500 hover:text-gray-300" title="Drag to reorder">
+                  <span
+                    className="cursor-move text-gray-500 hover:text-gray-300"
+                    title="Drag to reorder"
+                  >
                     ⋮⋮
                   </span>
-                  <span className="text-sm font-medium text-gray-400">Service {index + 1}</span>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    service.isActive !== false ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
-                  }`}>
-                    {service.isActive !== false ? 'Active' : 'Inactive'}
+                  <span className="text-sm font-medium text-gray-400">
+                    Service {index + 1}
+                  </span>
+                  <span
+                    className={`text-xs px-2 py-1 rounded ${
+                      service.isActive !== false
+                        ? "bg-green-500/20 text-green-400"
+                        : "bg-gray-500/20 text-gray-400"
+                    }`}
+                  >
+                    {service.isActive !== false ? "Active" : "Inactive"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -405,16 +521,20 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
                     type="button"
                     onClick={() => {
                       const updated = [...config.services];
-                      updated[index] = { ...updated[index], isActive: updated[index].isActive === false ? true : false };
+                      updated[index] = {
+                        ...updated[index],
+                        isActive:
+                          updated[index].isActive === false ? true : false,
+                      };
                       setConfig({ ...config, services: updated });
                     }}
                     className={`px-3 py-1 rounded text-xs transition-colors ${
-                      service.isActive !== false 
-                        ? 'bg-gray-600 hover:bg-gray-700 text-white' 
-                        : 'bg-green-600 hover:bg-green-700 text-white'
+                      service.isActive !== false
+                        ? "bg-gray-600 hover:bg-gray-700 text-white"
+                        : "bg-green-600 hover:bg-green-700 text-white"
                     }`}
                   >
-                    {service.isActive !== false ? 'Hide' : 'Show'}
+                    {service.isActive !== false ? "Hide" : "Show"}
                   </button>
                   <button
                     type="button"
@@ -429,26 +549,36 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
               {/* Title & Description */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Title
+                  </label>
                   <input
                     type="text"
                     value={service.title}
-                    onChange={(e) => updateService(index, 'title', e.target.value)}
+                    onChange={(e) =>
+                      updateService(index, "title", e.target.value)
+                    }
                     className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
                     required
                   />
                   <TypographyControls
                     label="Title Typography"
                     value={service.titleStyle}
-                    onChange={(titleStyle) => updateService(index, 'titleStyle', titleStyle)}
+                    onChange={(titleStyle) =>
+                      updateService(index, "titleStyle", titleStyle)
+                    }
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Badge Text</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Badge Text
+                  </label>
                   <input
                     type="text"
-                    value={service.badgeText || ''}
-                    onChange={(e) => updateService(index, 'badgeText', e.target.value)}
+                    value={service.badgeText || ""}
+                    onChange={(e) =>
+                      updateService(index, "badgeText", e.target.value)
+                    }
                     placeholder="Premium"
                     className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
                   />
@@ -456,10 +586,14 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Description
+                </label>
                 <textarea
                   value={service.description}
-                  onChange={(e) => updateService(index, 'description', e.target.value)}
+                  onChange={(e) =>
+                    updateService(index, "description", e.target.value)
+                  }
                   rows={2}
                   className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon resize-none"
                   required
@@ -467,13 +601,17 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
                 <TypographyControls
                   label="Description Typography"
                   value={service.descriptionStyle}
-                  onChange={(descriptionStyle) => updateService(index, 'descriptionStyle', descriptionStyle)}
+                  onChange={(descriptionStyle) =>
+                    updateService(index, "descriptionStyle", descriptionStyle)
+                  }
                 />
               </div>
 
               {/* Image */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Image</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Image
+                </label>
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -486,7 +624,9 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
                   <input
                     type="text"
                     value={service.image}
-                    onChange={(e) => updateService(index, 'image', e.target.value)}
+                    onChange={(e) =>
+                      updateService(index, "image", e.target.value)
+                    }
                     placeholder="/images/engine.jpg"
                     className="flex-1 px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
                     required
@@ -496,11 +636,15 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
 
               {/* Alt Text */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Alt Text (SEO)</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Alt Text (SEO)
+                </label>
                 <input
                   type="text"
-                  value={service.altText || ''}
-                  onChange={(e) => updateService(index, 'altText', e.target.value)}
+                  value={service.altText || ""}
+                  onChange={(e) =>
+                    updateService(index, "altText", e.target.value)
+                  }
                   placeholder="High-performance engine components"
                   className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
                 />
@@ -509,12 +653,12 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
               {/* Image Preview */}
               {service.image && (
                 <div className="mt-2">
-                  <img 
-                    src={service.image} 
+                  <img
+                    src={service.image}
                     alt={service.title}
                     className="h-32 w-auto object-cover rounded"
                     onError={(e) => {
-                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.style.display = "none";
                     }}
                   />
                 </div>
@@ -526,42 +670,49 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
                   <input
                     type="checkbox"
                     id={`cta-show-${index}`}
-                    checked={service.cta?.show !== undefined ? service.cta.show : true}
+                    checked={
+                      service.cta?.show !== undefined ? service.cta.show : true
+                    }
                     onChange={(e) => {
                       const updated = [...config.services];
-                      updated[index] = { 
-                        ...updated[index], 
-                        cta: { 
+                      updated[index] = {
+                        ...updated[index],
+                        cta: {
                           show: e.target.checked,
-                          text: service.cta?.text || 'LEARN MORE',
-                          link: service.cta?.link || '#'
-                        }
+                          text: service.cta?.text || "LEARN MORE",
+                          link: service.cta?.link || "#",
+                        },
                       };
                       setConfig({ ...config, services: updated });
                     }}
                     className="w-4 h-4 rounded bg-[#1a1a1a] border-[#2a2a2a] text-brand-maroon focus:ring-brand-maroon"
                   />
-                  <label htmlFor={`cta-show-${index}`} className="text-sm font-medium text-gray-300">
+                  <label
+                    htmlFor={`cta-show-${index}`}
+                    className="text-sm font-medium text-gray-300"
+                  >
                     Show CTA Button
                   </label>
                 </div>
-                
-                {(service.cta?.show !== false) && (
+
+                {service.cta?.show !== false && (
                   <div className="grid grid-cols-2 gap-3 pl-7">
                     <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1">Button Text</label>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">
+                        Button Text
+                      </label>
                       <input
                         type="text"
-                        value={service.cta?.text || 'LEARN MORE'}
+                        value={service.cta?.text || "LEARN MORE"}
                         onChange={(e) => {
                           const updated = [...config.services];
-                          updated[index] = { 
-                            ...updated[index], 
-                            cta: { 
+                          updated[index] = {
+                            ...updated[index],
+                            cta: {
                               show: true,
                               text: e.target.value,
-                              link: service.cta?.link || '#'
-                            }
+                              link: service.cta?.link || "#",
+                            },
                           };
                           setConfig({ ...config, services: updated });
                         }}
@@ -569,19 +720,21 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1">Link</label>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">
+                        Link
+                      </label>
                       <input
                         type="text"
-                        value={service.cta?.link || '#'}
+                        value={service.cta?.link || "#"}
                         onChange={(e) => {
                           const updated = [...config.services];
-                          updated[index] = { 
-                            ...updated[index], 
-                            cta: { 
+                          updated[index] = {
+                            ...updated[index],
+                            cta: {
                               show: true,
-                              text: service.cta?.text || 'LEARN MORE',
-                              link: e.target.value
-                            }
+                              text: service.cta?.text || "LEARN MORE",
+                              link: e.target.value,
+                            },
                           };
                           setConfig({ ...config, services: updated });
                         }}
@@ -597,11 +750,27 @@ export default function PrecisionMfgSectionEditor({ section, isOpen, onClose, on
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 pt-4 border-t border-[#2a2a2a]">
-          <button type="button" onClick={onClose} className="px-6 py-2 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white rounded-lg" disabled={saving}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-6 py-2 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white rounded-lg"
+            disabled={saving}
+          >
             Cancel
           </button>
-          <button type="submit" className="px-6 py-2 bg-brand-maroon hover:bg-red-700 text-white rounded-lg flex items-center gap-2" disabled={saving}>
-            {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : 'Save Changes'}
+          <button
+            type="submit"
+            className="px-6 py-2 bg-brand-maroon hover:bg-red-700 text-white rounded-lg flex items-center gap-2"
+            disabled={saving}
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
           </button>
         </div>
       </form>

@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { PageSection, CategoriesSectionConfig } from '@/types/page-section';
-import Modal from '@/components/ui/Modal';
-import { Loader2, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
-import MediaPickerModal from '@/components/admin/media/MediaPickerModal';
-import type { MediaFile } from '@/types/media';
-import TypographyControls from '@/components/admin/shared/TypographyControls';
+import { useState, useEffect } from "react";
+import { PageSection, CategoriesSectionConfig } from "@/types/page-section";
+import Modal from "@/components/ui/Modal";
+import { Loader2, Plus, Trash2, Image as ImageIcon } from "lucide-react";
+import MediaPickerModal from "@/components/admin/media/MediaPickerModal";
+import type { MediaFile } from "@/types/media";
+import TypographyControls from "@/components/admin/shared/TypographyControls";
 
 interface CategoriesSectionEditorProps {
   section: PageSection;
@@ -16,41 +16,55 @@ interface CategoriesSectionEditorProps {
   onSave: (updatedSection: PageSection) => void;
 }
 
-export default function CategoriesSectionEditor({ section, isOpen, onClose, onSave }: CategoriesSectionEditorProps) {
+export default function CategoriesSectionEditor({
+  section,
+  isOpen,
+  onClose,
+  onSave,
+}: CategoriesSectionEditorProps) {
   const [saving, setSaving] = useState(false);
-  const [sectionName, setSectionName] = useState(section.name || '');
+  const [sectionName, setSectionName] = useState(section.name || "");
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
-  const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<number | null>(null);
-  
+  const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<
+    number | null
+  >(null);
+
   // Migrate old config
   const migrateConfig = (oldConfig: any): CategoriesSectionConfig => {
     return {
-      title: oldConfig.title || '',
-      description: oldConfig.description || '',
+      title: oldConfig.title || "",
+      description: oldConfig.description || "",
       show: oldConfig.show !== undefined ? oldConfig.show : true,
-      accentColor: oldConfig.accentColor || '#6e0000',
-      backgroundPattern: oldConfig.backgroundPattern !== undefined ? oldConfig.backgroundPattern : true,
+      accentColor: oldConfig.accentColor || "#6e0000",
+      backgroundPattern:
+        oldConfig.backgroundPattern !== undefined
+          ? oldConfig.backgroundPattern
+          : true,
       gridColumns: oldConfig.gridColumns || 3,
-      cardStyle: oldConfig.cardStyle || 'boxed',
-      iconPosition: oldConfig.iconPosition || 'top',
-      categories: (oldConfig.categories || []).map((cat: any, index: number) => ({
-        icon: cat.icon || 'Car',
-        title: cat.title,
-        description: cat.description,
-        isActive: cat.isActive !== undefined ? cat.isActive : true,
-        order: cat.order !== undefined ? cat.order : index,
-        backgroundImage: cat.backgroundImage,
-        cta: cat.cta || { show: false, text: 'View Products', link: '#' }
-      }))
+      cardStyle: oldConfig.cardStyle || "boxed",
+      iconPosition: oldConfig.iconPosition || "top",
+      categories: (oldConfig.categories || []).map(
+        (cat: any, index: number) => ({
+          icon: cat.icon || "Car",
+          title: cat.title,
+          description: cat.description,
+          isActive: cat.isActive !== undefined ? cat.isActive : true,
+          order: cat.order !== undefined ? cat.order : index,
+          backgroundImage: cat.backgroundImage,
+          cta: cat.cta || { show: false, text: "View Products", link: "#" },
+        }),
+      ),
     };
   };
-  
-  const [config, setConfig] = useState<CategoriesSectionConfig>(migrateConfig(section.config));
+
+  const [config, setConfig] = useState<CategoriesSectionConfig>(
+    migrateConfig(section.config),
+  );
 
   useEffect(() => {
     setConfig(migrateConfig(section.config));
-    setSectionName(section.name || '');
+    setSectionName(section.name || "");
   }, [section]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,37 +75,44 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
       // Clean config to ensure all fields are present
       const cleanedConfig: CategoriesSectionConfig = {
         title: config.title,
+        titleStyle: config.titleStyle,
         description: config.description,
+        descriptionStyle: config.descriptionStyle,
         show: config.show !== undefined ? config.show : true,
-        accentColor: config.accentColor || '#6e0000',
-        backgroundPattern: config.backgroundPattern !== undefined ? config.backgroundPattern : true,
+        accentColor: config.accentColor || "#6e0000",
+        backgroundPattern:
+          config.backgroundPattern !== undefined
+            ? config.backgroundPattern
+            : true,
         gridColumns: config.gridColumns || 3,
-        cardStyle: config.cardStyle || 'boxed',
-        iconPosition: config.iconPosition || 'top',
+        cardStyle: config.cardStyle || "boxed",
+        iconPosition: config.iconPosition || "top",
         categories: config.categories.map((cat, index) => ({
           icon: cat.icon,
           title: cat.title,
+          titleStyle: cat.titleStyle,
           description: cat.description,
+          descriptionStyle: cat.descriptionStyle,
           isActive: cat.isActive !== undefined ? cat.isActive : true,
           order: cat.order !== undefined ? cat.order : index,
           backgroundImage: cat.backgroundImage,
-          cta: cat.cta || { show: false, text: 'View Products', link: '#' }
-        }))
+          cta: cat.cta || { show: false, text: "View Products", link: "#" },
+        })),
       };
 
       const response = await fetch(`/api/admin/page-sections/${section.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           config: cleanedConfig,
-          name: sectionName.trim() || null
+          name: sectionName.trim() || null,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('API Error Response:', errorData);
-        throw new Error(errorData.error || 'Failed to update section');
+        console.error("API Error Response:", errorData);
+        throw new Error(errorData.error || "Failed to update section");
       }
 
       const data = await response.json();
@@ -100,8 +121,10 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
         onClose();
       }
     } catch (error) {
-      console.error('Error updating section:', error);
-      alert(`Failed to update section: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Error updating section:", error);
+      alert(
+        `Failed to update section: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     } finally {
       setSaving(false);
     }
@@ -111,29 +134,32 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
     const newOrder = config.categories.length;
     setConfig({
       ...config,
-      categories: [...config.categories, { 
-        icon: 'Car', 
-        title: 'New Category', 
-        description: 'Description',
-        isActive: true,
-        order: newOrder,
-        backgroundImage: '',
-        cta: { show: false, text: 'View Products', link: '#' }
-      }]
+      categories: [
+        ...config.categories,
+        {
+          icon: "Car",
+          title: "New Category",
+          description: "Description",
+          isActive: true,
+          order: newOrder,
+          backgroundImage: "",
+          cta: { show: false, text: "View Products", link: "#" },
+        },
+      ],
     });
   };
 
   const removeCategory = (index: number) => {
     setConfig({
       ...config,
-      categories: config.categories.filter((_, i) => i !== index)
+      categories: config.categories.filter((_, i) => i !== index),
     });
   };
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
@@ -148,7 +174,7 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
     // Update order values
     const reorderedCategories = newCategories.map((cat, idx) => ({
       ...cat,
-      order: idx
+      order: idx,
     }));
 
     setConfig({ ...config, categories: reorderedCategories });
@@ -182,7 +208,12 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Categories Section" size="xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Edit Categories Section"
+      size="xl"
+    >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Section Name */}
         <div className="space-y-4 p-4 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a]">
@@ -199,16 +230,20 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
               maxLength={100}
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon focus:border-transparent"
             />
-            <p className="text-xs text-gray-500 mt-1">Leave empty to use default name: &quot;Categories&quot;</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Leave empty to use default name: &quot;Categories&quot;
+            </p>
           </div>
         </div>
 
         {/* Section Header */}
         <div className="space-y-4 p-4 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a]">
           <h3 className="text-lg font-semibold text-white">Section Header</h3>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Title
+            </label>
             <input
               type="text"
               value={config.title}
@@ -226,18 +261,24 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Description (Optional)</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Description (Optional)
+            </label>
             <input
               type="text"
-              value={config.description || ''}
-              onChange={(e) => setConfig({ ...config, description: e.target.value })}
+              value={config.description || ""}
+              onChange={(e) =>
+                setConfig({ ...config, description: e.target.value })
+              }
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
             />
             <div className="mt-2">
               <TypographyControls
                 label="Description Typography"
                 value={config.descriptionStyle}
-                onChange={(descriptionStyle) => setConfig({ ...config, descriptionStyle })}
+                onChange={(descriptionStyle) =>
+                  setConfig({ ...config, descriptionStyle })
+                }
               />
             </div>
           </div>
@@ -245,8 +286,10 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
 
         {/* Section Display Settings */}
         <div className="space-y-4 p-4 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a]">
-          <h3 className="text-lg font-semibold text-white">Section Display Settings</h3>
-          
+          <h3 className="text-lg font-semibold text-white">
+            Section Display Settings
+          </h3>
+
           {/* Show Section Toggle */}
           <div className="flex items-center gap-3">
             <input
@@ -256,7 +299,10 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
               onChange={(e) => setConfig({ ...config, show: e.target.checked })}
               className="w-4 h-4 rounded bg-[#1a1a1a] border-[#2a2a2a] text-brand-maroon focus:ring-brand-maroon"
             />
-            <label htmlFor="show-section" className="text-sm font-medium text-gray-300">
+            <label
+              htmlFor="show-section"
+              className="text-sm font-medium text-gray-300"
+            >
               Show Section
             </label>
           </div>
@@ -264,19 +310,26 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
           {/* Accent Color */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Accent Color <span className="text-gray-500">(Used for icons, dividers, and CTAs)</span>
+              Accent Color{" "}
+              <span className="text-gray-500">
+                (Used for icons, dividers, and CTAs)
+              </span>
             </label>
             <div className="flex gap-3">
               <input
                 type="color"
-                value={config.accentColor || '#6e0000'}
-                onChange={(e) => setConfig({ ...config, accentColor: e.target.value })}
+                value={config.accentColor || "#6e0000"}
+                onChange={(e) =>
+                  setConfig({ ...config, accentColor: e.target.value })
+                }
                 className="w-16 h-10 rounded border border-[#2a2a2a] bg-[#1a1a1a] cursor-pointer"
               />
               <input
                 type="text"
-                value={config.accentColor || '#6e0000'}
-                onChange={(e) => setConfig({ ...config, accentColor: e.target.value })}
+                value={config.accentColor || "#6e0000"}
+                onChange={(e) =>
+                  setConfig({ ...config, accentColor: e.target.value })
+                }
                 className="flex-1 px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
               />
             </div>
@@ -287,21 +340,37 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
             <input
               type="checkbox"
               id="background-pattern"
-              checked={config.backgroundPattern !== undefined ? config.backgroundPattern : true}
-              onChange={(e) => setConfig({ ...config, backgroundPattern: e.target.checked })}
+              checked={
+                config.backgroundPattern !== undefined
+                  ? config.backgroundPattern
+                  : true
+              }
+              onChange={(e) =>
+                setConfig({ ...config, backgroundPattern: e.target.checked })
+              }
               className="w-4 h-4 rounded bg-[#1a1a1a] border-[#2a2a2a] text-brand-maroon focus:ring-brand-maroon"
             />
-            <label htmlFor="background-pattern" className="text-sm font-medium text-gray-300">
+            <label
+              htmlFor="background-pattern"
+              className="text-sm font-medium text-gray-300"
+            >
               Show Background Pattern
             </label>
           </div>
 
           {/* Grid Columns */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Grid Columns (Desktop)</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Grid Columns (Desktop)
+            </label>
             <select
               value={config.gridColumns || 3}
-              onChange={(e) => setConfig({ ...config, gridColumns: parseInt(e.target.value) as 2 | 3 | 4 })}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  gridColumns: parseInt(e.target.value) as 2 | 3 | 4,
+                })
+              }
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
             >
               <option value={2}>2 Columns</option>
@@ -312,24 +381,51 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
 
           {/* Card Style */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Card Style</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Card Style
+            </label>
             <select
-              value={config.cardStyle || 'boxed'}
-              onChange={(e) => setConfig({ ...config, cardStyle: e.target.value as 'boxed' | 'minimal' | 'image-heavy' })}
+              value={config.cardStyle || "boxed"}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  cardStyle: e.target.value as
+                    | "boxed"
+                    | "minimal"
+                    | "image-heavy",
+                })
+              }
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
             >
-              <option value="boxed">Boxed - Standard card with background</option>
-              <option value="minimal">Minimal - Transparent with colored border</option>
-              <option value="image-heavy">Image Heavy - Background image with gradient</option>
+              <option value="boxed">
+                Boxed - Standard card with background
+              </option>
+              <option value="minimal">
+                Minimal - Transparent with colored border
+              </option>
+              <option value="image-heavy">
+                Image Heavy - Background image with gradient
+              </option>
             </select>
           </div>
 
           {/* Icon Position */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Icon Position</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Icon Position
+            </label>
             <select
-              value={config.iconPosition || 'top'}
-              onChange={(e) => setConfig({ ...config, iconPosition: e.target.value as 'top' | 'left' | 'right' | 'bottom' })}
+              value={config.iconPosition || "top"}
+              onChange={(e) =>
+                setConfig({
+                  ...config,
+                  iconPosition: e.target.value as
+                    | "top"
+                    | "left"
+                    | "right"
+                    | "bottom",
+                })
+              }
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
             >
               <option value="top">Top</option>
@@ -355,27 +451,36 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
           </div>
 
           {config.categories.map((category, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               draggable
               onDragStart={(e) => handleDragStart(e, index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
               className={`p-4 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] space-y-3 transition-all ${
-                draggedIndex === index ? 'opacity-50' : ''
-              } ${category.isActive === false ? 'opacity-60' : ''}`}
+                draggedIndex === index ? "opacity-50" : ""
+              } ${category.isActive === false ? "opacity-60" : ""}`}
             >
               {/* Card Header */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="cursor-move text-gray-500 hover:text-gray-300" title="Drag to reorder">
+                  <span
+                    className="cursor-move text-gray-500 hover:text-gray-300"
+                    title="Drag to reorder"
+                  >
                     ⋮⋮
                   </span>
-                  <span className="text-sm font-medium text-gray-400">Category {index + 1}</span>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    category.isActive !== false ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
-                  }`}>
-                    {category.isActive !== false ? 'Active' : 'Inactive'}
+                  <span className="text-sm font-medium text-gray-400">
+                    Category {index + 1}
+                  </span>
+                  <span
+                    className={`text-xs px-2 py-1 rounded ${
+                      category.isActive !== false
+                        ? "bg-green-500/20 text-green-400"
+                        : "bg-gray-500/20 text-gray-400"
+                    }`}
+                  >
+                    {category.isActive !== false ? "Active" : "Inactive"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -383,16 +488,20 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
                     type="button"
                     onClick={() => {
                       const updated = [...config.categories];
-                      updated[index] = { ...updated[index], isActive: updated[index].isActive === false ? true : false };
+                      updated[index] = {
+                        ...updated[index],
+                        isActive:
+                          updated[index].isActive === false ? true : false,
+                      };
                       setConfig({ ...config, categories: updated });
                     }}
                     className={`px-3 py-1 rounded text-xs transition-colors ${
-                      category.isActive !== false 
-                        ? 'bg-gray-600 hover:bg-gray-700 text-white' 
-                        : 'bg-green-600 hover:bg-green-700 text-white'
+                      category.isActive !== false
+                        ? "bg-gray-600 hover:bg-gray-700 text-white"
+                        : "bg-green-600 hover:bg-green-700 text-white"
                     }`}
                   >
-                    {category.isActive !== false ? 'Hide' : 'Show'}
+                    {category.isActive !== false ? "Hide" : "Show"}
                   </button>
                   <button
                     type="button"
@@ -406,10 +515,14 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
 
               {/* Icon Selector */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Icon</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Icon
+                </label>
                 <select
                   value={category.icon}
-                  onChange={(e) => updateCategory(index, 'icon', e.target.value)}
+                  onChange={(e) =>
+                    updateCategory(index, "icon", e.target.value)
+                  }
                   className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
                 >
                   <optgroup label="🚗 Vehicles">
@@ -467,11 +580,15 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
               {/* Title & Description */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Title
+                  </label>
                   <input
                     type="text"
                     value={category.title}
-                    onChange={(e) => updateCategory(index, 'title', e.target.value)}
+                    onChange={(e) =>
+                      updateCategory(index, "title", e.target.value)
+                    }
                     className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
                     required
                   />
@@ -479,16 +596,22 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
                     <TypographyControls
                       label="Title Typography"
                       value={category.titleStyle}
-                      onChange={(titleStyle) => updateCategory(index, 'titleStyle', titleStyle)}
+                      onChange={(titleStyle) =>
+                        updateCategory(index, "titleStyle", titleStyle)
+                      }
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Description
+                  </label>
                   <input
                     type="text"
                     value={category.description}
-                    onChange={(e) => updateCategory(index, 'description', e.target.value)}
+                    onChange={(e) =>
+                      updateCategory(index, "description", e.target.value)
+                    }
                     className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon"
                     required
                   />
@@ -496,16 +619,24 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
                     <TypographyControls
                       label="Description Typography"
                       value={category.descriptionStyle}
-                      onChange={(descriptionStyle) => updateCategory(index, 'descriptionStyle', descriptionStyle)}
+                      onChange={(descriptionStyle) =>
+                        updateCategory(
+                          index,
+                          "descriptionStyle",
+                          descriptionStyle,
+                        )
+                      }
                     />
                   </div>
                 </div>
               </div>
 
               {/* Background Image (for image-heavy style) */}
-              {config.cardStyle === 'image-heavy' && (
+              {config.cardStyle === "image-heavy" && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Background Image (Optional)</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Background Image (Optional)
+                  </label>
                   <div className="flex gap-2">
                     <button
                       type="button"
@@ -517,10 +648,13 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
                     </button>
                     <input
                       type="text"
-                      value={category.backgroundImage || ''}
+                      value={category.backgroundImage || ""}
                       onChange={(e) => {
                         const updated = [...config.categories];
-                        updated[index] = { ...updated[index], backgroundImage: e.target.value };
+                        updated[index] = {
+                          ...updated[index],
+                          backgroundImage: e.target.value,
+                        };
                         setConfig({ ...config, categories: updated });
                       }}
                       placeholder="Or enter image URL"
@@ -529,7 +663,11 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
                   </div>
                   {category.backgroundImage && (
                     <div className="mt-2">
-                      <img src={category.backgroundImage} alt="Preview" className="w-full h-32 object-cover rounded" />
+                      <img
+                        src={category.backgroundImage}
+                        alt="Preview"
+                        className="w-full h-32 object-cover rounded"
+                      />
                     </div>
                   )}
                 </div>
@@ -541,42 +679,51 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
                   <input
                     type="checkbox"
                     id={`cta-show-${index}`}
-                    checked={category.cta?.show !== undefined ? category.cta.show : false}
+                    checked={
+                      category.cta?.show !== undefined
+                        ? category.cta.show
+                        : false
+                    }
                     onChange={(e) => {
                       const updated = [...config.categories];
-                      updated[index] = { 
-                        ...updated[index], 
-                        cta: { 
+                      updated[index] = {
+                        ...updated[index],
+                        cta: {
                           show: e.target.checked,
-                          text: category.cta?.text || 'View Products',
-                          link: category.cta?.link || '#'
-                        }
+                          text: category.cta?.text || "View Products",
+                          link: category.cta?.link || "#",
+                        },
                       };
                       setConfig({ ...config, categories: updated });
                     }}
                     className="w-4 h-4 rounded bg-[#1a1a1a] border-[#2a2a2a] text-brand-maroon focus:ring-brand-maroon"
                   />
-                  <label htmlFor={`cta-show-${index}`} className="text-sm font-medium text-gray-300">
+                  <label
+                    htmlFor={`cta-show-${index}`}
+                    className="text-sm font-medium text-gray-300"
+                  >
                     Show CTA Button
                   </label>
                 </div>
-                
+
                 {category.cta?.show && (
                   <div className="grid grid-cols-2 gap-3 pl-7">
                     <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1">Button Text</label>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">
+                        Button Text
+                      </label>
                       <input
                         type="text"
-                        value={category.cta?.text || 'View Products'}
+                        value={category.cta?.text || "View Products"}
                         onChange={(e) => {
                           const updated = [...config.categories];
-                          updated[index] = { 
-                            ...updated[index], 
-                            cta: { 
+                          updated[index] = {
+                            ...updated[index],
+                            cta: {
                               show: true,
                               text: e.target.value,
-                              link: category.cta?.link || '#'
-                            }
+                              link: category.cta?.link || "#",
+                            },
                           };
                           setConfig({ ...config, categories: updated });
                         }}
@@ -584,19 +731,21 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-400 mb-1">Link</label>
+                      <label className="block text-xs font-medium text-gray-400 mb-1">
+                        Link
+                      </label>
                       <input
                         type="text"
-                        value={category.cta?.link || '#'}
+                        value={category.cta?.link || "#"}
                         onChange={(e) => {
                           const updated = [...config.categories];
-                          updated[index] = { 
-                            ...updated[index], 
-                            cta: { 
+                          updated[index] = {
+                            ...updated[index],
+                            cta: {
                               show: true,
-                              text: category.cta?.text || 'View Products',
-                              link: e.target.value
-                            }
+                              text: category.cta?.text || "View Products",
+                              link: e.target.value,
+                            },
                           };
                           setConfig({ ...config, categories: updated });
                         }}
@@ -631,7 +780,7 @@ export default function CategoriesSectionEditor({ section, isOpen, onClose, onSa
                 Saving...
               </>
             ) : (
-              'Save Changes'
+              "Save Changes"
             )}
           </button>
         </div>

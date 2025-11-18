@@ -74,6 +74,8 @@ export default function HeroSectionEditor({
           value: Number.isFinite(parsedValue) ? parsedValue : 0,
           suffix: stat.suffix?.trim() || "+",
           label: stat.label?.trim() || `Metric ${index + 1}`,
+          valueStyle: stat.valueStyle,
+          labelStyle: stat.labelStyle,
         };
       });
 
@@ -95,10 +97,13 @@ export default function HeroSectionEditor({
         title: {
           line1: config.title?.line1?.trim() || "Leading Manufacturer",
           line2: config.title?.line2?.trim() || "Precision Crafted Solutions",
+          line1Style: config.title?.line1Style,
+          line2Style: config.title?.line2Style,
         },
         description:
           config.description?.trim() ||
           "Discover our full capabilities in precision manufacturing.",
+        descriptionStyle: config.descriptionStyle,
         primaryCTA,
         secondaryCTA,
         statistics: {

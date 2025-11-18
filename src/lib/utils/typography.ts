@@ -3,8 +3,25 @@
  * Helper functions for applying text styles dynamically
  */
 
-import { TextStyle } from '@/types/typography';
-import { CSSProperties } from 'react';
+import { TextStyle } from "@/types/typography";
+import { CSSProperties } from "react";
+
+/**
+ * Properly quotes font-family names that contain spaces
+ * @param fontFamily - Font family name
+ * @returns Quoted font family for CSS
+ */
+function quoteFontFamily(fontFamily: string): string {
+  // If font family contains spaces and isn't already quoted, add quotes
+  if (
+    fontFamily.includes(" ") &&
+    !fontFamily.startsWith("'") &&
+    !fontFamily.startsWith('"')
+  ) {
+    return `'${fontFamily}'`;
+  }
+  return fontFamily;
+}
 
 /**
  * Converts TextStyle object to React CSSProperties
@@ -17,15 +34,19 @@ export function applyTextStyles(textStyle?: TextStyle): CSSProperties {
   const styles: CSSProperties = {};
 
   if (textStyle.fontFamily) {
-    styles.fontFamily = textStyle.fontFamily;
+    styles.fontFamily = quoteFontFamily(textStyle.fontFamily);
   }
 
   if (textStyle.fontSize) {
-    styles.fontSize = textStyle.fontSize;
+    // Check if it's a number or a string containing only digits (and optional decimal)
+    // If so, append 'px' to ensure valid CSS
+    const size = textStyle.fontSize.trim();
+    const isNumber = /^\d+(\.\d+)?$/.test(size);
+    styles.fontSize = isNumber ? `${size}px` : size;
   }
 
   if (textStyle.color) {
-    styles.color = textStyle.color;
+    styles.color = textStyle.color.trim();
   }
 
   if (textStyle.fontWeight) {
@@ -44,7 +65,9 @@ export function applyTextStyles(textStyle?: TextStyle): CSSProperties {
  * @param styles - Array of optional TextStyle objects
  * @returns Merged CSSProperties
  */
-export function mergeTextStyles(...styles: (TextStyle | undefined)[]): CSSProperties {
+export function mergeTextStyles(
+  ...styles: (TextStyle | undefined)[]
+): CSSProperties {
   return styles.reduce((acc, style) => {
     return { ...acc, ...applyTextStyles(style) };
   }, {} as CSSProperties);
@@ -72,12 +95,12 @@ export function hasTextStyles(textStyle?: TextStyle): boolean {
  * @returns Google Fonts URL
  */
 export function generateGoogleFontsUrl(fontFamilies: string[]): string {
-  if (fontFamilies.length === 0) return '';
-  
+  if (fontFamilies.length === 0) return "";
+
   const families = fontFamilies
-    .map(font => font.replace(/ /g, '+'))
-    .join('&family=');
-  
+    .map((font) => `${font.replace(/ /g, "+")}:wght@300;400;500;600;700;800`)
+    .join("&family=");
+
   return `https://fonts.googleapis.com/css2?family=${families}&display=swap`;
 }
 
