@@ -3,10 +3,9 @@
 import Link from "next/link";
 import Statistics from "@/components/ui/Statistics";
 import { Sparkles } from "lucide-react";
-import ShaderBackground from "@/components/ui/shader-background";
 import GradientMeshBackground from "@/components/ui/gradient-mesh-background";
-import RibbonBackground from "@/components/ui/ribbon-background";
 import IonStormBackground from "@/components/ui/ion-storm-background";
+import RainingBoxesDriftBackground from "@/components/ui/raining-boxes-drift-background";
 import { HeroSectionConfig } from "@/types/page-section";
 import { applyTextStyles, mergeTextStyles } from "@/lib/utils/typography";
 import { TextStyle } from "@/types/typography";
@@ -82,10 +81,8 @@ export default function HeroSection({ config }: HeroSectionProps) {
             <GradientMeshBackground />
           ) : config.backgroundType === "ion-storm" ? (
             <IonStormBackground />
-          ) : config.backgroundType === "ribbon" ? (
-            <RibbonBackground />
           ) : (
-            <ShaderBackground />
+            <RainingBoxesDriftBackground />
           )}
         </div>
 

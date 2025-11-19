@@ -238,6 +238,17 @@ export default function HomepageCMSManager() {
             "Cache-Control": "no-cache",
           },
         });
+
+        if (!userRes.ok) {
+          console.error(
+            "[HomepageCMS] Failed to fetch user permissions:",
+            userRes.status,
+            userRes.statusText,
+          );
+          setLoading(false);
+          return;
+        }
+
         const userData = await userRes.json();
 
         if (userData.success && userData.data.permissions) {
@@ -265,6 +276,7 @@ export default function HomepageCMSManager() {
             pagesRes.status,
             pagesRes.statusText,
           );
+          setLoading(false);
           return;
         }
 
@@ -298,6 +310,7 @@ export default function HomepageCMSManager() {
               sectionsRes.status,
               sectionsRes.statusText,
             );
+            setLoading(false);
             return;
           }
 

@@ -190,6 +190,28 @@ svg {
   }
 }
 
+/* Raining Boxes Drift Background - Discrete box pattern like Matrix */
+.raining-boxes-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000000;
+  pointer-events: none;
+  /* V-shaped mask: covers area with deep center reach (100%) and higher sides (~70%) */
+  mask-image: radial-gradient(
+    ellipse 70% 100% at 50% 0%,
+    black 40%,
+    rgba(0, 0, 0, 0.9) 70%,
+    transparent 100%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 70% 100% at 50% 0%,
+    black 40%,
+    rgba(0, 0, 0, 0.9) 70%,
+    transparent 100%
+  );
+}
+
 /* Custom animations for product page */
 @keyframes shimmer {
   0% {

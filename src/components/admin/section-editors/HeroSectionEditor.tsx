@@ -91,7 +91,7 @@ export default function HeroSectionEditor({
       }
 
       const normalizedConfig: HeroSectionConfig = {
-        backgroundType: config.backgroundType || "shader",
+        backgroundType: config.backgroundType || "raining-boxes",
         badge: {
           ...(config.badge ?? {}),
           text: config.badge?.text?.trim() || "Badge",
@@ -138,12 +138,21 @@ export default function HeroSectionEditor({
           body: Object.keys(errorData).length ? errorData : errorText,
         });
 
-        const message =
-          (errorData && errorData.error) ||
-          (typeof errorText === "string" && errorText.trim().length
-            ? errorText
-            : null) ||
-          "Failed to update section";
+        // Extract detailed error message
+        let message = "Failed to update section";
+
+        if (errorData && errorData.error) {
+          message = errorData.error;
+          // If there are validation details, append them
+          if (errorData.details && Array.isArray(errorData.details)) {
+            const detailMessages = errorData.details
+              .map((issue: any) => `${issue.path.join(".")}: ${issue.message}`)
+              .join("; ");
+            message += `\n\nValidation errors:\n${detailMessages}`;
+          }
+        } else if (typeof errorText === "string" && errorText.trim().length) {
+          message = errorText;
+        }
 
         throw new Error(message);
       }
@@ -210,21 +219,20 @@ export default function HeroSectionEditor({
               }
               className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:ring-2 focus:ring-brand-maroon focus:border-transparent"
             >
-              <option value="shader">Plasma Motion Shader (Animated)</option>
               <option value="gradient-mesh">
                 Aurora Gradient Mesh (Animated)
               </option>
               <option value="ion-storm">Ion Storm Drift (Animated)</option>
-              <option value="ribbon">Cinematic Ribbon Artwork (Static)</option>
+              <option value="raining-boxes">
+                Raining Boxes Drift (Lightweight)
+              </option>
             </select>
             <p className="text-xs text-gray-500 mt-1">
-              {config.backgroundType === "shader"
-                ? "GPU-accelerated plasma wave that adds energetic motion with real-time WebGL shaders."
-                : config.backgroundType === "gradient-mesh"
-                  ? "Animated gradient mesh with soft aurora transitions crafted in pure CSS."
-                  : config.backgroundType === "ion-storm"
-                    ? "Layered ion beams with orbital halos, animated entirely in CSS with subtle parallax to feel electrified."
-                    : "High-resolution cinematic ribbon artwork with subtle overlays for premium presentation."}
+              {config.backgroundType === "gradient-mesh"
+                ? "Animated gradient mesh with soft aurora transitions crafted in pure CSS."
+                : config.backgroundType === "ion-storm"
+                  ? "Layered ion beams with orbital halos, animated entirely in CSS with subtle parallax to feel electrified."
+                  : "Ultra-lightweight digital rain effect with drifting pixel boxes - optimized for mobile performance with pure CSS."}
             </p>
           </div>
         </div>

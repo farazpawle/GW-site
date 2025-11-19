@@ -22,9 +22,9 @@ export type SectionType =
 
 export const heroSectionConfigSchema = z.object({
   backgroundType: z
-    .enum(["shader", "gradient-mesh", "ion-storm", "ribbon"])
+    .enum(["gradient-mesh", "ion-storm", "raining-boxes"])
     .optional()
-    .default("shader"),
+    .default("raining-boxes"),
   badge: z.object({
     text: z.string().min(1, "Badge text is required"),
     icon: z.string().optional(),
