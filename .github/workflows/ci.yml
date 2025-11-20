@@ -1,0 +1,53 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    
+    env:
+      # CI environment flag - enables mock environment variables in build
+      CI: 'true'
+      # Mock values for build-time validation (not used at runtime)
+      DATABASE_URL: 'postgresql://ci:ci@localhost:5432/ci'
+      MINIO_ENDPOINT: 'localhost'
+      MINIO_PORT: '9000'
+      MINIO_ACCESS_KEY: 'ci-access-key'
+      MINIO_SECRET_KEY: 'ci-secret-key'
+      MINIO_USE_SSL: 'false'
+      MINIO_BUCKET_NAME: 'ci-bucket'
+      # Valid format Clerk keys for CI builds (not real keys)
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_Y2ktdGVzdC1rZXkuZXhhbXBsZS5jb20k'
+      CLERK_SECRET_KEY: 'sk_test_Y2ktdGVzdC1zZWNyZXQta2V5'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linter
+        run: npm run lint
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Build success notification
+        if: success()
+        run: echo "✅ Build and lint checks passed successfully!"
+      
+      - name: Build failure notification
+        if: failure()
+        run: echo "❌ Build or lint checks failed. Please fix the errors."

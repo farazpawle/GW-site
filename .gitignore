@@ -1,0 +1,89 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env
+.env.*
+!.env.example
+!.env.local.example
+!.env.production
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Prisma generated client
+/src/generated/prisma
+
+# Clerk configuration (runtime secrets)
+/.clerk/
+
+# Documentation and AI context (not needed in production)
+/docs/
+/memory-bank/
+
+# Ignore all .github content everywhere, except workflows
+**/.github/**
+!**/.github/workflows/**
+
+# Development/Testing Scripts (keep deployment scripts)
+/scripts/*
+!/scripts/setup/
+!/scripts/deploy-simple.sh
+# NOTE: setup-vps-env.sh contains production secrets - only exists on VPS
+
+# Editor/IDE temporary files
+.cursor/
+.superdesign/
+.vscode/
+.idea/
+
+# Credential and key files
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+
+# Nginx configuration (not needed)
+nginx.conf
+nginx.prod.conf
+/ssl/
+
+# NOTE: Only production-essential files should be in git:
+# ✅ /prisma/ - Database schema and migrations (REQUIRED)
+# ✅ /scripts/setup/ - Deployment setup scripts (REQUIRED)
+# ✅ .env.example files - Template files for environment setup
+# ✅ All source code including lib/, middleware, API routes

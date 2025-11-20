@@ -1,0 +1,22 @@
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="400" fill="#f3f4f6"/>
+  
+  <!-- Icon Container -->
+  <circle cx="200" cy="160" r="50" fill="#e5e7eb"/>
+  
+  <!-- Image Icon -->
+  <path d="M200 135 L185 155 L175 145 L165 160 L235 160 Z" fill="#9ca3af"/>
+  <circle cx="215" cy="145" r="6" fill="#9ca3af"/>
+  
+  <!-- Text -->
+  <text x="200" y="240" font-family="Arial, sans-serif" font-size="16" fill="#6b7280" text-anchor="middle" font-weight="bold">
+    Product Image
+  </text>
+  <text x="200" y="265" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af" text-anchor="middle">
+    Coming Soon
+  </text>
+  
+  <!-- Brand Accent -->
+  <rect x="150" y="290" width="100" height="3" fill="#6e0000" rx="1.5"/>
+</svg>

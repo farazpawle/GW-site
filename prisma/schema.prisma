@@ -1,0 +1,456 @@
+generator client {
+  provider = "prisma-client-js"
+  log      = ["warn", "error"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id
+  email        String        @unique
+  name         String?
+  role         UserRole      @default(VIEWER)
+  permissions  String[]      @default([])
+  roleLevel    Int           @default(10)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  activityLogs ActivityLog[]
+
+  @@index([role])
+  @@index([roleLevel])
+  @@map("users")
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String // order, product, user, category, system, collection, page, menu
+  action      String // created, updated, deleted, published, unpublished
+  title       String
+  description String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+model RBACLog {
+  id          String   @id @default(cuid())
+  actorId     String   // User who made the change
+  actorEmail  String
+  targetId    String   // User who was affected
+  targetEmail String
+  action      String   // PERMISSION_CHANGE, ROLE_CHANGE
+  oldValue    Json?    // Previous permissions/role
+  newValue    Json?    // New permissions/role
+  metadata    Json?    // Additional context
+  createdAt   DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([targetId, createdAt])
+  @@index([action, createdAt])
+  @@index([createdAt])
+  @@map("rbac_logs")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  parts       Part[]
+
+  @@map("categories")
+}
+
+model Part {
+  id                   String                 @id @default(cuid())
+  name                 String
+  slug                 String                 @unique
+  description          String?
+  shortDesc            String?
+  partNumber           String                 @unique
+  price                Decimal                @db.Decimal(10, 2)
+  comparePrice         Decimal?               @db.Decimal(10, 2)
+  inStock              Boolean                @default(true)
+  stockQuantity        Int                    @default(0)
+  images               String[]
+  specifications       Json?
+  compatibility        String[]
+  categoryId           String
+  featured             Boolean                @default(false)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  application          String[]               @default([])
+  brand                String?
+  certifications       String[]               @default([])
+  origin               String?
+  pdfUrl               String?
+  published            Boolean                @default(false)
+  publishedAt          DateTime?
+  showcaseOrder        Int                    @default(999)
+  tags                 String[]               @default([])
+  views                Int                    @default(0)
+  warranty             String?
+  compareAtPrice       Decimal?               @db.Decimal(10, 2)
+  hasVariants          Boolean                @default(false)
+  sku                  String                 @unique
+  relatedProductIds    String[]               @default([])
+  collections          CollectionProduct[]
+  oemPartNumbers       OEMPartNumber[]
+  crossReferences      PartCrossReference[]   @relation("PartReferences")
+  referencedBy         PartCrossReference[]   @relation("ReferencedBy")
+  category             Category               @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  variants             ProductVariant[]
+  vehicleCompatibility VehicleCompatibility[]
+  productViews         ProductView[]
+
+  @@index([published, showcaseOrder])
+  @@index([published, categoryId])
+  @@index([published, featured])
+  @@map("parts")
+}
+
+model QuoteRequest {
+  id          String             @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  company     String?
+  message     String?
+  status      QuoteRequestStatus @default(PENDING)
+  products    Json?
+  adminNotes  String?
+  respondedAt DateTime?
+  respondedBy String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+  @@map("quote_requests")
+}
+
+model ContactMessage {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  status    MessageStatus @default(UNREAD)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @default(now()) @updatedAt
+  repliedAt DateTime?
+
+  @@map("contact_messages")
+}
+
+model BlogPost {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  content       String
+  excerpt       String?
+  featuredImage String?
+  published     Boolean   @default(false)
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("blog_posts")
+}
+
+model SiteSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model SearchQuery {
+  id           String   @id @default(cuid())
+  query        String
+  filters      Json?
+  resultsCount Int
+  userId       String?
+  createdAt    DateTime @default(now())
+
+  @@index([query])
+  @@index([createdAt])
+  @@map("search_queries")
+}
+
+model SearchAnalytics {
+  id           String   @id @default(cuid())
+  term         String   @unique
+  count        Int      @default(1)
+  lastSearched DateTime @default(now())
+
+  @@index([count])
+  @@map("search_analytics")
+}
+
+model PageAnalytics {
+  id              String   @id @default(cuid())
+  date            DateTime @unique
+  pageViews       Int      @default(0)
+  productViews    Int      @default(0)
+  categoryViews   Int      @default(0)
+  inquiries       Int      @default(0)
+  quoteRequests   Int      @default(0)
+  newProducts     Int      @default(0)
+  updatedProducts Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  @@index([date])
+  @@map("page_analytics")
+}
+
+model ProductView {
+  id        String   @id @default(cuid())
+  partId    String
+  part      Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+  userId    String?
+  ipAddress String?
+  userAgent String?
+  viewedAt  DateTime @default(now())
+
+  @@index([partId, viewedAt])
+  @@index([userId, viewedAt])
+  @@map("product_views")
+}
+
+model Settings {
+  id        String           @id @default(cuid())
+  key       String           @unique
+  value     String
+  category  SettingsCategory
+  updatedBy String?
+  updatedAt DateTime         @updatedAt
+  createdAt DateTime         @default(now())
+
+  @@index([category])
+  @@map("settings")
+}
+
+model Page {
+  id           String        @id @default(cuid())
+  title        String
+  slug         String        @unique
+  description  String?
+  groupType    String?
+  groupValues  Json?
+  layout       String        @default("grid")
+  sortBy       String        @default("name")
+  itemsPerPage Int           @default(12)
+  metaTitle    String?
+  metaDesc     String?
+  published    Boolean       @default(false)
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  content      String?
+  pageType     String        @default("dynamic")
+  isPermanent  Boolean       @default(false) // Permanent pages cannot be deleted
+  menuItems    MenuItem[]
+  sections     PageSection[]
+
+  @@index([slug])
+  @@index([published])
+  @@index([pageType])
+  @@map("pages")
+}
+
+model PageSection {
+  id          String   @id @default(cuid())
+  pageId      String
+  sectionType String // "hero" | "brandStory" | "carousel" | "categories" | "precisionMfg"
+  name        String? // Optional custom name for the section
+  position    Int // Order: 0, 1, 2, 3, 4...
+  visible     Boolean  @default(true)
+  config      Json // Section-specific configuration
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  page        Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId, position])
+  @@index([visible])
+  @@map("page_sections")
+}
+
+model MenuItem {
+  id          String     @id @default(cuid())
+  label       String
+  position    Int
+  visible     Boolean    @default(true)
+  openNewTab  Boolean    @default(false)
+  parentId    String?
+  pageId      String?
+  externalUrl String?
+  isPermanent Boolean    @default(false) // Permanent menu items cannot be deleted
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  page        Page?      @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  parent      MenuItem?  @relation("MenuHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    MenuItem[] @relation("MenuHierarchy")
+
+  @@index([parentId])
+  @@index([position])
+  @@index([visible])
+  @@map("menu_items")
+}
+
+model Collection {
+  id             String              @id @default(cuid())
+  name           String
+  slug           String              @unique
+  description    String?
+  filterRules    Json?
+  useManual      Boolean             @default(false)
+  layout         String              @default("grid")
+  sortBy         String              @default("name")
+  itemsPerPage   Int                 @default(12)
+  metaTitle      String?
+  metaDesc       String?
+  published      Boolean             @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  manualProducts CollectionProduct[]
+
+  @@index([slug])
+  @@index([published])
+  @@map("collections")
+}
+
+model CollectionProduct {
+  id           String     @id @default(cuid())
+  collectionId String
+  partId       String
+  position     Int        @default(0)
+  createdAt    DateTime   @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  part         Part       @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, partId])
+  @@index([collectionId])
+  @@index([partId])
+  @@map("collection_products")
+}
+
+model ProductVariant {
+  id             String   @id @default(cuid())
+  partId         String
+  title          String
+  price          Decimal? @db.Decimal(10, 2)
+  compareAtPrice Decimal? @db.Decimal(10, 2)
+  options        Json
+  available      Boolean  @default(true)
+  image          String?
+  position       Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  part           Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@index([partId])
+  @@map("product_variants")
+}
+
+model PartCrossReference {
+  id               String   @id @default(cuid())
+  partId           String
+  referencedPartId String?
+  referenceType    String
+  brandName        String
+  partNumber       String
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  part             Part     @relation("PartReferences", fields: [partId], references: [id], onDelete: Cascade)
+  referencedPart   Part?    @relation("ReferencedBy", fields: [referencedPartId], references: [id])
+
+  @@index([partId])
+  @@index([referencedPartId])
+  @@index([brandName])
+  @@map("part_cross_references")
+}
+
+model OEMPartNumber {
+  id            String   @id @default(cuid())
+  partId        String
+  manufacturer  String
+  oemPartNumber String
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  part          Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@unique([partId, manufacturer, oemPartNumber])
+  @@index([partId])
+  @@index([manufacturer])
+  @@index([oemPartNumber])
+  @@map("oem_part_numbers")
+}
+
+model VehicleCompatibility {
+  id        String   @id @default(cuid())
+  partId    String
+  make      String
+  model     String
+  yearStart Int
+  yearEnd   Int
+  engine    String?
+  trim      String?
+  position  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  part      Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@index([partId])
+  @@index([make, model])
+  @@index([yearStart, yearEnd])
+  @@map("vehicle_compatibility")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+  CONTENT_EDITOR
+  VIEWER
+}
+
+enum QuoteRequestStatus {
+  PENDING
+  REVIEWED
+  RESPONDED
+  CLOSED
+}
+
+enum SettingsCategory {
+  GENERAL
+  CONTACT
+  SEO
+  SHIPPING
+}
+
+enum MessageStatus {
+  UNREAD
+  READ
+  REPLIED
+}

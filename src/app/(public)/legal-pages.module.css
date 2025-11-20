@@ -1,0 +1,62 @@
+/* Legal Pages Content Styling */
+
+.legalContent h2 {
+  color: white;
+  font-weight: bold;
+  font-size: 1.875rem;
+  margin-bottom: 1.5rem;
+  margin-top: 3rem;
+}
+
+.legalContent h2:first-child {
+  margin-top: 0;
+}
+
+.legalContent h3 {
+  color: white;
+  font-weight: bold;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  margin-top: 2rem;
+}
+
+.legalContent h4 {
+  color: white;
+  font-weight: bold;
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.legalContent p {
+  color: #d1d5db;
+  line-height: 1.75;
+  margin-bottom: 1.5rem;
+}
+
+.legalContent ul,
+.legalContent ol {
+  color: #d1d5db;
+  margin: 1.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.legalContent li {
+  color: #d1d5db;
+  line-height: 1.75;
+  margin-bottom: 0.75rem;
+}
+
+.legalContent strong {
+  color: white;
+  font-weight: 600;
+}
+
+.legalContent a {
+  color: #6e0000;
+  text-decoration: none;
+}
+
+.legalContent a:hover {
+  text-decoration: underline;
+}
