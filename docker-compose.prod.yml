@@ -1,0 +1,117 @@
+services:
+  nextjs-app:
+    container_name: GW-nextjs
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - REDIS_URL=${REDIS_URL}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_PORT=${MINIO_PORT}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_USE_SSL=${MINIO_USE_SSL:-false}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      - CLERK_WEBHOOK_SECRET=${CLERK_WEBHOOK_SECRET}
+      - NEXT_PUBLIC_CLERK_SIGN_IN_URL=${NEXT_PUBLIC_CLERK_SIGN_IN_URL}
+      - NEXT_PUBLIC_CLERK_SIGN_UP_URL=${NEXT_PUBLIC_CLERK_SIGN_UP_URL}
+      - NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=${NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL}
+      - NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=${NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - proxy
+    restart: unless-stopped
+    mem_limit: 1g
+    mem_reservation: 512m
+    memswap_limit: 2g
+
+  postgres:
+    container_name: GW-postgres
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=garritwulf_db
+      - POSTGRES_USER=garritwulf_user
+      - POSTGRES_PASSWORD=garritwulf_secure_pass_2025
+    volumes:
+      - gw_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "6383:5432"
+    networks:
+      - proxy
+    restart: unless-stopped
+    mem_limit: 512m
+    mem_reservation: 256m
+    memswap_limit: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U garritwulf_user -d garritwulf_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    container_name: GW-redis
+    image: redis:7-alpine
+    volumes:
+      - gw_redis_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - proxy
+    restart: unless-stopped
+    mem_limit: 256m
+    mem_reservation: 128m
+    memswap_limit: 512m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    container_name: GW-minio
+    image: minio/minio:latest
+    environment:
+      - MINIO_ROOT_USER=garritwulf_minio
+      - MINIO_ROOT_PASSWORD=garritwulf_minio_secure_2025
+    volumes:
+      - gw_minio_data:/data
+    command: server /data --console-address ":9001"
+    ports:
+      - "6381:9000"
+      - "6382:9001"
+    networks:
+      - proxy
+    restart: unless-stopped
+    mem_limit: 512m
+    mem_reservation: 256m
+    memswap_limit: 1g
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+volumes:
+  gw_postgres_data:
+    external: true
+  gw_redis_data:
+    external: true
+  gw_minio_data:
+    external: true
+
+networks:
+  proxy:
+    external: true
