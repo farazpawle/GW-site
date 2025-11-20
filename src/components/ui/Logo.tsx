@@ -28,21 +28,9 @@ export default function Logo({
   };
 
   const dimensions = sizeMap[size];
-  
-  // Use proxy for MinIO URLs to avoid CORS issues - Desktop logo
-  const proxyUrl = (logoUrl.includes('localhost:9000') || logoUrl.includes('minio:9000'))
-    ? `/api/admin/media/proxy?url=${encodeURIComponent(logoUrl)}`
-    : logoUrl;
-
-  // Use proxy for MinIO URLs to avoid CORS issues - Mobile logo
-  const mobileProxyUrl = mobileLogoUrl 
-    ? (mobileLogoUrl.includes('localhost:9000') || mobileLogoUrl.includes('minio:9000'))
-      ? `/api/admin/media/proxy?url=${encodeURIComponent(mobileLogoUrl)}`
-      : mobileLogoUrl
-    : null;
 
   // If no mobile logo is provided, show desktop logo on all screen sizes
-  if (!mobileProxyUrl) {
+  if (!mobileLogoUrl) {
     return (
       <Link href="/" className={`flex items-center ${className}`}>
         <div className="relative w-full max-w-[180px] md:max-w-[220px] lg:max-w-[260px] flex items-center justify-center" style={{ 
@@ -55,7 +43,7 @@ export default function Logo({
             </div>
           ) : (
             <Image 
-              src={proxyUrl}
+              src={logoUrl}
               alt={`${siteName} Logo`}
               width={dimensions.width}
               height={dimensions.height}
@@ -86,7 +74,7 @@ export default function Logo({
           </div>
         ) : (
           <Image 
-            src={proxyUrl}
+            src={logoUrl}
             alt={`${siteName} Logo`}
             width={dimensions.width}
             height={dimensions.height}
@@ -111,7 +99,7 @@ export default function Logo({
           </div>
         ) : (
           <Image 
-            src={mobileProxyUrl}
+            src={mobileLogoUrl!}
             alt={`${siteName} Mobile Logo`}
             width={150}
             height={55}

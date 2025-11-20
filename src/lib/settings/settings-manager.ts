@@ -1,7 +1,8 @@
 import { SettingsCategory, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { encryptValue, decryptValue, isSensitiveField } from './encryption';
-import { getPresignedUrl, extractKeyFromUrl } from '@/lib/minio';
+import { extractKeyFromUrl } from '@/lib/minio';
+import { buildPublicMediaUrl } from '@/lib/minio-client';
 
 /**
  * Cache entry structure with timestamp for TTL
@@ -104,16 +105,15 @@ async function resolveMediaSettingValue(value: string | null): Promise<string | 
   const lower = normalized.toLowerCase();
   const isHttp = lower.startsWith('http://') || lower.startsWith('https://');
 
+  // If it's already an external HTTP(S) URL, return as-is
   if (isHttp) {
     return normalized;
   }
 
-  try {
-    return await getPresignedUrl(normalized, 3600);
-  } catch (error) {
-    console.error(`Failed to generate presigned URL for key "${normalized}":`, error);
-    return null;
-  }
+  // For MinIO keys (e.g., "general/logo.png"), return public proxy URL
+  // This ensures logo/footer images are accessible without authentication
+  // The public proxy (/api/media/public) has immutable cache headers and is whitelisted in middleware
+  return buildPublicMediaUrl(normalized);
 }
 
 function cacheMediaUrl(key: string, url: string | null): void {
