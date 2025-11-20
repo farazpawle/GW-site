@@ -16,23 +16,31 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
+  fallback: ["system-ui", "arial"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+  fallback: ["monospace"],
 });
 
 const oswald = Oswald({
   variable: "--font-oswald",
   subsets: ["latin"],
   weight: ["200", "300", "400", "500", "600", "700"],
+  display: "swap",
+  fallback: ["sans-serif"],
 });
 
 const aclonica = Aclonica({
   variable: "--font-aclonica",
   subsets: ["latin"],
   weight: "400",
+  display: "swap",
+  fallback: ["cursive"],
 });
 
 /**

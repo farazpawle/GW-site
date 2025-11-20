@@ -24,7 +24,7 @@ async function checkSocialSettings() {
       console.log(" You need to add social media URLs in Settings > Contact & Social\n");
     } else {
       console.log(" Found social media settings:\n");
-      socialSettings.forEach(setting => {
+      socialSettings.forEach((setting: { key: string; value: string | null; category: string | null }) => {
         const hasValue = setting.value && setting.value.trim().length > 0;
         const status = hasValue ? "" : "";
         console.log(`${status} ${setting.key}: ${hasValue ? setting.value : "(empty)"}`);

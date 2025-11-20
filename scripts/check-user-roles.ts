@@ -21,7 +21,7 @@ async function main() {
 
     console.log(`📊 Found ${users.length} users:\n`);
     
-    users.forEach(user => {
+    users.forEach((user: { id: string; email: string; name: string | null; role: string }) => {
       console.log(`- ${user.email}`);
       console.log(`  Name: ${user.name || 'N/A'}`);
       console.log(`  Role: ${user.role}`);
@@ -29,7 +29,7 @@ async function main() {
     });
 
     // Count by role
-    const roleCounts = users.reduce((acc, user) => {
+    const roleCounts = users.reduce((acc: Record<string, number>, user: { id: string; email: string; name: string | null; role: string }) => {
       acc[user.role] = (acc[user.role] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);

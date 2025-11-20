@@ -37,6 +37,9 @@ yarn-error.log*
 !.env.local.example
 !.env.production
 
+# Font mocks for restricted build environments
+.next-font-mocks/
+
 # vercel
 .vercel
 

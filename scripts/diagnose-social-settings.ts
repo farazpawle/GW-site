@@ -47,7 +47,7 @@ async function diagnoseSocialSettings() {
     });
     
     console.log(`Found ${contactSettings.length} CONTACT settings:\n`);
-    contactSettings.forEach(s => {
+    contactSettings.forEach((s: { key: string; value: string | null }) => {
       console.log(`${s.key}: "${s.value}"`);
     });
     
