@@ -13,22 +13,35 @@ import { MINIO_BUCKET_NAME, extractKeyFromUrl } from "./minio-client";
 export { extractKeyFromUrl } from "./minio-client";
 
 // MinIO S3-compatible storage client
-// ✅ In production, use public HTTPS endpoint so presigned URLs work correctly
-// The endpoint determines what hostname appears in AWS signatures
-const isProduction = process.env.NODE_ENV === "production";
-const minioEndpoint = isProduction
-  ? "https://minio.garritwulf.com" // Production: Public HTTPS endpoint
-  : `http://${process.env.MINIO_ENDPOINT || "localhost"}:${process.env.MINIO_PORT || "9000"}`; // Development: Docker/localhost
+// ✅ Use internal endpoint for server-side operations (upload, delete, proxy)
+// This ensures the Next.js server can talk to MinIO within the Docker network
+const internalEndpoint = `http://${process.env.MINIO_ENDPOINT || "localhost"}:${process.env.MINIO_PORT || "9000"}`;
 
 const s3Client = new S3Client({
-  endpoint: minioEndpoint,
+  endpoint: internalEndpoint,
   region: process.env.MINIO_REGION || "us-east-1",
   credentials: {
-    accessKeyId: process.env.MINIO_ACCESS_KEY || "garritwulf_minio",
-    secretAccessKey:
-      process.env.MINIO_SECRET_KEY || "garritwulf_minio_secure_2025",
+    accessKeyId: process.env.MINIO_ACCESS_KEY!,
+    secretAccessKey: process.env.MINIO_SECRET_KEY!,
   },
   forcePathStyle: true, // Required for MinIO
+});
+
+// ✅ Public client for generating presigned URLs that work in the browser
+// In production, this points to the public HTTPS endpoint
+const publicEndpoint =
+  process.env.NODE_ENV === "production"
+    ? "https://minio.garritwulf.com"
+    : internalEndpoint;
+
+const s3ClientPublic = new S3Client({
+  endpoint: publicEndpoint,
+  region: process.env.MINIO_REGION || "us-east-1",
+  credentials: {
+    accessKeyId: process.env.MINIO_ACCESS_KEY!,
+    secretAccessKey: process.env.MINIO_SECRET_KEY!,
+  },
+  forcePathStyle: true,
 });
 
 // Single bucket with folder structure
@@ -146,11 +159,12 @@ export async function getPresignedUrl(
     Key: key,
   });
 
-  // ✅ No URL replacement needed - endpoint is already configured correctly
+  // ✅ Use public client to generate URLs accessible from browser
   // Production uses https://minio.garritwulf.com
   // Development uses http://localhost:9000
-  // AWS signatures will be valid because they're generated with the correct endpoint
-  const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn });
+  const client =
+    process.env.NODE_ENV === "production" ? s3ClientPublic : s3Client;
+  const presignedUrl = await getSignedUrl(client, command, { expiresIn });
 
   return presignedUrl;
 }
