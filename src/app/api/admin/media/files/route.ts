@@ -4,10 +4,10 @@ import {
   listObjects,
   formatBytes,
   isImageFile,
-  getPresignedUrl,
   getObjectMetadata,
   FOLDERS,
 } from "@/lib/minio";
+import { buildPublicMediaUrl } from "@/lib/minio-client";
 import type { ListFilesResponse, MediaFile } from "@/types/media";
 
 /**
@@ -81,8 +81,9 @@ export async function GET(request: NextRequest) {
       // Convert to MediaFile format with presigned URLs
       const files: MediaFile[] = await Promise.all(
         paginatedObjects.map(async (obj) => {
-          // Generate presigned URL (valid for 1 hour)
-          const url = await getPresignedUrl(obj.key, 3600);
+          // Generate public proxy URL (accessible via /api/media/public)
+          // This avoids issues with internal Docker hostnames or presigned URL expiration
+          const url = buildPublicMediaUrl(obj.key);
 
           // Try to get actual content type from MinIO metadata
           let contentType = "application/octet-stream";

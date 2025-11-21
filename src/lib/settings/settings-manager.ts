@@ -32,6 +32,8 @@ const DEFAULT_MINIO_HOSTS = new Set([
   'localhost:9000',
   '127.0.0.1:9000',
   'minio:9000',
+  'minio.garritwulf.com', // Public production endpoint
+  'garritwulf.com',       // Main domain
 ]);
 
 /**
