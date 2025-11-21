@@ -10,7 +10,7 @@ interface AdminHeaderProps {
 
 export default function AdminHeader({ pageTitle, description }: AdminHeaderProps) {
   return (
-    <header className="border-b border-[#2a2a2a] bg-[#0a0a0a] sticky top-0 z-10">
+    <header className="bg-[#0a0a0a] sticky top-0 z-10">
       <div className="flex items-center justify-between px-8 py-4">
         <div>
           <h1 className="text-2xl font-bold text-white">{pageTitle}</h1>

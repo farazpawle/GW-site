@@ -8,6 +8,7 @@ import {
   SignedOut,
   UserButton,
 } from "@clerk/nextjs";
+import { User, UserPlus } from "lucide-react";
 import Logo from "./ui/Logo";
 import Navigation from "./ui/Navigation";
 import AnnouncementBar from "./ui/AnnouncementBar";
@@ -68,8 +69,8 @@ export default function Header({
         }`}
         style={{ backgroundColor: "#ebe8e5ed" }}
       >
-        <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between gap-8">
+        <div className="container mx-auto px-4 xl:px-6">
+          <div className="flex items-center justify-between gap-4 xl:gap-8">
             {/* Logo Section - Enhanced with Smooth Animation */}
             <div className="flex-shrink-0 relative">
               {/* Glow Effect on Logo Hover - Behind logo */}
@@ -90,20 +91,22 @@ export default function Header({
             </div>
 
             {/* Navigation - Premium Layout */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 xl:gap-6">
               <Navigation />
 
               {/* Clerk Authentication UI */}
               <div className="flex items-center gap-3 flex-shrink-0">
                 <SignedOut>
                   <SignInButton mode="modal">
-                    <button className="px-4 py-2 text-sm font-medium text-[#6e0000] hover:text-[#8b0000] transition-colors duration-300">
-                      Sign In
+                    <button className="px-2 xl:px-4 py-2 text-sm font-medium text-[#6e0000] hover:text-[#8b0000] transition-colors duration-300 flex items-center justify-center">
+                      <span className="hidden xl:inline">Sign In</span>
+                      <User className="w-5 h-5 block xl:hidden" />
                     </button>
                   </SignInButton>
                   <SignUpButton mode="modal">
-                    <button className="px-4 py-2 text-sm font-medium text-white bg-[#6e0000] hover:bg-[#8b0000] rounded-md transition-all duration-300 shadow-md hover:shadow-lg">
-                      Sign Up
+                    <button className="px-2 xl:px-4 py-2 text-sm font-medium text-white bg-[#6e0000] hover:bg-[#8b0000] rounded-md transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center">
+                      <span className="hidden xl:inline">Sign Up</span>
+                      <UserPlus className="w-5 h-5 block xl:hidden" />
                     </button>
                   </SignUpButton>
                 </SignedOut>

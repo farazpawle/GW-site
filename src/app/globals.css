@@ -23,6 +23,13 @@
   }
 }
 
+/* Global Horizontal Scroll Fix */
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -260,4 +267,32 @@ svg {
 .scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: rgba(139, 21, 56, 0.2) transparent;
+}
+
+/* 
+  Responsive Fix for Tablet/Mid-size Desktop (1000px - 1200px)
+  Prevents horizontal overflow caused by aggressive grid columns.
+*/
+@media (max-width: 1200px) and (min-width: 1000px) {
+  /* Tame the Grid: Force 3 columns instead of 4 in this range */
+  .lg\:grid-cols-4 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  
+  /* Ensure images/cards don't overflow their cells */
+  .min-w-\[200px\] {
+    min-width: 0 !important;
+  }
+
+  /* Product Page: Reduce Main Grid Gap */
+  .lg\:gap-16 {
+    gap: 2rem !important;
+  }
+
+  /* Product Page: Reduce Title Size & Ensure Wrapping */
+  .lg\:text-6xl {
+    font-size: 3rem !important;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
 }

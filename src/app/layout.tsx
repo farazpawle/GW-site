@@ -10,6 +10,7 @@ import GoogleTagManager from "@/components/analytics/GoogleTagManager";
 import WebVitals from "@/components/analytics/WebVitals";
 import { initializeApplication } from "@/lib/initialization";
 import BackToTopButton from "@/components/BackToTopButton";
+import { UserSyncer } from "@/components/auth/UserSyncer";
 import "@/lib/env"; // Validate environment variables at startup
 import "./globals.css";
 
@@ -183,17 +184,16 @@ export default async function RootLayout({
 
   return (
     <ClerkProvider>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} ${oswald.variable} ${aclonica.variable} antialiased`}
-        >
-          {/* Google Analytics (GA4) */}
-          {googleAnalyticsId && <GoogleAnalytics gaId={googleAnalyticsId} />}
-
+      <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${oswald.variable} ${aclonica.variable}`}>
+        <body className="antialiased min-h-screen flex flex-col">
+          <UserSyncer />
           {/* Google Tag Manager */}
           {googleTagManagerId && (
             <GoogleTagManager gtmId={googleTagManagerId} />
           )}
+
+          {/* Google Analytics (GA4) */}
+          {googleAnalyticsId && <GoogleAnalytics gaId={googleAnalyticsId} />}
 
           {/* Web Vitals Performance Monitoring */}
           <WebVitals />

@@ -96,7 +96,7 @@ export default function Navigation() {
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className="hidden lg:flex items-center gap-8 flex-shrink-0">
+      <nav className="hidden lg:flex items-center gap-4 xl:gap-8 flex-shrink-0">
         {/* Navigation Links */}
         <div className="flex items-center gap-6">
           {navigationItems.map((item) => {
