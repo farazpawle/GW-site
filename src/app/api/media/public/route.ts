@@ -127,12 +127,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (process.env.NODE_ENV !== "production") {
-      console.error("[media-public] Failed to stream object", {
-        key,
-        error,
-      });
-    }
+    // Always log errors for debugging
+    console.error("[media-public] Failed to stream object", {
+      key,
+      error,
+      statusCode,
+    });
 
     return NextResponse.json(
       { success: false, error: "Failed to load media asset" },
